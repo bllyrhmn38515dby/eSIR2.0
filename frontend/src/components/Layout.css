@@ -1,0 +1,17 @@
+.layout {
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.main-content {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 20px 15px;
+  }
+}
