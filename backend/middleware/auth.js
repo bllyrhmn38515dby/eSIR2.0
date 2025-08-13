@@ -14,9 +14,12 @@ const verifyToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Ambil data user dari database
+    // Ambil data user dari database dengan role
     const [users] = await pool.execute(
-      'SELECT * FROM users WHERE id = ?',
+      `SELECT u.*, r.nama_role as role 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = ?`,
       [decoded.userId]
     );
 
@@ -46,7 +49,7 @@ const requireRole = (roles) => {
       });
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!req.user.role || !roles.includes(req.user.role)) {
       return res.status(403).json({ 
         success: false, 
         message: 'Akses ditolak. Role tidak sesuai' 

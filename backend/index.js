@@ -15,6 +15,8 @@ const faskesRoutes = require('./routes/faskes');
 const notificationRoutes = require('./routes/notifications');
 const tempatTidurRoutes = require('./routes/tempatTidur');
 const laporanRoutes = require('./routes/laporan');
+const searchRoutes = require('./routes/search');
+const trackingRoutes = require('./routes/tracking');
 
 const app = express();
 const server = http.createServer(app);
@@ -40,6 +42,8 @@ app.use('/api/faskes', faskesRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/tempat-tidur', tempatTidurRoutes);
 app.use('/api/laporan', laporanRoutes);
+app.use('/api/search', searchRoutes);
+app.use('/api/tracking', trackingRoutes);
 
 // Socket.IO connection handling with authentication
 io.use(socketAuth);
@@ -58,6 +62,18 @@ io.on('connection', (socket) => {
     socket.join('admin-room');
     console.log(`Admin ${socket.user.nama} joined admin room`);
   }
+
+  // Join tracking room untuk monitoring real-time
+  socket.on('join-tracking', (rujukan_id) => {
+    socket.join(`tracking-${rujukan_id}`);
+    console.log(`User ${socket.user.nama} joined tracking room: ${rujukan_id}`);
+  });
+
+  // Leave tracking room
+  socket.on('leave-tracking', (rujukan_id) => {
+    socket.leave(`tracking-${rujukan_id}`);
+    console.log(`User ${socket.user.nama} left tracking room: ${rujukan_id}`);
+  });
 
   // Handle realtime notifications
   socket.on('send-notification', (data) => {

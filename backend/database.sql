@@ -92,6 +92,55 @@ CREATE TABLE IF NOT EXISTS tempat_tidur (
     UNIQUE KEY unique_bed (faskes_id, nomor_kamar, nomor_bed)
 );
 
+-- Tabel search_logs untuk analytics pencarian
+CREATE TABLE IF NOT EXISTS search_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    search_term VARCHAR(255) NOT NULL,
+    entity_type ENUM('pasien', 'rujukan', 'faskes', 'tempat_tidur', 'global') NOT NULL,
+    results_count INT DEFAULT 0,
+    response_time_ms INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Tabel tracking_data untuk real-time route tracking
+CREATE TABLE IF NOT EXISTS tracking_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    rujukan_id INT NOT NULL,
+    latitude DECIMAL(10,8) NOT NULL,
+    longitude DECIMAL(11,8) NOT NULL,
+    status ENUM('menunggu', 'dijemput', 'dalam_perjalanan', 'tiba') DEFAULT 'menunggu',
+    estimated_time INT, -- dalam menit
+    estimated_distance DECIMAL(8,2), -- dalam km
+    speed DECIMAL(5,2), -- dalam km/h
+    heading INT, -- arah dalam derajat (0-360)
+    accuracy DECIMAL(5,2), -- akurasi GPS dalam meter
+    battery_level INT, -- level baterai device (0-100)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rujukan_id) REFERENCES rujukan(id) ON DELETE CASCADE,
+    INDEX idx_rujukan_status (rujukan_id, status),
+    INDEX idx_updated_at (updated_at)
+);
+
+-- Tabel tracking_sessions untuk mengelola sesi tracking
+CREATE TABLE IF NOT EXISTS tracking_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    rujukan_id INT NOT NULL,
+    user_id INT NOT NULL, -- petugas yang melakukan tracking
+    device_id VARCHAR(255), -- ID device yang digunakan
+    session_token VARCHAR(255) UNIQUE, -- token untuk autentikasi tracking
+    is_active BOOLEAN DEFAULT TRUE,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ended_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rujukan_id) REFERENCES rujukan(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    INDEX idx_session_token (session_token),
+    INDEX idx_active_sessions (is_active, rujukan_id)
+);
+
 -- Insert data awal untuk roles
 INSERT INTO roles (nama_role, deskripsi) VALUES
 ('admin_pusat', 'Administrator Pusat - Akses penuh ke semua fitur'),
@@ -99,14 +148,16 @@ INSERT INTO roles (nama_role, deskripsi) VALUES
 
 -- Insert data awal untuk faskes dengan koordinat Surabaya
 INSERT INTO faskes (nama_faskes, alamat, tipe, telepon, latitude, longitude) VALUES
-('RSUD Dr. Soetomo', 'Jl. Mayjen Prof. Dr. Moestopo No.6-8, Airlangga, Kec. Gubeng, Kota SBY, Jawa Timur 60286', 'RSUD', '031-5501078', -7.2575, 112.7521),
-('Puskesmas Kenjeran', 'Jl. Kenjeran No.1, Kenjeran, Kec. Bulak, Kota SBY, Jawa Timur 60124', 'Puskesmas', '031-3290001', -7.2456, 112.7890),
-('Puskesmas Gubeng', 'Jl. Gubeng Jaya No.1, Gubeng, Kec. Gubeng, Kota SBY, Jawa Timur 60281', 'Puskesmas', '031-5020001', -7.2654, 112.7456),
-('Klinik Sejahtera', 'Jl. Ahmad Yani No.123, Gubeng, Kec. Gubeng, Kota SBY, Jawa Timur 60281', 'Klinik', '031-5021234', -7.2700, 112.7400),
-('RSUD Haji', 'Jl. Manyar Kertoadi No.100, Manyar Sabrangan, Kec. Mulyorejo, Kota SBY, Jawa Timur 60116', 'RSUD', '031-5913591', -7.2800, 112.7800),
-('Puskesmas Wonokromo', 'Jl. Wonokromo No.45, Wonokromo, Kec. Wonokromo, Kota SBY, Jawa Timur 60243', 'Puskesmas', '031-8290001', -7.2900, 112.7300),
-('Klinik Medika', 'Jl. Basuki Rahmat No.67, Tunjungan, Kec. Genteng, Kota SBY, Jawa Timur 60275', 'Klinik', '031-5312345', -7.2600, 112.7350),
-('Puskesmas Tambaksari', 'Jl. Tambaksari No.12, Tambaksari, Kec. Tambaksari, Kota SBY, Jawa Timur 60136', 'Puskesmas', '031-5010001', -7.2500, 112.7500);
+('RSUD Kota Bogor', 'Jl. Dr. Semeru No.120, Tegallega, Kec. Bogor Tengah, Kota Bogor, Jawa Barat 16129', 'RSUD', '0251-8313084', -6.5971, 106.8060),
+('RS Hermina Bogor', 'Jl. Ring Road I No.75, Pakuan, Kec. Bogor Selatan, Kota Bogor, Jawa Barat 16143', 'RS Swasta', '0251-7537777', -6.6011, 106.7990),
+('RS Salak Bogor', 'Jl. Salak No.38, Babakan, Kec. Bogor Tengah, Kota Bogor, Jawa Barat 16128', 'RS Swasta', '0251-8313084', -6.5950, 106.8080),
+('Puskesmas Bogor Tengah', 'Jl. Siliwangi No.45, Pabaton, Kec. Bogor Tengah, Kota Bogor, Jawa Barat 16121', 'Puskesmas', '0251-8321234', -6.5970, 106.8060),
+('Puskesmas Bogor Utara', 'Jl. Raya Pakuan No.12, Pakuan, Kec. Bogor Utara, Kota Bogor, Jawa Barat 16143', 'Puskesmas', '0251-8325678', -6.6010, 106.7990),
+('Puskesmas Bogor Selatan', 'Jl. Raya Pajajaran No.67, Bantarjati, Kec. Bogor Utara, Kota Bogor, Jawa Barat 16153', 'Puskesmas', '0251-8329012', -6.5950, 106.8080),
+('Puskesmas Bogor Barat', 'Jl. Raya Dramaga No.89, Dramaga, Kec. Bogor Barat, Kota Bogor, Jawa Barat 16680', 'Puskesmas', '0251-8323456', -6.5900, 106.8000),
+('Puskesmas Bogor Timur', 'Jl. Raya Tajur No.34, Tajur, Kec. Bogor Timur, Kota Bogor, Jawa Barat 16134', 'Puskesmas', '0251-8327890', -6.6050, 106.8100),
+('Klinik Bogor Sehat', 'Jl. Suryakencana No.56, Suryakencana, Kec. Bogor Barat, Kota Bogor, Jawa Barat 16123', 'Klinik', '0251-8321111', -6.5920, 106.8020),
+('Klinik Bogor Medika', 'Jl. Raya Pajajaran No.78, Bantarjati, Kec. Bogor Utara, Kota Bogor, Jawa Barat 16153', 'Klinik', '0251-8322222', -6.5980, 106.8040);
 
 -- Insert data awal untuk users (password: admin123)
 INSERT INTO users (nama_lengkap, username, email, password, role_id, faskes_id) VALUES

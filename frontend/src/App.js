@@ -11,6 +11,9 @@ import FaskesPage from './components/FaskesPage';
 import MapPage from './components/MapPage';
 import TempatTidurPage from './components/TempatTidurPage';
 import LaporanPage from './components/LaporanPage';
+import SearchPage from './components/SearchPage';
+import TrackingPage from './components/TrackingPage';
+import AmbulanceTracker from './components/AmbulanceTracker';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -79,6 +82,30 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+                              <Route 
+                  path="/search" 
+                  element={
+                    <ProtectedRoute>
+                      <SearchPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/tracking" 
+                  element={
+                    <ProtectedRoute>
+                      <TrackingPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/ambulance-tracker" 
+                  element={
+                    <ProtectedRoute>
+                      <AmbulanceTracker />
+                    </ProtectedRoute>
+                  } 
+                />
               <Route path="/" element={<Navigate to="/login" replace />} />
             </Routes>
           </div>

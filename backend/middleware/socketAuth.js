@@ -11,9 +11,12 @@ const socketAuth = async (socket, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Get user data from database
+    // Get user data from database with role
     const [users] = await db.execute(
-      'SELECT id, nama, email, role, faskes_id FROM users WHERE id = ?',
+      `SELECT u.id, u.nama_lengkap as nama, u.email, r.nama_role as role, u.faskes_id 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = ?`,
       [decoded.userId]
     );
 

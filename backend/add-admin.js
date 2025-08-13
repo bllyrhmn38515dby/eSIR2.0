@@ -2,7 +2,7 @@ require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const mysql = require('mysql2');
 
-async function createUser() {
+async function createTestUser() {
   try {
     const connection = mysql.createConnection({
       host: process.env.DB_HOST,
@@ -18,24 +18,16 @@ async function createUser() {
     const hashedPassword = await bcrypt.hash('password123', 12);
     console.log('Password berhasil di-hash');
 
-    // Insert user admin pusat
+    // Insert user test
     const [result] = await connection.promise().execute(
       'INSERT INTO users (nama_lengkap, username, email, password, role_id, faskes_id, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      ['Administrator Pusat', hashedPassword, 'admin@pusat.com', 'admin']
+      ['Test User', hashedPassword, 'test@example.com', 'admin']
     );
 
-    console.log('User admin_pusat berhasil dibuat dengan ID:', result.insertId);
-
-    // Insert user admin faskes
-    const [result2] = await connection.promise().execute(
-      'INSERT INTO users (nama_lengkap, username, email, password, role_id, faskes_id, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      ['Administrator Faskes', hashedPassword, 'admin@faskes.com', 'admin']
-    );
-
-    console.log('User admin_faskes berhasil dibuat dengan ID:', result2.insertId);
+    console.log('User test berhasil dibuat dengan ID:', result.insertId);
 
     await connection.promise().end();
-    console.log('Pembuatan user selesai!');
+    console.log('Pembuatan user test selesai!');
 
   } catch (error) {
     console.error('Error membuat user:', error);
@@ -43,4 +35,4 @@ async function createUser() {
   }
 }
 
-createUser();
+createTestUser();

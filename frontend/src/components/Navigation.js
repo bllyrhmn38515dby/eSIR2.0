@@ -28,6 +28,21 @@ const Navigation = () => {
           Dashboard
         </Link>
         
+        <Link to="/search" className={`nav-link ${isActive('/search')}`}>
+          <i className="nav-icon">🔍</i>
+          Pencarian
+        </Link>
+        
+        <Link to="/tracking" className={`nav-link ${isActive('/tracking')}`}>
+          <i className="nav-icon">🛰️</i>
+          Tracking
+        </Link>
+        
+        <Link to="/ambulance-tracker" className={`nav-link ${isActive('/ambulance-tracker')}`}>
+          <i className="nav-icon">🚑</i>
+          Ambulance Tracker
+        </Link>
+        
         <Link to="/pasien" className={`nav-link ${isActive('/pasien')}`}>
           <i className="nav-icon">👥</i>
           Pasien

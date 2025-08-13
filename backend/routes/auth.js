@@ -37,8 +37,8 @@ router.post('/register', async (req, res) => {
 
     // Insert user baru
     const [result] = await pool.execute(
-      'INSERT INTO users (nama, password, email, role, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())',
-      [nama_lengkap, hashedPassword, email, role]
+      'INSERT INTO users (nama_lengkap, username, password, email, role_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+      [nama_lengkap, username, hashedPassword, email, role]
     );
 
     res.status(201).json({
@@ -74,9 +74,12 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Cari user berdasarkan email
+    // Cari user berdasarkan email dengan role
     const [users] = await pool.execute(
-      'SELECT * FROM users WHERE email = ?',
+      `SELECT u.*, r.nama_role as role 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.email = ?`,
       [email]
     );
 
