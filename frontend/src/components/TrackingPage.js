@@ -18,46 +18,71 @@ const TrackingPage = () => {
   useEffect(() => {
     const initMap = () => {
       if (window.google && mapRef.current) {
-        const mapInstance = new window.google.maps.Map(mapRef.current, {
-          center: { lat: -6.5971, lng: 106.8060 }, // Kota Bogor center
-          zoom: 12,
-          styles: [
-            {
-              featureType: 'poi.medical',
-              elementType: 'labels',
-              stylers: [{ visibility: 'on' }]
+        try {
+          const mapInstance = new window.google.maps.Map(mapRef.current, {
+            center: { lat: -6.5971, lng: 106.8060 }, // Kota Bogor center
+            zoom: 12,
+            styles: [
+              {
+                featureType: 'poi.medical',
+                elementType: 'labels',
+                stylers: [{ visibility: 'on' }]
+              }
+            ]
+          });
+
+          const directionsServiceInstance = new window.google.maps.DirectionsService();
+          const directionsRendererInstance = new window.google.maps.DirectionsRenderer({
+            suppressMarkers: true,
+            polylineOptions: {
+              strokeColor: '#4285F4',
+              strokeWeight: 5,
+              strokeOpacity: 0.8
             }
-          ]
-        });
+          });
 
-        const directionsServiceInstance = new window.google.maps.DirectionsService();
-        const directionsRendererInstance = new window.google.maps.DirectionsRenderer({
-          suppressMarkers: true,
-          polylineOptions: {
-            strokeColor: '#4285F4',
-            strokeWeight: 5,
-            strokeOpacity: 0.8
-          }
-        });
+          directionsRendererInstance.setMap(mapInstance);
 
-        directionsRendererInstance.setMap(mapInstance);
-
-        setMap(mapInstance);
-        setDirectionsService(directionsServiceInstance);
-        setDirectionsRenderer(directionsRendererInstance);
+          setMap(mapInstance);
+          setDirectionsService(directionsServiceInstance);
+          setDirectionsRenderer(directionsRendererInstance);
+          
+          console.log('🗺️ Google Maps initialized successfully');
+        } catch (error) {
+          console.error('❌ Error initializing Google Maps:', error);
+        }
       }
     };
 
-    // Load Google Maps script
-    if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=geometry,places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initMap;
-      document.head.appendChild(script);
-    } else {
+    // Check if Google Maps is already loaded
+    if (window.google && window.google.maps) {
+      console.log('🗺️ Google Maps already loaded');
       initMap();
+    } else {
+      // Check if script is already being loaded
+      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+      if (existingScript) {
+        console.log('🗺️ Google Maps script already loading, waiting...');
+        existingScript.onload = initMap;
+      } else {
+        // Load Google Maps script
+        const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+        if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
+          console.warn('⚠️ Google Maps API key not configured. Please set REACT_APP_GOOGLE_MAPS_API_KEY in .env file');
+          return;
+        }
+        
+        console.log('🗺️ Loading Google Maps script...');
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places&loading=async`;
+        script.async = true;
+        script.defer = true;
+        script.onload = initMap;
+        script.onerror = () => {
+          console.error('❌ Failed to load Google Maps script');
+        };
+        document.head.appendChild(script);
+      }
     }
   }, []);
 
@@ -90,35 +115,55 @@ const TrackingPage = () => {
 
   // Socket.IO events untuk real-time updates
   useEffect(() => {
-    if (socket && socket.on) {
-      console.log('🔌 Setting up socket listeners for tracking updates');
-      
-      const handleTrackingUpdate = (data) => {
-        console.log('📡 Tracking update received:', data);
-        if (selectedSession && data.rujukan_id === selectedSession.rujukan_id) {
-          setTrackingData(prev => ({ ...prev, ...data }));
-          updateMapWithNewPosition(data);
+    const setupSocketListeners = () => {
+      if (socket && socket.on && socket.connected) {
+        console.log('🔌 Setting up socket listeners for tracking updates');
+        
+        const handleTrackingUpdate = (data) => {
+          console.log('📡 Tracking update received:', data);
+          if (selectedSession && data.rujukan_id === selectedSession.rujukan_id) {
+            setTrackingData(prev => ({ ...prev, ...data }));
+            updateMapWithNewPosition(data);
+          }
+        };
+
+        socket.on('tracking-update', handleTrackingUpdate);
+
+        // Cleanup function
+        return () => {
+          if (socket && socket.off) {
+            console.log('🔌 Cleaning up socket listeners');
+            socket.off('tracking-update', handleTrackingUpdate);
+          }
+        };
+      } else {
+        console.log('⚠️ Socket not available for tracking updates');
+        return () => {};
+      }
+    };
+
+    // Setup listeners immediately if socket is ready
+    const cleanup = setupSocketListeners();
+
+    // If socket is not ready, wait for it to connect
+    if (socket && !socket.connected) {
+      console.log('⏳ Waiting for socket connection...');
+      const timeoutId = setTimeout(() => {
+        if (socket.connected) {
+          console.log('✅ Socket connected, setting up listeners');
+          setupSocketListeners();
+        } else {
+          console.log('❌ Socket connection timeout');
         }
-      };
-
-      socket.on('tracking-update', handleTrackingUpdate);
-
-      // Cleanup function
-      return () => {
-        if (socket && socket.off) {
-          console.log('🔌 Cleaning up socket listeners');
-          socket.off('tracking-update', handleTrackingUpdate);
-        }
-      };
-    } else {
-      console.log('⚠️ Socket not available for tracking updates');
-    }
-  }, [socket, selectedSession, updateMapWithNewPosition]);
+      }, 2000);
 
       return () => {
-        socket.off('tracking-update');
+        clearTimeout(timeoutId);
+        cleanup();
       };
     }
+
+    return cleanup;
   }, [socket, selectedSession, updateMapWithNewPosition]);
 
   const loadActiveSessions = async () => {
