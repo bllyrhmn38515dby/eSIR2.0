@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import './TrackingPage.css';
 
 const TrackingPage = () => {
-  const { user } = useAuth();
-  const socket = useSocket();
+  // const { user } = useAuth(); // Removed unused variable
+  const { socket } = useSocket();
   const [activeSessions, setActiveSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [trackingData, setTrackingData] = useState(null);
@@ -67,21 +66,60 @@ const TrackingPage = () => {
     loadActiveSessions();
   }, []);
 
+  const updateMapWithNewPosition = useCallback((data) => {
+    if (!map || !window.trackingMarkers) return;
+
+    // Update current position marker
+    const currentMarker = window.trackingMarkers.find(marker => 
+      marker.getTitle() === 'Posisi Ambulans'
+    );
+
+    if (currentMarker) {
+      currentMarker.setPosition({ lat: data.latitude, lng: data.longitude });
+      
+      // Add rotation if heading is available
+      if (data.heading) {
+        currentMarker.setIcon({
+          url: 'https://maps.google.com/mapfiles/ms/icons/ambulance.png',
+          scaledSize: new window.google.maps.Size(40, 40),
+          rotation: data.heading
+        });
+      }
+    }
+  }, [map]);
+
   // Socket.IO events untuk real-time updates
   useEffect(() => {
-    if (socket) {
-      socket.on('tracking-update', (data) => {
+    if (socket && socket.on) {
+      console.log('🔌 Setting up socket listeners for tracking updates');
+      
+      const handleTrackingUpdate = (data) => {
+        console.log('📡 Tracking update received:', data);
         if (selectedSession && data.rujukan_id === selectedSession.rujukan_id) {
           setTrackingData(prev => ({ ...prev, ...data }));
           updateMapWithNewPosition(data);
         }
-      });
+      };
+
+      socket.on('tracking-update', handleTrackingUpdate);
+
+      // Cleanup function
+      return () => {
+        if (socket && socket.off) {
+          console.log('🔌 Cleaning up socket listeners');
+          socket.off('tracking-update', handleTrackingUpdate);
+        }
+      };
+    } else {
+      console.log('⚠️ Socket not available for tracking updates');
+    }
+  }, [socket, selectedSession, updateMapWithNewPosition]);
 
       return () => {
         socket.off('tracking-update');
       };
     }
-  }, [socket, selectedSession]);
+  }, [socket, selectedSession, updateMapWithNewPosition]);
 
   const loadActiveSessions = async () => {
     try {
@@ -137,7 +175,7 @@ const TrackingPage = () => {
   const renderMapWithTrackingData = (data) => {
     if (!map || !directionsService || !directionsRenderer) return;
 
-    const { tracking, rujukan, route } = data;
+    const { tracking, route } = data;
 
     // Clear existing markers
     if (window.trackingMarkers) {
@@ -208,27 +246,7 @@ const TrackingPage = () => {
     }
   };
 
-  const updateMapWithNewPosition = (data) => {
-    if (!map || !window.trackingMarkers) return;
 
-    // Update current position marker
-    const currentMarker = window.trackingMarkers.find(marker => 
-      marker.getTitle() === 'Posisi Ambulans'
-    );
-
-    if (currentMarker) {
-      currentMarker.setPosition({ lat: data.latitude, lng: data.longitude });
-      
-      // Add rotation if heading is available
-      if (data.heading) {
-        currentMarker.setIcon({
-          url: 'https://maps.google.com/mapfiles/ms/icons/ambulance.png',
-          scaledSize: new window.google.maps.Size(40, 40),
-          rotation: data.heading
-        });
-      }
-    }
-  };
 
   const getStatusColor = (status) => {
     switch (status) {

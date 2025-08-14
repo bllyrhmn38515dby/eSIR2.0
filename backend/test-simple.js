@@ -1,22 +1,26 @@
 const axios = require('axios');
 
-async function testSimple() {
+async function testEndpoints() {
   try {
-    console.log('🔍 Testing backend connection...');
+    console.log('Testing endpoints...');
     
     // Test basic endpoint
-    const response = await axios.get('http://localhost:3001/api');
-    console.log('✅ Backend is running:', response.data);
+    const testResponse = await axios.get('http://localhost:3001/test');
+    console.log('✅ Test endpoint:', testResponse.data);
     
     // Test login
-    console.log('\n🔐 Testing login...');
     const loginResponse = await axios.post('http://localhost:3001/api/auth/login', {
       email: 'admin@pusat.com',
-      password: 'password123'
+      password: 'admin123'
     });
-    
     console.log('✅ Login successful:', loginResponse.data.success);
-    console.log('Token:', loginResponse.data.data.token.substring(0, 50) + '...');
+    
+    // Test stats with token
+    const token = loginResponse.data.data.token;
+    const statsResponse = await axios.get('http://localhost:3001/api/rujukan/stats/overview', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log('✅ Stats endpoint:', statsResponse.data);
     
   } catch (error) {
     console.error('❌ Error:', error.message);
@@ -27,4 +31,4 @@ async function testSimple() {
   }
 }
 
-testSimple();
+testEndpoints();

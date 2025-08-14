@@ -12,12 +12,24 @@ const RujukanPage = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedRujukan, setSelectedRujukan] = useState(null);
   const [formData, setFormData] = useState({
-    pasien_id: '',
+    // Data Pasien
+    nik: '',
+    nama_pasien: '',
+    tanggal_lahir: '',
+    jenis_kelamin: 'L',
+    alamat: '',
+    telepon: '',
+    // Data Rujukan
+    faskes_asal_id: '',
     faskes_tujuan_id: '',
     diagnosa: '',
     alasan_rujukan: '',
     catatan_asal: ''
   });
+  const [searchNik, setSearchNik] = useState('');
+  const [foundPasien, setFoundPasien] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isNewPasien, setIsNewPasien] = useState(false);
   const [statusData, setStatusData] = useState({
     status: 'diterima',
     catatan_tujuan: ''
@@ -33,15 +45,60 @@ const RujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const [rujukanRes, pasienRes, faskesRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/rujukan', { headers }),
-        axios.get('http://localhost:3001/api/pasien', { headers }),
-        axios.get('http://localhost:3001/api/faskes', { headers })
-      ]);
-
-      setRujukan(rujukanRes.data.data);
-      setPasien(pasienRes.data.data);
-      setFaskes(faskesRes.data.data);
+      console.log('Fetching data with token:', token ? 'Token exists' : 'No token');
+      
+      // Fetch faskes terpisah untuk debugging
+      try {
+        const faskesRes = await axios.get('http://localhost:3001/api/faskes', { headers });
+        console.log('Faskes response:', faskesRes.data);
+        if (faskesRes.data.success) {
+          setFaskes(faskesRes.data.data);
+          console.log('✅ Faskes data set:', faskesRes.data.data);
+        } else {
+          console.error('❌ Faskes API error:', faskesRes.data.message);
+        }
+      } catch (faskesError) {
+        console.error('❌ Error fetching faskes:', faskesError.response?.data || faskesError.message);
+      }
+      
+      // Fetch rujukan terpisah untuk debugging
+      try {
+        console.log('🔍 Fetching rujukan data...');
+        const rujukanRes = await axios.get('http://localhost:3001/api/rujukan', { headers });
+        console.log('📡 Rujukan response status:', rujukanRes.status);
+        console.log('📡 Rujukan response data:', rujukanRes.data);
+        
+        if (rujukanRes.data.success) {
+          console.log('✅ Rujukan API success');
+          console.log('📊 Rujukan data length:', rujukanRes.data.data ? rujukanRes.data.data.length : 'null');
+          console.log('📋 Rujukan data:', rujukanRes.data.data);
+          
+          setRujukan(rujukanRes.data.data || []);
+          console.log('✅ Rujukan state set successfully');
+        } else {
+          console.error('❌ Rujukan API error:', rujukanRes.data.message);
+          setRujukan([]);
+        }
+      } catch (rujukanError) {
+        console.error('❌ Error fetching rujukan:', rujukanError);
+        console.error('❌ Error response:', rujukanError.response?.data);
+        console.error('❌ Error status:', rujukanError.response?.status);
+        setRujukan([]);
+      }
+      
+      // Fetch pasien
+      try {
+        const pasienRes = await axios.get('http://localhost:3001/api/pasien', { headers });
+        console.log('Pasien response:', pasienRes.data);
+        if (pasienRes.data.success) {
+          setPasien(pasienRes.data.data);
+          console.log('✅ Pasien data set:', pasienRes.data.data);
+        } else {
+          console.error('❌ Pasien API error:', pasienRes.data.message);
+        }
+      } catch (pasienError) {
+        console.error('❌ Error fetching pasien:', pasienError.response?.data || pasienError.message);
+      }
     } catch (error) {
       setError('Gagal memuat data');
       console.error('Error fetching data:', error);
@@ -55,6 +112,107 @@ const RujukanPage = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleSearchPasien = async () => {
+    if (!searchNik || searchNik.length !== 16) {
+      setError('NIK harus 16 digit');
+      return;
+    }
+
+    setIsSearching(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      // Cari pasien berdasarkan NIK
+      const response = await axios.get(`http://localhost:3001/api/pasien/search?nik=${searchNik}`, { headers });
+      
+      if (response.data.success && response.data.data) {
+        // Pasien ditemukan
+        const pasien = response.data.data;
+        console.log('Pasien ditemukan:', pasien); // Debug log
+        setFoundPasien(pasien);
+        setIsNewPasien(false);
+        
+        // Auto-fill form dengan data pasien
+        // Format tanggal jika diperlukan (dari MySQL date format ke HTML date input format)
+        let formattedTanggalLahir = pasien.tanggal_lahir;
+        if (pasien.tanggal_lahir && typeof pasien.tanggal_lahir === 'string') {
+          // Jika tanggal dalam format YYYY-MM-DD, gunakan langsung
+          // Jika dalam format lain, konversi ke YYYY-MM-DD
+          const date = new Date(pasien.tanggal_lahir);
+          if (!isNaN(date.getTime())) {
+            formattedTanggalLahir = date.toISOString().split('T')[0];
+          }
+        }
+        
+        const updatedFormData = {
+          ...formData,
+          nik: pasien.nik,
+          nama_pasien: pasien.nama_pasien,
+          tanggal_lahir: formattedTanggalLahir,
+          jenis_kelamin: pasien.jenis_kelamin,
+          alamat: pasien.alamat,
+          telepon: pasien.telepon || ''
+        };
+        console.log('Form data yang akan diupdate:', updatedFormData); // Debug log
+        setFormData(updatedFormData);
+      } else {
+        // Pasien tidak ditemukan, mode tambah baru
+        setFoundPasien(null);
+        setIsNewPasien(true);
+        
+        // Reset form data pasien
+        setFormData(prev => ({
+          ...prev,
+          nik: searchNik,
+          nama_pasien: '',
+          tanggal_lahir: '',
+          jenis_kelamin: 'L',
+          alamat: '',
+          telepon: ''
+        }));
+      }
+    } catch (error) {
+      if (error.response?.status === 404) {
+        // Pasien tidak ditemukan, mode tambah baru
+        setFoundPasien(null);
+        setIsNewPasien(true);
+        
+        setFormData(prev => ({
+          ...prev,
+          nik: searchNik,
+          nama_pasien: '',
+          tanggal_lahir: '',
+          jenis_kelamin: 'L',
+          alamat: '',
+          telepon: ''
+        }));
+      } else {
+        setError('Gagal mencari pasien');
+        console.error('Error searching pasien:', error);
+      }
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const resetPasienSearch = () => {
+    setSearchNik('');
+    setFoundPasien(null);
+    setIsNewPasien(false);
+    setFormData(prev => ({
+      ...prev,
+      nik: '',
+      nama_pasien: '',
+      tanggal_lahir: '',
+      jenis_kelamin: 'L',
+      alamat: '',
+      telepon: ''
+    }));
   };
 
   const handleStatusChange = (e) => {
@@ -72,9 +230,11 @@ const RujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      await axios.post('http://localhost:3001/api/rujukan', formData, { headers });
+      // Kirim data pasien dan rujukan sekaligus
+      await axios.post('http://localhost:3001/api/rujukan/with-pasien', formData, { headers });
       fetchData();
       resetForm();
+      resetPasienSearch();
       setShowForm(false);
     } catch (error) {
       setError(error.response?.data?.message || 'Terjadi kesalahan');
@@ -106,7 +266,15 @@ const RujukanPage = () => {
 
   const resetForm = () => {
     setFormData({
-      pasien_id: '',
+      // Data Pasien
+      nik: '',
+      nama_pasien: '',
+      tanggal_lahir: '',
+      jenis_kelamin: 'L',
+      alamat: '',
+      telepon: '',
+      // Data Rujukan
+      faskes_asal_id: '',
       faskes_tujuan_id: '',
       diagnosa: '',
       alasan_rujukan: '',
@@ -138,6 +306,11 @@ const RujukanPage = () => {
   const getPasienName = (id) => {
     const pasienItem = pasien.find(p => p.id === id);
     return pasienItem ? pasienItem.nama_pasien : 'Unknown';
+  };
+
+  // Fungsi untuk mendapatkan nama pasien dari data rujukan (jika sudah ada nama_pasien)
+  const getPasienNameFromRujukan = (rujukan) => {
+    return rujukan.nama_pasien || getPasienName(rujukan.pasien_id);
   };
 
   if (loading) {
@@ -188,74 +361,222 @@ const RujukanPage = () => {
               </div>
 
               <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Pasien *</label>
-                    <select
-                      name="pasien_id"
-                      value={formData.pasien_id}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Pilih Pasien</option>
-                      {pasien.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.no_rm} - {p.nama_pasien}
-                        </option>
-                      ))}
-                    </select>
+                {/* Pencarian Pasien */}
+                <div className="form-section">
+                  <h3>🔍 Pencarian Pasien</h3>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>NIK Pasien</label>
+                      <div className="search-container">
+                        <input
+                          type="text"
+                          value={searchNik}
+                          onChange={(e) => setSearchNik(e.target.value)}
+                          placeholder="Masukkan 16 digit NIK"
+                          maxLength="16"
+                          pattern="[0-9]{16}"
+                          title="NIK harus 16 digit angka"
+                        />
+                        <button
+                          type="button"
+                          className="btn-search"
+                          onClick={handleSearchPasien}
+                          disabled={isSearching}
+                        >
+                          {isSearching ? '🔍 Mencari...' : '🔍 Cari'}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={resetPasienSearch}
+                      >
+                        🔄 Reset
+                      </button>
+                    </div>
                   </div>
-                  <div className="form-group">
-                    <label>Faskes Tujuan *</label>
-                    <select
-                      name="faskes_tujuan_id"
-                      value={formData.faskes_tujuan_id}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      <option value="">Pilih Faskes Tujuan</option>
-                      {faskes.map((f) => (
-                        <option key={f.id} value={f.id}>
-                          {f.nama_faskes} ({f.tipe})
-                        </option>
-                      ))}
-                    </select>
+
+                  {/* Status Pencarian */}
+                  {foundPasien && (
+                    <div className="search-result success">
+                      ✅ Pasien ditemukan: <strong>{foundPasien.nama_pasien}</strong> (NIK: {foundPasien.nik})
+                    </div>
+                  )}
+                  {isNewPasien && (
+                    <div className="search-result info">
+                      ℹ️ Pasien baru akan dibuat dengan NIK: <strong>{searchNik}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {/* Data Pasien */}
+                <div className="form-section">
+                  <h3>📋 Data Pasien</h3>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>NIK *</label>
+                      <input
+                        type="text"
+                        name="nik"
+                        value={formData.nik}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="16 digit NIK"
+                        maxLength="16"
+                        pattern="[0-9]{16}"
+                        title="NIK harus 16 digit angka"
+                        readOnly={foundPasien !== null}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Nama Pasien *</label>
+                      <input
+                        type="text"
+                        name="nama_pasien"
+                        value={formData.nama_pasien}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Nama lengkap pasien"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Tanggal Lahir *</label>
+                      <input
+                        type="date"
+                        name="tanggal_lahir"
+                        value={formData.tanggal_lahir}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Jenis Kelamin *</label>
+                      <select
+                        name="jenis_kelamin"
+                        value={formData.jenis_kelamin}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Alamat *</label>
+                      <textarea
+                        name="alamat"
+                        value={formData.alamat}
+                        onChange={handleInputChange}
+                        placeholder="Alamat lengkap"
+                        rows="2"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Telepon</label>
+                      <input
+                        type="tel"
+                        name="telepon"
+                        value={formData.telepon}
+                        onChange={handleInputChange}
+                        placeholder="08123456789"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Diagnosa *</label>
-                  <textarea
-                    name="diagnosa"
-                    value={formData.diagnosa}
-                    onChange={handleInputChange}
-                    placeholder="Masukkan diagnosa pasien"
-                    rows="3"
-                    required
-                  />
-                </div>
+                {/* Data Rujukan */}
+                <div className="form-section">
+                  <h3>📄 Data Rujukan</h3>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Faskes Asal *</label>
+                      <select
+                        name="faskes_asal_id"
+                        value={formData.faskes_asal_id}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Pilih Faskes Asal</option>
+                        {console.log('🔍 Rendering faskes dropdown, count:', faskes.length, 'faskes:', faskes)}
+                        {faskes && faskes.length > 0 ? (
+                          faskes.map((f) => {
+                            console.log('📋 Faskes item:', f);
+                            return (
+                              <option key={f.id} value={f.id}>
+                                {f.nama_faskes} ({f.tipe})
+                              </option>
+                            );
+                          })
+                        ) : (
+                          <option value="" disabled>Loading faskes...</option>
+                        )}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>Faskes Tujuan *</label>
+                      <select
+                        name="faskes_tujuan_id"
+                        value={formData.faskes_tujuan_id}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="">Pilih Faskes Tujuan</option>
+                        {faskes && faskes.length > 0 ? (
+                          faskes.map((f) => (
+                            <option key={f.id} value={f.id}>
+                              {f.nama_faskes} ({f.tipe})
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>Loading faskes...</option>
+                        )}
+                      </select>
+                    </div>
+                  </div>
 
-                <div className="form-group">
-                  <label>Alasan Rujukan *</label>
-                  <textarea
-                    name="alasan_rujukan"
-                    value={formData.alasan_rujukan}
-                    onChange={handleInputChange}
-                    placeholder="Alasan mengapa pasien dirujuk"
-                    rows="3"
-                    required
-                  />
-                </div>
+                  <div className="form-group">
+                    <label>Diagnosa *</label>
+                    <textarea
+                      name="diagnosa"
+                      value={formData.diagnosa}
+                      onChange={handleInputChange}
+                      placeholder="Masukkan diagnosa pasien"
+                      rows="3"
+                      required
+                    />
+                  </div>
 
-                <div className="form-group">
-                  <label>Catatan Asal</label>
-                  <textarea
-                    name="catatan_asal"
-                    value={formData.catatan_asal}
-                    onChange={handleInputChange}
-                    placeholder="Catatan tambahan dari faskes asal"
-                    rows="3"
-                  />
+                  <div className="form-group">
+                    <label>Alasan Rujukan *</label>
+                    <textarea
+                      name="alasan_rujukan"
+                      value={formData.alasan_rujukan}
+                      onChange={handleInputChange}
+                      placeholder="Alasan mengapa pasien dirujuk"
+                      rows="3"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Catatan Asal</label>
+                    <textarea
+                      name="catatan_asal"
+                      value={formData.catatan_asal}
+                      onChange={handleInputChange}
+                      placeholder="Catatan tambahan dari faskes asal"
+                      rows="3"
+                    />
+                  </div>
                 </div>
 
                 <div className="form-actions">
@@ -266,7 +587,7 @@ const RujukanPage = () => {
                     Batal
                   </button>
                   <button type="submit" className="btn-primary">
-                    Buat Rujukan
+                    {foundPasien ? 'Update Pasien & Buat Rujukan' : 'Buat Pasien & Rujukan'}
                   </button>
                 </div>
               </form>
@@ -293,8 +614,8 @@ const RujukanPage = () => {
 
               <div className="rujukan-info">
                 <p><strong>Nomor Rujukan:</strong> {selectedRujukan.nomor_rujukan}</p>
-                <p><strong>Pasien:</strong> {getPasienName(selectedRujukan.pasien_id)}</p>
-                <p><strong>Faskes Tujuan:</strong> {getFaskesName(selectedRujukan.faskes_tujuan_id)}</p>
+                <p><strong>Pasien:</strong> {getPasienNameFromRujukan(selectedRujukan)}</p>
+                <p><strong>Faskes Tujuan:</strong> {selectedRujukan.faskes_tujuan_nama || getFaskesName(selectedRujukan.faskes_tujuan_id)}</p>
                 <p><strong>Diagnosa:</strong> {selectedRujukan.diagnosa}</p>
               </div>
 
@@ -354,13 +675,14 @@ const RujukanPage = () => {
                 <th>Aksi</th>
               </tr>
             </thead>
-            <tbody>
-              {rujukan.map((r) => (
+                         <tbody>
+               {console.log('🔍 Rendering rujukan table, count:', rujukan.length, 'data:', rujukan)}
+               {rujukan.map((r) => (
                 <tr key={r.id}>
                   <td>{r.nomor_rujukan}</td>
-                  <td>{getPasienName(r.pasien_id)}</td>
-                  <td>{getFaskesName(r.faskes_asal_id)}</td>
-                  <td>{getFaskesName(r.faskes_tujuan_id)}</td>
+                  <td>{getPasienNameFromRujukan(r)}</td>
+                  <td>{r.faskes_asal_nama || getFaskesName(r.faskes_asal_id)}</td>
+                  <td>{r.faskes_tujuan_nama || getFaskesName(r.faskes_tujuan_id)}</td>
                   <td className="diagnosa-cell">{r.diagnosa}</td>
                   <td>{getStatusBadge(r.status)}</td>
                   <td>{formatDate(r.tanggal_rujukan)}</td>

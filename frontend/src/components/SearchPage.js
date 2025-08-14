@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react';
 import './SearchPage.css';
 
 const SearchPage = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Removed unused variable
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('global');
   const [searchResults, setSearchResults] = useState({});

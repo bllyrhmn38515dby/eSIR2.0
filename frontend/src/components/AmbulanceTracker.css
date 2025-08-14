@@ -7,13 +7,28 @@
 }
 
 .tracker-header {
-  text-align: center;
   margin-bottom: 30px;
   padding: 20px;
   background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
   color: white;
   border-radius: 15px;
   box-shadow: 0 8px 32px rgba(220, 53, 69, 0.2);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.header-right {
+  flex-shrink: 0;
 }
 
 .tracker-header h1 {
@@ -26,6 +41,52 @@
   margin: 0;
   font-size: 1.1rem;
   opacity: 0.9;
+}
+
+.back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive design for header */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .header-left {
+    order: 2;
+  }
+  
+  .header-right {
+    order: 1;
+    width: 100%;
+  }
+  
+  .back-btn {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .tracker-header h1 {
+    font-size: 2rem;
+  }
 }
 
 .tracker-container {
@@ -75,6 +136,75 @@
   outline: none;
   border-color: #dc3545;
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.loading-rujukan {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+}
+
+.loading-rujukan p {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.rujukan-info {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.rujukan-info p {
+  margin: 0;
+  color: #1976d2;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.rujukan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.refresh-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  color: #1976d2;
+}
+
+.refresh-btn:hover {
+  background: rgba(25, 118, 210, 0.1);
+  transform: rotate(180deg);
+}
+
+.no-rujukan {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.no-rujukan p {
+  margin: 5px 0;
+  color: #856404;
+  font-size: 0.9rem;
+}
+
+.no-rujukan p:first-child {
+  font-weight: 600;
 }
 
 .start-btn, .stop-btn {

@@ -156,7 +156,7 @@ const TempatTidurPage = () => {
   };
 
   const filteredTempatTidur = tempatTidur.filter(bed => {
-    const faskesMatch = !filterFaskes || bed.faskes_id == filterFaskes;
+    const faskesMatch = !filterFaskes || bed.faskes_id === filterFaskes;
     const statusMatch = !filterStatus || bed.status === filterStatus;
     const tipeMatch = !filterTipe || bed.tipe_kamar === filterTipe;
     return faskesMatch && statusMatch && tipeMatch;

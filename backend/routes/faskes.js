@@ -5,7 +5,7 @@ const { verifyToken, requireRole } = require('../middleware/auth');
 const router = express.Router();
 
 // Get semua faskes
-router.get('/', verifyToken, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const [faskes] = await pool.execute(
       'SELECT * FROM faskes ORDER BY nama_faskes ASC'

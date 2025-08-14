@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
@@ -7,6 +7,8 @@ import './Navigation.css';
 const Navigation = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     logout();
@@ -15,6 +17,28 @@ const Navigation = () => {
   const isActive = (path) => {
     return location.pathname === path ? 'active' : '';
   };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const closeDropdown = () => {
+    setIsDropdownOpen(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <nav className="navigation">
@@ -25,53 +49,78 @@ const Navigation = () => {
       <div className="nav-menu">
         <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>
           <i className="nav-icon">📊</i>
-          Dashboard
+          <span>Dashboard</span>
         </Link>
         
-        <Link to="/search" className={`nav-link ${isActive('/search')}`}>
-          <i className="nav-icon">🔍</i>
-          Pencarian
-        </Link>
+        <div className="nav-dropdown" ref={dropdownRef}>
+          <button 
+            className={`nav-link dropdown-toggle ${isDropdownOpen ? 'active' : ''}`}
+            onClick={toggleDropdown}
+          >
+            <i className="nav-icon">📋</i>
+            <span>Menu</span>
+            <i className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</i>
+          </button>
+          
+          {isDropdownOpen && (
+            <>
+              <div className="dropdown-backdrop" onClick={closeDropdown}></div>
+              <div className="dropdown-menu">
+                <Link to="/search" className={`dropdown-item ${isActive('/search')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🔍</i>
+                  <span>Pencarian</span>
+                </Link>
+                
+                <Link to="/tracking" className={`dropdown-item ${isActive('/tracking')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🛰️</i>
+                  <span>Tracking</span>
+                </Link>
+                
+                <Link to="/ambulance-tracker" className={`dropdown-item ${isActive('/ambulance-tracker')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🚑</i>
+                  <span>Ambulance Tracker</span>
+                </Link>
+                
+                <Link to="/pasien" className={`dropdown-item ${isActive('/pasien')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">👥</i>
+                  <span>Pasien</span>
+                </Link>
+                
+                <Link to="/rujukan" className={`dropdown-item ${isActive('/rujukan')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">📋</i>
+                  <span>Rujukan</span>
+                </Link>
+                
+                <Link to="/peta" className={`dropdown-item ${isActive('/peta')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🗺️</i>
+                  <span>Peta</span>
+                </Link>
+                
+                <Link to="/tempat-tidur" className={`dropdown-item ${isActive('/tempat-tidur')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🛏️</i>
+                  <span>Tempat Tidur</span>
+                </Link>
+                
+                <Link to="/laporan" className={`dropdown-item ${isActive('/laporan')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">📈</i>
+                  <span>Laporan</span>
+                </Link>
+                
+                {user?.role === 'admin_pusat' && (
+                  <Link to="/faskes" className={`dropdown-item ${isActive('/faskes')}`} onClick={closeDropdown}>
+                    <i className="nav-icon">🏥</i>
+                    <span>Faskes</span>
+                  </Link>
+                )}
+              </div>
+            </>
+          )}
+        </div>
         
-        <Link to="/tracking" className={`nav-link ${isActive('/tracking')}`}>
-          <i className="nav-icon">🛰️</i>
-          Tracking
-        </Link>
-        
-        <Link to="/ambulance-tracker" className={`nav-link ${isActive('/ambulance-tracker')}`}>
-          <i className="nav-icon">🚑</i>
-          Ambulance Tracker
-        </Link>
-        
-        <Link to="/pasien" className={`nav-link ${isActive('/pasien')}`}>
-          <i className="nav-icon">👥</i>
-          Pasien
-        </Link>
-        
-        <Link to="/rujukan" className={`nav-link ${isActive('/rujukan')}`}>
-          <i className="nav-icon">📋</i>
-          Rujukan
-        </Link>
-        
-        <Link to="/peta" className={`nav-link ${isActive('/peta')}`}>
-          <i className="nav-icon">🗺️</i>
-          Peta
-        </Link>
-        
-        <Link to="/tempat-tidur" className={`nav-link ${isActive('/tempat-tidur')}`}>
-          <i className="nav-icon">🛏️</i>
-          Tempat Tidur
-        </Link>
-        
-        <Link to="/laporan" className={`nav-link ${isActive('/laporan')}`}>
-          <i className="nav-icon">📈</i>
-          Laporan
-        </Link>
-        
-        {user?.role === 'admin' && (
-          <Link to="/faskes" className={`nav-link ${isActive('/faskes')}`}>
-            <i className="nav-icon">🏥</i>
-            Faskes
+        {user?.role === 'admin_pusat' && (
+          <Link to="/user-management" className={`nav-link ${isActive('/user-management')}`}>
+            <i className="nav-icon">👤</i>
+            <span>Manajemen User</span>
           </Link>
         )}
       </div>
@@ -80,7 +129,7 @@ const Navigation = () => {
         <NotificationBell />
         <div className="user-info">
           <span className="user-name">{user?.nama}</span>
-          <span className="user-role">({user?.role === 'admin' ? 'Admin Pusat' : user?.role === 'puskesmas' ? 'Admin Puskesmas' : 'Admin RS'})</span>
+          <span className="user-role">({user?.role === 'admin_pusat' ? 'Admin Pusat' : user?.role === 'admin_faskes' ? 'Admin Faskes' : 'User'})</span>
         </div>
         <button onClick={handleLogout} className="logout-btn">
           <i className="nav-icon">🚪</i>

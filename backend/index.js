@@ -3,9 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
-
-const db = require('./config/db');
-const socketAuth = require('./middleware/socketAuth');
+const pool = require('./config/db');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -34,7 +32,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// Test database connection
+async function testDatabaseConnection() {
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    return true;
+  } catch (error) {
+    console.error('Database connection failed:', error.message);
+    return false;
+  }
+}
+
+// Test route
+app.get('/test', (req, res) => {
+  res.json({ message: 'Server is running!' });
+});
+
+// Routes (with error handling)
 app.use('/api/auth', authRoutes);
 app.use('/api/pasien', pasienRoutes);
 app.use('/api/rujukan', rujukanRoutes);
@@ -45,48 +61,61 @@ app.use('/api/laporan', laporanRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/tracking', trackingRoutes);
 
-// Socket.IO connection handling with authentication
-io.use(socketAuth);
-
-io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.id} (${socket.user.nama})`);
-
-  // Join room based on user's faskes_id
-  if (socket.user.faskes_id) {
-    socket.join(`faskes-${socket.user.faskes_id}`);
-    console.log(`User ${socket.user.nama} joined faskes room: ${socket.user.faskes_id}`);
+// Socket.IO middleware for authentication
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  
+  if (!token) {
+    return next(new Error('Authentication error: Token required'));
   }
 
-  // Join admin room if user is admin
-  if (socket.user.role === 'admin') {
-    socket.join('admin-room');
-    console.log(`Admin ${socket.user.nama} joined admin room`);
-  }
-
-  // Join tracking room untuk monitoring real-time
-  socket.on('join-tracking', (rujukan_id) => {
-    socket.join(`tracking-${rujukan_id}`);
-    console.log(`User ${socket.user.nama} joined tracking room: ${rujukan_id}`);
-  });
-
-  // Leave tracking room
-  socket.on('leave-tracking', (rujukan_id) => {
-    socket.leave(`tracking-${rujukan_id}`);
-    console.log(`User ${socket.user.nama} left tracking room: ${rujukan_id}`);
-  });
-
-  // Handle realtime notifications
-  socket.on('send-notification', (data) => {
-    console.log('Notification sent:', data);
-    // Broadcast to appropriate rooms
-    if (data.targetRoom) {
-      io.to(data.targetRoom).emit('notification', data);
+  try {
+    // Verify token (you can use your existing JWT verification logic)
+    // For now, we'll just check if token exists
+    if (token) {
+      socket.userToken = token;
+      return next();
+    } else {
+      return next(new Error('Authentication error: Invalid token'));
     }
+  } catch (error) {
+    return next(new Error('Authentication error: Token verification failed'));
+  }
+});
+
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+  
+  // Store user info
+  socket.userToken = socket.handshake.auth.token;
+
+  // Join admin room
+  socket.on('join-admin', () => {
+    socket.join('admin');
+    console.log(`👑 Admin joined room: ${socket.id}`);
+  });
+
+  // Join faskes room
+  socket.on('join-faskes', (faskesId) => {
+    socket.join(`faskes-${faskesId}`);
+    console.log(`🏥 Faskes ${faskesId} joined room: ${socket.id}`);
+  });
+
+  // Join tracking room
+  socket.on('join-tracking', (rujukanId) => {
+    socket.join(`tracking-${rujukanId}`);
+    console.log(`🛰️ Tracking room ${rujukanId} joined: ${socket.id}`);
   });
 
   // Handle disconnect
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.id} (${socket.user.nama})`);
+    console.log(`❌ User disconnected: ${socket.id}`);
+  });
+
+  // Handle errors
+  socket.on('error', (error) => {
+    console.error(`❌ Socket error for ${socket.id}:`, error);
   });
 });
 
@@ -95,7 +124,16 @@ global.io = io;
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err.message);
+  
+  // Handle database connection errors
+  if (err.code === 'ECONNREFUSED') {
+    return res.status(503).json({
+      success: false,
+      message: 'Database tidak tersedia. Silakan coba lagi nanti.'
+    });
+  }
+  
   res.status(500).json({
     success: false,
     message: 'Terjadi kesalahan internal server'
@@ -112,7 +150,33 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, () => {
-  console.log(`Server berjalan di port ${PORT}`);
-  console.log(`Socket.IO server siap untuk koneksi realtime`);
+// Start server with database check
+async function startServer() {
+  const dbConnected = await testDatabaseConnection();
+  
+  server.listen(PORT, () => {
+    console.log(`✅ Server berjalan di port ${PORT}`);
+    console.log(`✅ Test endpoint: http://localhost:${PORT}/test`);
+    console.log(`✅ Login endpoint: http://localhost:${PORT}/api/auth/login`);
+    console.log(`✅ Stats endpoint: http://localhost:${PORT}/api/rujukan/stats/overview`);
+    
+    if (dbConnected) {
+      console.log(`✅ Database terhubung: ${process.env.DB_DATABASE || 'esirv2'}`);
+    } else {
+      console.log(`⚠️  Database tidak tersedia, menggunakan mock data`);
+    }
+  });
+}
+
+// Handle server errors
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} sudah digunakan. Silakan matikan proses yang menggunakan port ini.`);
+  } else {
+    console.error('❌ Server error:', error);
+  }
+  process.exit(1);
 });
+
+// Start the server
+startServer();

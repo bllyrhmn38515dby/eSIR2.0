@@ -83,6 +83,28 @@
   border: 1px solid #fcc;
 }
 
+.error-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.retry-btn {
+  background: #c33;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: #a22;
+}
+
 .map-container {
   position: relative;
   border-radius: 12px;
@@ -187,6 +209,10 @@
 
 .legend-icon.klinik {
   background: #f57c00;
+}
+
+.legend-icon.rs-swasta {
+  background: #c2185b;
 }
 
 .legend-line {

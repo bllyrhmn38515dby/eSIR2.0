@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import Layout from './Layout';
 import './AmbulanceTracker.css';
 
 const AmbulanceTracker = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  // const { user } = useAuth(); // Removed unused variable
   const [sessionToken, setSessionToken] = useState('');
   const [rujukanId, setRujukanId] = useState('');
   const [isTracking, setIsTracking] = useState(false);
@@ -11,6 +13,7 @@ const AmbulanceTracker = () => {
   const [trackingData, setTrackingData] = useState(null);
   const [rujukanList, setRujukanList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingRujukan, setLoadingRujukan] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const watchIdRef = useRef(null);
@@ -22,22 +25,47 @@ const AmbulanceTracker = () => {
 
   const loadRujukanList = async () => {
     try {
-      const response = await fetch('/api/rujukan', {
+      setLoadingRujukan(true);
+      console.log('🔍 Loading rujukan list...');
+      const token = localStorage.getItem('token');
+      console.log('Token exists:', !!token);
+      
+      const response = await fetch('http://localhost:3001/api/rujukan', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
+      console.log('Response status:', response.status);
+      
       if (response.ok) {
         const result = await response.json();
-        // Filter rujukan yang statusnya 'diterima' atau 'dalam_perjalanan'
-        const activeRujukan = result.data.filter(rujukan => 
-          ['diterima', 'dalam_perjalanan'].includes(rujukan.status)
-        );
-        setRujukanList(activeRujukan);
+        console.log('Rujukan API response:', result);
+        
+        if (result.success && result.data) {
+          // Filter rujukan yang statusnya 'diterima', 'dalam_perjalanan', atau 'pending'
+          const activeRujukan = result.data.filter(rujukan => 
+            ['diterima', 'dalam_perjalanan', 'pending'].includes(rujukan.status)
+          );
+          console.log('Active rujukan found:', activeRujukan.length);
+          console.log('Active rujukan:', activeRujukan);
+          setRujukanList(activeRujukan);
+        } else {
+          console.log('No data in response or API error');
+          setRujukanList([]);
+        }
+      } else {
+        console.error('API response not ok:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        setRujukanList([]);
       }
     } catch (error) {
       console.error('Error loading rujukan:', error);
+      setRujukanList([]);
+    } finally {
+      setLoadingRujukan(false);
     }
   };
 
@@ -229,184 +257,226 @@ const AmbulanceTracker = () => {
   };
 
   return (
-    <div className="ambulance-tracker">
-      <div className="tracker-header">
-        <h1>🚑 Ambulance Tracker</h1>
-        <p>Kirim posisi GPS secara real-time untuk monitoring perjalanan</p>
-      </div>
-
-      <div className="tracker-container">
-        <div className="tracker-sidebar">
-          <div className="session-controls">
-            <h3>🎯 Kontrol Session</h3>
-            
-            {!isTracking ? (
-              <div className="start-session">
-                <select 
-                  value={rujukanId}
-                  onChange={(e) => setRujukanId(e.target.value)}
-                  className="rujukan-select"
-                >
-                  <option value="">Pilih Rujukan</option>
-                  {rujukanList.map(rujukan => (
-                    <option key={rujukan.id} value={rujukan.id}>
-                      {rujukan.nomor_rujukan} - {rujukan.nama_pasien}
-                    </option>
-                  ))}
-                </select>
-
-                <button 
-                  onClick={startTrackingSession}
-                  disabled={loading || !rujukanId}
-                  className="start-btn"
-                >
-                  {loading ? 'Memulai...' : '🚀 Mulai Tracking'}
-                </button>
-              </div>
-            ) : (
-              <div className="stop-session">
-                <button 
-                  onClick={stopTracking}
-                  className="stop-btn"
-                >
-                  🛑 Hentikan Tracking
-                </button>
-              </div>
-            )}
+    <Layout>
+      <div className="ambulance-tracker">
+        <div className="tracker-header">
+          <div className="header-content">
+            <div className="header-left">
+              <h1>🚑 Ambulance Tracker</h1>
+              <p>Kirim posisi GPS secara real-time untuk monitoring perjalanan</p>
+            </div>
+            <div className="header-right">
+              <button 
+                onClick={() => navigate('/dashboard')}
+                className="back-btn"
+              >
+                ← Kembali ke Dashboard
+              </button>
+            </div>
           </div>
-
-          {isTracking && (
-            <div className="status-controls">
-              <h3>📊 Status Kontrol</h3>
-              <div className="status-buttons">
-                <button 
-                  onClick={() => updateStatus('menunggu')}
-                  className="status-btn menunggu"
-                >
-                  ⏳ Menunggu
-                </button>
-                <button 
-                  onClick={() => updateStatus('dijemput')}
-                  className="status-btn dijemput"
-                >
-                  🚗 Dijemput
-                </button>
-                <button 
-                  onClick={() => updateStatus('dalam_perjalanan')}
-                  className="status-btn dalam_perjalanan"
-                >
-                  🚑 Dalam Perjalanan
-                </button>
-                <button 
-                  onClick={() => updateStatus('tiba')}
-                  className="status-btn tiba"
-                >
-                  ✅ Tiba
-                </button>
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="error-message">
-              ❌ {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="success-message">
-              ✅ {success}
-            </div>
-          )}
         </div>
 
-        <div className="tracker-main">
-          <div className="position-display">
-            <h3>📍 Posisi GPS</h3>
-            
-            {currentPosition ? (
-              <div className="position-info">
-                <div className="position-row">
-                  <span>Latitude:</span>
-                  <span>{currentPosition.latitude.toFixed(6)}</span>
-                </div>
-                <div className="position-row">
-                  <span>Longitude:</span>
-                  <span>{currentPosition.longitude.toFixed(6)}</span>
-                </div>
-                <div className="position-row">
-                  <span>Akurasi:</span>
-                  <span>{currentPosition.accuracy?.toFixed(1)} meter</span>
-                </div>
-                {currentPosition.speed && (
-                  <div className="position-row">
-                    <span>Kecepatan:</span>
-                    <span>{currentPosition.speed.toFixed(1)} km/h</span>
-                  </div>
-                )}
-                {currentPosition.heading && (
-                  <div className="position-row">
-                    <span>Arah:</span>
-                    <span>{currentPosition.heading}°</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="no-position">
-                <p>Posisi GPS belum tersedia</p>
-                <p>Pastikan GPS aktif dan izin lokasi diberikan</p>
-              </div>
-            )}
-          </div>
+        <div className="tracker-container">
+          <div className="tracker-sidebar">
+            <div className="session-controls">
+              <h3>🎯 Kontrol Session</h3>
+              
+                             {!isTracking ? (
+                 <div className="start-session">
+                   {loadingRujukan ? (
+                     <div className="loading-rujukan">
+                       <p>🔄 Memuat data rujukan...</p>
+                     </div>
+                   ) : (
+                     <>
+                       <div className="rujukan-info">
+                         <div className="rujukan-header">
+                           <p>📋 Ditemukan {rujukanList.length} rujukan aktif</p>
+                           <button 
+                             onClick={loadRujukanList}
+                             className="refresh-btn"
+                             title="Refresh data rujukan"
+                           >
+                             🔄
+                           </button>
+                         </div>
+                       </div>
+                       
+                       <select 
+                         value={rujukanId}
+                         onChange={(e) => setRujukanId(e.target.value)}
+                         className="rujukan-select"
+                       >
+                         <option value="">Pilih Rujukan</option>
+                         {rujukanList.map(rujukan => (
+                           <option key={rujukan.id} value={rujukan.id}>
+                             {rujukan.nomor_rujukan} - {rujukan.nama_pasien} ({rujukan.status})
+                           </option>
+                         ))}
+                       </select>
 
-          {trackingData && (
-            <div className="tracking-info">
-              <h3>📋 Info Rujukan</h3>
-              <div className="info-content">
-                <div className="info-row">
-                  <span>Nomor Rujukan:</span>
-                  <span>{trackingData.nomor_rujukan}</span>
-                </div>
-                <div className="info-row">
-                  <span>Pasien:</span>
-                  <span>{trackingData.nama_pasien}</span>
-                </div>
-                <div className="info-row">
-                  <span>Dari:</span>
-                  <span>{trackingData.faskes_asal_nama}</span>
-                </div>
-                <div className="info-row">
-                  <span>Ke:</span>
-                  <span>{trackingData.faskes_tujuan_nama}</span>
-                </div>
-                <div className="info-row">
-                  <span>Status:</span>
-                  <span className="status-text">
-                    {getStatusText(trackingData.status)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+                       {rujukanList.length === 0 && (
+                         <div className="no-rujukan">
+                           <p>❌ Tidak ada rujukan aktif</p>
+                           <p>Buat rujukan baru di menu Rujukan</p>
+                         </div>
+                       )}
 
-          <div className="tracking-status">
-            <h3>🔄 Status Tracking</h3>
-            <div className={`status-indicator ${isTracking ? 'active' : 'inactive'}`}>
-              {isTracking ? (
-                <div className="active-status">
-                  <div className="pulse-dot"></div>
-                  <span>Tracking Aktif</span>
-                </div>
-              ) : (
-                <div className="inactive-status">
-                  <span>Tracking Tidak Aktif</span>
+                       <button 
+                         onClick={startTrackingSession}
+                         disabled={loading || !rujukanId || rujukanList.length === 0}
+                         className="start-btn"
+                       >
+                         {loading ? 'Memulai...' : '🚀 Mulai Tracking'}
+                       </button>
+                     </>
+                   )}
+                 </div>
+               ) : (
+                <div className="stop-session">
+                  <button 
+                    onClick={stopTracking}
+                    className="stop-btn"
+                  >
+                    🛑 Hentikan Tracking
+                  </button>
                 </div>
               )}
             </div>
+
+            {isTracking && (
+              <div className="status-controls">
+                <h3>📊 Status Kontrol</h3>
+                <div className="status-buttons">
+                  <button 
+                    onClick={() => updateStatus('menunggu')}
+                    className="status-btn menunggu"
+                  >
+                    ⏳ Menunggu
+                  </button>
+                  <button 
+                    onClick={() => updateStatus('dijemput')}
+                    className="status-btn dijemput"
+                  >
+                    🚗 Dijemput
+                  </button>
+                  <button 
+                    onClick={() => updateStatus('dalam_perjalanan')}
+                    className="status-btn dalam_perjalanan"
+                  >
+                    🚑 Dalam Perjalanan
+                  </button>
+                  <button 
+                    onClick={() => updateStatus('tiba')}
+                    className="status-btn tiba"
+                  >
+                    ✅ Tiba
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="error-message">
+                ❌ {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="success-message">
+                ✅ {success}
+              </div>
+            )}
+          </div>
+
+          <div className="tracker-main">
+            <div className="position-display">
+              <h3>📍 Posisi GPS</h3>
+              
+              {currentPosition ? (
+                <div className="position-info">
+                  <div className="position-row">
+                    <span>Latitude:</span>
+                    <span>{currentPosition.latitude.toFixed(6)}</span>
+                  </div>
+                  <div className="position-row">
+                    <span>Longitude:</span>
+                    <span>{currentPosition.longitude.toFixed(6)}</span>
+                  </div>
+                  <div className="position-row">
+                    <span>Akurasi:</span>
+                    <span>{currentPosition.accuracy?.toFixed(1)} meter</span>
+                  </div>
+                  {currentPosition.speed && (
+                    <div className="position-row">
+                      <span>Kecepatan:</span>
+                      <span>{currentPosition.speed.toFixed(1)} km/h</span>
+                    </div>
+                  )}
+                  {currentPosition.heading && (
+                    <div className="position-row">
+                      <span>Arah:</span>
+                      <span>{currentPosition.heading}°</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="no-position">
+                  <p>Posisi GPS belum tersedia</p>
+                  <p>Pastikan GPS aktif dan izin lokasi diberikan</p>
+                </div>
+              )}
+            </div>
+
+            {trackingData && (
+              <div className="tracking-info">
+                <h3>📋 Info Rujukan</h3>
+                <div className="info-content">
+                  <div className="info-row">
+                    <span>Nomor Rujukan:</span>
+                    <span>{trackingData.nomor_rujukan}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Pasien:</span>
+                    <span>{trackingData.nama_pasien}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Dari:</span>
+                    <span>{trackingData.faskes_asal_nama}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Ke:</span>
+                    <span>{trackingData.faskes_tujuan_nama}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Status:</span>
+                    <span className="status-text">
+                      {getStatusText(trackingData.status)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="tracking-status">
+              <h3>🔄 Status Tracking</h3>
+              <div className={`status-indicator ${isTracking ? 'active' : 'inactive'}`}>
+                {isTracking ? (
+                  <div className="active-status">
+                    <div className="pulse-dot"></div>
+                    <span>Tracking Aktif</span>
+                  </div>
+                ) : (
+                  <div className="inactive-status">
+                    <span>Tracking Tidak Aktif</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

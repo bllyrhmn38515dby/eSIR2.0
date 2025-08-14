@@ -167,26 +167,27 @@ npm start
 ### **Default Users (sudah tersedia)**
 1. **Admin Pusat**
    - Email: `admin@pusat.com`
-   - Password: `password123`
-   - Role: `admin`
+   - Password: `admin123`
+   - Role: `admin_pusat`
 
 2. **Admin Faskes**
-   - Email: `admin@faskes.com`
-   - Password: `password123`
-   - Role: `puskesmas`
+   - Email: `admin@soetomo.com`
+   - Password: `admin123`
+   - Role: `admin_faskes`
 
-3. **Test User**
-   - Email: `test@example.com`
-   - Password: `password123`
-   - Role: `rs`
+3. **Admin Puskesmas**
+   - Email: `admin@kenjeran.com`
+   - Password: `admin123`
+   - Role: `admin_faskes`
 
 ## 🔧 Fitur Utama
 
 ### **🔐 Authentication & Authorization**
 - JWT-based authentication
-- Role-based access control (admin, puskesmas, rs)
+- Role-based access control (admin_pusat, admin_faskes)
 - Protected routes
 - Auto-login dengan token validation
+- **Hanya admin pusat yang dapat membuat akun user baru**
 
 ### **👥 Patient Management**
 - CRUD operasi untuk data pasien
@@ -226,11 +227,20 @@ npm start
 - Real-time updates
 - Modern UI/UX design
 
+### **👤 User Management (Admin Pusat Only)**
+- Manajemen user oleh admin pusat
+- Pembuatan akun user baru
+- View daftar semua user
+- Role-based access control
+
 ## 🔌 API Endpoints
 
 ### **Authentication**
 - `POST /api/auth/login` - Login user
-- `POST /api/auth/register` - Register user baru
+- `POST /api/auth/register` - Register user baru (Admin Pusat only)
+- `POST /api/auth/create-user` - Create user baru (Admin Pusat only)
+- `GET /api/auth/users` - Get all users (Admin Pusat only)
+- `GET /api/auth/roles` - Get all roles (Admin Pusat only)
 - `GET /api/auth/profile` - Get user profile
 
 ### **Patients**

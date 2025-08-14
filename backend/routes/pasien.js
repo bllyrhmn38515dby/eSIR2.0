@@ -25,6 +25,62 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// Get all pasien
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM pasien ORDER BY nama_pasien');
+    
+    res.json({
+      success: true,
+      data: rows
+    });
+  } catch (error) {
+    console.error('Error fetching pasien:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Search pasien by NIK
+router.get('/search', verifyToken, async (req, res) => {
+  try {
+    const { nik } = req.query;
+
+    if (!nik) {
+      return res.status(400).json({
+        success: false,
+        message: 'NIK harus disediakan'
+      });
+    }
+
+    const [pasien] = await pool.execute(
+      'SELECT * FROM pasien WHERE nik = ?',
+      [nik]
+    );
+
+    if (pasien.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pasien tidak ditemukan'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: pasien[0]
+    });
+
+  } catch (error) {
+    console.error('Error search pasien by NIK:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
 // Get pasien by ID
 router.get('/:id', verifyToken, async (req, res) => {
   try {
@@ -60,7 +116,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.post('/', verifyToken, async (req, res) => {
   try {
     const {
-      nama,
+      nama_pasien,
       nik,
       tanggal_lahir,
       jenis_kelamin,
@@ -68,11 +124,12 @@ router.post('/', verifyToken, async (req, res) => {
       telepon,
       golongan_darah,
       alergi,
-      riwayat_penyakit
+      riwayat_penyakit,
+      no_rm
     } = req.body;
 
     // Validasi input
-    if (!nama || !nik || !tanggal_lahir || !jenis_kelamin || !alamat) {
+    if (!nama_pasien || !nik || !tanggal_lahir || !jenis_kelamin || !alamat) {
       return res.status(400).json({
         success: false,
         message: 'Nama, NIK, tanggal lahir, jenis kelamin, dan alamat wajib diisi'
@@ -100,11 +157,26 @@ router.post('/', verifyToken, async (req, res) => {
       });
     }
 
+    // Cek apakah No RM sudah ada
+    if (no_rm) {
+      const [existingRM] = await pool.execute(
+        'SELECT id FROM pasien WHERE no_rm = ?',
+        [no_rm]
+      );
+
+      if (existingRM.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No RM sudah terdaftar'
+        });
+      }
+    }
+
     // Insert pasien baru
     const [result] = await pool.execute(
-      `INSERT INTO pasien (nama, nik, tanggal_lahir, jenis_kelamin, alamat, telepon, golongan_darah, alergi, riwayat_penyakit) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nama, nik, tanggal_lahir, jenis_kelamin, alamat, telepon, golongan_darah, alergi, riwayat_penyakit]
+      `INSERT INTO pasien (nama_pasien, nik, tanggal_lahir, jenis_kelamin, alamat, telepon, golongan_darah, alergi, riwayat_penyakit, no_rm) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nama_pasien, nik, tanggal_lahir, jenis_kelamin, alamat, telepon, golongan_darah, alergi, riwayat_penyakit, no_rm]
     );
 
     // Ambil data pasien yang baru dibuat
@@ -133,7 +205,7 @@ router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      nama,
+      nama_pasien,
       nik,
       tanggal_lahir,
       jenis_kelamin,
@@ -141,11 +213,12 @@ router.put('/:id', verifyToken, async (req, res) => {
       telepon,
       golongan_darah,
       alergi,
-      riwayat_penyakit
+      riwayat_penyakit,
+      no_rm
     } = req.body;
 
     // Validasi input
-    if (!nama || !nik || !tanggal_lahir || !jenis_kelamin || !alamat) {
+    if (!nama_pasien || !nik || !tanggal_lahir || !jenis_kelamin || !alamat) {
       return res.status(400).json({
         success: false,
         message: 'Nama, NIK, tanggal lahir, jenis kelamin, dan alamat wajib diisi'
@@ -186,13 +259,28 @@ router.put('/:id', verifyToken, async (req, res) => {
       });
     }
 
+    // Cek apakah No RM sudah digunakan oleh pasien lain
+    if (no_rm) {
+      const [rmCheck] = await pool.execute(
+        'SELECT id FROM pasien WHERE no_rm = ? AND id != ?',
+        [no_rm, id]
+      );
+
+      if (rmCheck.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'No RM sudah digunakan oleh pasien lain'
+        });
+      }
+    }
+
     // Update pasien
     await pool.execute(
       `UPDATE pasien 
-       SET nama = ?, nik = ?, tanggal_lahir = ?, jenis_kelamin = ?, alamat = ?, 
-           telepon = ?, golongan_darah = ?, alergi = ?, riwayat_penyakit = ?
+       SET nama_pasien = ?, nik = ?, tanggal_lahir = ?, jenis_kelamin = ?, alamat = ?, 
+           telepon = ?, golongan_darah = ?, alergi = ?, riwayat_penyakit = ?, no_rm = ?
        WHERE id = ?`,
-      [nama, nik, tanggal_lahir, jenis_kelamin, alamat, telepon, golongan_darah, alergi, riwayat_penyakit, id]
+      [nama_pasien, nik, tanggal_lahir, jenis_kelamin, alamat, telepon, golongan_darah, alergi, riwayat_penyakit, no_rm, id]
     );
 
     // Ambil data pasien yang diupdate

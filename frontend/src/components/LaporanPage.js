@@ -19,7 +19,7 @@ const LaporanPage = () => {
   useEffect(() => {
     fetchFaskes();
     fetchData();
-  }, [activeTab, filters]);
+  }, [activeTab, filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchFaskes = async () => {
     try {

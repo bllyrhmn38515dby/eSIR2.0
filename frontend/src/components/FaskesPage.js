@@ -109,7 +109,8 @@ const FaskesPage = () => {
     const tipeConfig = {
       'RSUD': { text: 'RSUD', class: 'tipe-rsud' },
       'Puskesmas': { text: 'Puskesmas', class: 'tipe-puskesmas' },
-      'Klinik': { text: 'Klinik', class: 'tipe-klinik' }
+      'Klinik': { text: 'Klinik', class: 'tipe-klinik' },
+      'RS Swasta': { text: 'RS Swasta', class: 'tipe-rs-swasta' }
     };
     
     const config = tipeConfig[tipe] || { text: tipe, class: 'tipe-default' };
@@ -186,6 +187,7 @@ const FaskesPage = () => {
                       <option value="RSUD">RSUD</option>
                       <option value="Puskesmas">Puskesmas</option>
                       <option value="Klinik">Klinik</option>
+                      <option value="RS Swasta">RS Swasta</option>
                     </select>
                   </div>
                 </div>

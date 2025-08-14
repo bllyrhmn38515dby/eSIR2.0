@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import Login from './components/Login';
-import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import UserManagement from './components/UserManagement';
 import PasienPage from './components/PasienPage';
 import RujukanPage from './components/RujukanPage';
 import FaskesPage from './components/FaskesPage';
@@ -24,13 +24,20 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route 
+                            <Route path="/login" element={<Login />} />
+              <Route
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route
+                path="/user-management" 
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
                   </ProtectedRoute>
                 } 
               />

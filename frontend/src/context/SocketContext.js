@@ -29,35 +29,56 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    // Create socket connection
+    // Create socket connection with better error handling
     const newSocket = io('http://localhost:3001', {
       auth: {
         token: localStorage.getItem('token')
-      }
+      },
+      transports: ['websocket', 'polling'],
+      timeout: 20000,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
     });
 
     // Connection events
     newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
+      console.log('✅ Socket connected:', newSocket.id);
       setIsConnected(true);
 
       // Join appropriate rooms based on user role
       if (user.role === 'admin') {
         newSocket.emit('join-admin');
-        console.log('Joined admin room');
+        console.log('👑 Joined admin room');
       } else if ((user.role === 'puskesmas' || user.role === 'rs') && user.faskes_id) {
         newSocket.emit('join-faskes', user.faskes_id);
-        console.log('Joined faskes room:', user.faskes_id);
+        console.log('🏥 Joined faskes room:', user.faskes_id);
       }
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    newSocket.on('disconnect', (reason) => {
+      console.log('❌ Socket disconnected:', reason);
       setIsConnected(false);
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
+      console.error('❌ Socket connection error:', error);
+      setIsConnected(false);
+    });
+
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
+      setIsConnected(true);
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('❌ Socket reconnection error:', error);
+      setIsConnected(false);
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('❌ Socket reconnection failed');
       setIsConnected(false);
     });
 
@@ -88,13 +109,26 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
+    newSocket.on('tracking-update', (data) => {
+      console.log('Tracking update received:', data);
+      addNotification({
+        id: Date.now(),
+        type: 'tracking-update',
+        title: 'Update Tracking',
+        message: data.message,
+        data: data.data,
+        timestamp: data.timestamp,
+        read: false
+      });
+    });
+
     setSocket(newSocket);
 
     // Cleanup on unmount
     return () => {
       newSocket.disconnect();
     };
-  }, [user]);
+  }, [user]); // Remove socket from dependency array to prevent infinite re-render
 
   const addNotification = (notification) => {
     setNotifications(prev => {

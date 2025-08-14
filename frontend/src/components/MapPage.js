@@ -19,7 +19,8 @@ const createCustomIcon = (type) => {
   const iconColors = {
     'RSUD': '#1976d2',
     'Puskesmas': '#388e3c',
-    'Klinik': '#f57c00'
+    'Klinik': '#f57c00',
+    'RS Swasta': '#c2185b'
   };
 
   return L.divIcon({
@@ -103,18 +104,46 @@ const MapPage = () => {
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Token tidak ditemukan. Silakan login ulang.');
+        setLoading(false);
+        return;
+      }
+
       const headers = { Authorization: `Bearer ${token}` };
+      
+      console.log('Mengambil data faskes dan rujukan...');
       
       const [faskesRes, rujukanRes] = await Promise.all([
         axios.get('http://localhost:3001/api/faskes', { headers }),
         axios.get('http://localhost:3001/api/rujukan', { headers })
       ]);
 
+      console.log(`Berhasil mengambil ${faskesRes.data.data.length} faskes`);
+      console.log(`Berhasil mengambil ${rujukanRes.data.data.length} rujukan`);
+
       setFaskes(faskesRes.data.data);
       setRujukan(rujukanRes.data.data);
+      setError(''); // Clear any previous errors
     } catch (error) {
-      setError('Gagal memuat data peta');
       console.error('Error fetching map data:', error);
+      
+      if (error.response) {
+        // Server responded with error status
+        if (error.response.status === 401) {
+          setError('Token tidak valid. Silakan login ulang.');
+        } else if (error.response.status === 404) {
+          setError('Endpoint tidak ditemukan. Pastikan server berjalan.');
+        } else {
+          setError(`Gagal memuat data peta: ${error.response.data.message || 'Server error'}`);
+        }
+      } else if (error.request) {
+        // Network error
+        setError('Tidak dapat terhubung ke server. Pastikan backend berjalan di port 3001.');
+      } else {
+        // Other error
+        setError(`Gagal memuat data peta: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -137,14 +166,23 @@ const MapPage = () => {
   };
 
   const getRujukanLines = () => {
-    if (!showRujukanLines) return [];
+    // Jika checkbox tidak dicentang, return array kosong
+    if (!showRujukanLines) {
+      console.log('Garis rujukan disembunyikan');
+      return [];
+    }
 
-    return rujukan
-      .filter(r => r.faskes_asal_id && r.faskes_tujuan_id)
+    // Filter rujukan yang memiliki faskes asal dan tujuan
+    const validRujukan = rujukan.filter(r => r.faskes_asal_id && r.faskes_tujuan_id);
+    
+    console.log(`Menampilkan ${validRujukan.length} garis rujukan`);
+
+    return validRujukan
       .map(r => {
         const faskesAsal = faskes.find(f => f.id === r.faskes_asal_id);
         const faskesTujuan = faskes.find(f => f.id === r.faskes_tujuan_id);
 
+        // Pastikan kedua faskes memiliki koordinat
         if (faskesAsal?.latitude && faskesAsal?.longitude && 
             faskesTujuan?.latitude && faskesTujuan?.longitude) {
           return {
@@ -186,7 +224,7 @@ const MapPage = () => {
   }
 
   const validFaskes = faskes.filter(f => f.latitude && f.longitude);
-  const rujukanLines = getRujukanLines();
+  const rujukanLines = getRujukanLines(); // This will be recalculated when showRujukanLines changes
 
   return (
     <Layout>
@@ -204,23 +242,38 @@ const MapPage = () => {
               <input
                 type="checkbox"
                 checked={showRujukanLines}
-                onChange={(e) => setShowRujukanLines(e.target.checked)}
+                onChange={(e) => {
+                  console.log('Checkbox garis rujukan:', e.target.checked ? 'ON' : 'OFF');
+                  setShowRujukanLines(e.target.checked);
+                }}
               />
-              Tampilkan Garis Rujukan
+              Tampilkan Garis Rujukan ({rujukan.filter(r => r.faskes_asal_id && r.faskes_tujuan_id).length} rujukan)
             </label>
           </div>
         </div>
 
         {error && (
           <div className="error-message">
-            {error}
+            <div className="error-content">
+              <span>{error}</span>
+              <button 
+                onClick={() => {
+                  setError('');
+                  setLoading(true);
+                  fetchData();
+                }}
+                className="retry-btn"
+              >
+                🔄 Coba Lagi
+              </button>
+            </div>
           </div>
         )}
 
         <div className="map-container">
           <MapContainer
             ref={mapRef}
-            center={[-7.2575, 112.7521]} // Surabaya coordinates
+            center={[-6.5950, 106.8166]} // Kota Bogor coordinates
             zoom={10}
             style={{ height: '600px', width: '100%' }}
           >
@@ -254,6 +307,11 @@ const MapPage = () => {
             ))}
 
             {/* Rujukan Lines */}
+            {rujukanLines.length > 0 && (
+              <div style={{ display: 'none' }}>
+                Debug: Menampilkan {rujukanLines.length} garis rujukan
+              </div>
+            )}
             {rujukanLines.map((line) => (
               <Polyline
                 key={line.id}
@@ -292,6 +350,10 @@ const MapPage = () => {
             <div className="legend-item">
               <div className="legend-icon klinik"></div>
               <span>Klinik</span>
+            </div>
+            <div className="legend-item">
+              <div className="legend-icon rs-swasta"></div>
+              <span>RS Swasta</span>
             </div>
           </div>
           

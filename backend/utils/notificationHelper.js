@@ -85,7 +85,7 @@ const sendRujukanNotification = async (io, rujukanData, senderId) => {
       type: 'rujukan-baru',
       title: 'Rujukan Baru',
       message: `Rujukan baru: ${rujukanData.nomor_rujukan}`,
-      targetRoom: 'admin-room',
+      targetRoom: 'admin',
       data: rujukanData
     });
 
@@ -124,7 +124,7 @@ const sendStatusUpdateNotification = async (io, rujukanData, oldStatus, newStatu
       type: 'status-update',
       title: 'Status Rujukan Diperbarui',
       message: `Status rujukan ${rujukanData.nomor_rujukan} diubah menjadi ${newStatus}`,
-      targetRoom: 'admin-room',
+      targetRoom: 'admin',
       data: rujukanData
     });
 
@@ -135,9 +135,28 @@ const sendStatusUpdateNotification = async (io, rujukanData, oldStatus, newStatu
   }
 };
 
+// Send tracking update notification
+const sendTrackingUpdateNotification = async (io, trackingData, rujukanId) => {
+  try {
+    // Send realtime notification to tracking room
+    sendRealtimeNotification(io, {
+      type: 'tracking-update',
+      title: 'Update Tracking',
+      message: `Posisi ambulans diperbarui`,
+      targetRoom: `tracking-${rujukanId}`,
+      data: trackingData
+    });
+
+    console.log(`Tracking update sent to tracking-${rujukanId}`);
+  } catch (error) {
+    console.error('Error sending tracking update notification:', error);
+  }
+};
+
 module.exports = {
   createNotification,
   sendRealtimeNotification,
   sendRujukanNotification,
-  sendStatusUpdateNotification
+  sendStatusUpdateNotification,
+  sendTrackingUpdateNotification
 };
