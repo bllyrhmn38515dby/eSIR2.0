@@ -39,6 +39,12 @@ Proyek ini bertujuan untuk mendigitalisasi dan mempercepat alur rujukan pasien a
 - ✅ Real-time map updates
 - ✅ Responsive design
 
+### ✅ **Sprint 5: Bug Fixes & Optimization** - SELESAI
+- ✅ Perbaikan query database rujukan
+- ✅ Perbaikan filter role untuk admin pusat
+- ✅ Optimasi API response
+- ✅ Perbaikan frontend data loading
+
 ## 🛠️ Tumpukan Teknologi (Technology Stack)
 
 ### **Backend**
@@ -79,6 +85,10 @@ eSIR2.0/
 │   │   ├── pasien.js             # Patient management
 │   │   ├── rujukan.js            # Referral management
 │   │   ├── faskes.js             # Healthcare facility management
+│   │   ├── tracking.js           # Tracking management
+│   │   ├── search.js             # Search functionality
+│   │   ├── laporan.js            # Report management
+│   │   ├── tempatTidur.js        # Bed management
 │   │   └── notifications.js      # Notification routes
 │   ├── utils/
 │   │   └── notificationHelper.js # Notification utilities
@@ -89,13 +99,19 @@ eSIR2.0/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Login.js          # Login page
-│   │   │   ├── Register.js       # Register page
 │   │   │   ├── Dashboard.js      # Main dashboard
 │   │   │   ├── PasienPage.js     # Patient management
 │   │   │   ├── RujukanPage.js    # Referral management
 │   │   │   ├── FaskesPage.js     # Facility management
 │   │   │   ├── MapPage.js        # Interactive map
+│   │   │   ├── TrackingPage.js   # Tracking page
+│   │   │   ├── SearchPage.js     # Search page
+│   │   │   ├── LaporanPage.js    # Report page
+│   │   │   ├── TempatTidurPage.js # Bed management
+│   │   │   ├── AmbulanceTracker.js # Ambulance tracking
 │   │   │   ├── Navigation.js     # Navigation component
+│   │   │   ├── NotificationBell.js # Notification component
+│   │   │   ├── UserManagement.js # User management
 │   │   │   └── ProtectedRoute.js # Route protection
 │   │   ├── context/
 │   │   │   ├── AuthContext.js    # Authentication context
@@ -125,8 +141,8 @@ cd eSIR2.0
 mysql -u root -p
 
 # Buat database
-CREATE DATABASE esir_db;
-USE esir_db;
+CREATE DATABASE esirv2;
+USE esirv2;
 
 # Import struktur database
 source backend/database.sql;
@@ -140,11 +156,13 @@ cd backend
 npm install
 
 # Setup environment variables
-cp .env.example .env
+cp env.example .env
 # Edit .env sesuai konfigurasi database Anda
 
 # Jalankan server development
-npm run dev
+npm start
+# atau
+node index.js
 ```
 
 ### **4. Setup Frontend**
@@ -169,16 +187,13 @@ npm start
    - Email: `admin@pusat.com`
    - Password: `admin123`
    - Role: `admin_pusat`
+   - Akses: Semua fitur dan data
 
 2. **Admin Faskes**
-   - Email: `admin@soetomo.com`
+   - Email: `admin@rsud.com`
    - Password: `admin123`
    - Role: `admin_faskes`
-
-3. **Admin Puskesmas**
-   - Email: `admin@kenjeran.com`
-   - Password: `admin123`
-   - Role: `admin_faskes`
+   - Akses: Data faskes tertentu saja
 
 ## 🔧 Fitur Utama
 
@@ -204,8 +219,9 @@ npm start
 ### **📋 Referral Management**
 - Auto-generate nomor rujukan (format: RJYYYYMMDD001)
 - Status tracking: pending → diterima/ditolak → selesai
-- Role-based filtering (puskesmas hanya lihat rujukan dari faskesnya)
+- Role-based filtering (admin pusat lihat semua, admin faskes lihat faskes tertentu)
 - Catatan dokter untuk tracking
+- **✅ FIXED: Data rujukan sekarang muncul dengan benar di frontend**
 
 ### **🗺️ Interactive Map**
 - Real-time map dengan OpenStreetMap
@@ -213,6 +229,30 @@ npm start
 - Rujukan lines dengan warna berdasarkan status
 - Real-time updates via Socket.IO
 - Responsive design
+
+### **🚑 Ambulance Tracking**
+- Real-time tracking ambulans
+- Status tracking: standby → berangkat → tiba
+- Integration dengan peta interaktif
+- Notifikasi real-time
+
+### **🔍 Search & Filter**
+- Pencarian pasien berdasarkan NIK
+- Filter rujukan berdasarkan status
+- Filter berdasarkan tanggal
+- Advanced search options
+
+### **📊 Reports & Analytics**
+- Laporan rujukan harian/bulanan
+- Statistik per faskes
+- Export data ke Excel/PDF
+- Dashboard analytics
+
+### **🛏️ Bed Management**
+- Manajemen tempat tidur per faskes
+- Status: tersedia/terisi/reserved
+- Real-time bed availability
+- Integration dengan sistem rujukan
 
 ### **🔔 Real-time Notifications**
 - Socket.IO integration
@@ -248,10 +288,12 @@ npm start
 - `POST /api/pasien` - Create new patient
 - `PUT /api/pasien/:id` - Update patient
 - `DELETE /api/pasien/:id` - Delete patient
+- `GET /api/pasien/search?nik=xxx` - Search patient by NIK
 
 ### **Referrals**
-- `GET /api/rujukan` - Get all referrals
+- `GET /api/rujukan` - Get all referrals (role-based filtered)
 - `POST /api/rujukan` - Create new referral
+- `POST /api/rujukan/with-pasien` - Create referral with patient data
 - `PUT /api/rujukan/:id/status` - Update referral status
 - `GET /api/rujukan/stats/overview` - Get referral statistics
 
@@ -260,6 +302,25 @@ npm start
 - `POST /api/faskes` - Create new facility
 - `PUT /api/faskes/:id` - Update facility
 - `DELETE /api/faskes/:id` - Delete facility
+
+### **Tracking**
+- `GET /api/tracking` - Get tracking data
+- `POST /api/tracking` - Create tracking entry
+- `PUT /api/tracking/:id` - Update tracking
+
+### **Search**
+- `GET /api/search` - Global search
+- `GET /api/search/pasien` - Search patients
+- `GET /api/search/rujukan` - Search referrals
+
+### **Reports**
+- `GET /api/laporan` - Get reports
+- `POST /api/laporan` - Generate report
+
+### **Bed Management**
+- `GET /api/tempat-tidur` - Get bed data
+- `POST /api/tempat-tidur` - Create bed entry
+- `PUT /api/tempat-tidur/:id` - Update bed status
 
 ### **Notifications**
 - `GET /api/notifications` - Get user notifications
@@ -272,7 +333,15 @@ npm start
 ### **Backend Testing**
 ```bash
 cd backend
-node test-auth-fix.js
+
+# Test API rujukan
+node debug-rujukan-api.js
+
+# Test database query
+node test-rujukan-query.js
+
+# Test login
+node test-rujukan-with-login.js
 ```
 
 ### **Frontend Testing**
@@ -281,6 +350,8 @@ node test-auth-fix.js
 3. Test semua fitur: CRUD pasien, rujukan, faskes
 4. Test peta interaktif
 5. Test real-time notifications
+6. Test search dan filter
+7. Test tracking dan laporan
 
 ## 🐛 Troubleshooting
 
@@ -289,7 +360,7 @@ node test-auth-fix.js
 1. **Database Connection Error**
    - Pastikan MySQL berjalan
    - Periksa konfigurasi di `.env`
-   - Pastikan database `esir_db` sudah dibuat
+   - Pastikan database `esirv2` sudah dibuat
 
 2. **CORS Error**
    - Pastikan backend berjalan di port 3001
@@ -303,11 +374,33 @@ node test-auth-fix.js
    - Pastikan backend server berjalan
    - Periksa CORS configuration untuk Socket.IO
 
+5. **Data Rujukan Tidak Muncul**
+   - ✅ **FIXED**: Perbaikan query database dan filter role
+   - Pastikan server backend sudah di-restart setelah perubahan
+   - Periksa console browser untuk error
+
+6. **Frontend Server Error**
+   - Pastikan berada di direktori `frontend` saat menjalankan `npm start`
+   - Periksa package.json ada di direktori frontend
+
+### **Recent Bug Fixes**
+
+#### **✅ Fixed: Data Rujukan Tidak Muncul di Frontend**
+- **Problem**: Query database menggunakan kolom `u.nama` yang tidak ada
+- **Solution**: Ubah ke `u.nama_lengkap` di semua query rujukan
+- **Problem**: Filter role admin pusat tidak berfungsi
+- **Solution**: Perbaiki logic filter untuk admin pusat dengan `faskes_id = null`
+
+#### **✅ Fixed: Server Startup Issues**
+- **Problem**: Server tidak start dengan benar
+- **Solution**: Gunakan `node index.js` atau `npm start` di direktori yang benar
+
 ### **Development Tips**
 - Gunakan browser DevTools untuk debug
 - Check console logs untuk error messages
 - Monitor network requests di DevTools
 - Restart server jika ada perubahan di backend
+- Pastikan kedua server (frontend & backend) berjalan
 
 ## 📝 Environment Variables
 
@@ -316,7 +409,7 @@ node test-auth-fix.js
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_password
-DB_NAME=esir_db
+DB_NAME=esirv2
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=24h
 PORT=3001
@@ -341,3 +434,6 @@ Dikembangkan dengan ❤️ untuk sistem rujukan kesehatan yang lebih efisien.
 ---
 
 **Status:** ✅ **PRODUCTION READY** - Semua fitur utama telah selesai dan siap untuk deployment.
+
+**Last Updated:** 16 Agustus 2025
+**Version:** 2.0.0

@@ -15,14 +15,14 @@ const generateNomorRujukan = async () => {
 };
 
 // Get all rujukan (with role-based filtering)
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     let query = `
       SELECT r.*, 
              p.nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
-             u.nama as user_nama
+             u.nama_lengkap as user_nama
       FROM rujukan r
       LEFT JOIN pasien p ON r.pasien_id = p.id
       LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
@@ -33,9 +33,9 @@ router.get('/', async (req, res) => {
     const params = [];
 
     // Filter berdasarkan role
-    if (req.user.role === 'admin_faskes') {
+    if (req.user.role === 'admin_faskes' && req.user.faskes_id) {
       query += ' WHERE (r.faskes_asal_id = ? OR r.faskes_tujuan_id = ?)';
-      params.push(req.user.faskes_id || 0, req.user.faskes_id || 0);
+      params.push(req.user.faskes_id, req.user.faskes_id);
     }
 
     query += ' ORDER BY r.tanggal_rujukan DESC';
@@ -70,7 +70,7 @@ router.get('/:id', verifyToken, async (req, res) => {
              p.nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
-             u.nama as user_nama
+             u.nama_lengkap as user_nama
       FROM rujukan r
       LEFT JOIN pasien p ON r.pasien_id = p.id
       LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
@@ -303,7 +303,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get current rujukan data
     const [currentRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien, p.no_rm,
+             p.nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -342,7 +342,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r

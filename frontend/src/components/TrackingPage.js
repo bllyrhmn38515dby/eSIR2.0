@@ -1,90 +1,54 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import './TrackingPage.css';
 
+// Fix Leaflet default marker icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+});
+
+// Custom icons
+const createCustomIcon = (iconUrl, size = [32, 32]) => {
+  return L.icon({
+    iconUrl,
+    iconSize: size,
+    iconAnchor: [size[0] / 2, size[1] / 2],
+    popupAnchor: [0, -size[1] / 2]
+  });
+};
+
+const ambulanceIcon = createCustomIcon('https://maps.google.com/mapfiles/ms/icons/ambulance.png', [40, 40]);
+const originIcon = createCustomIcon('https://maps.google.com/mapfiles/ms/icons/green-dot.png', [32, 32]);
+const destinationIcon = createCustomIcon('https://maps.google.com/mapfiles/ms/icons/red-dot.png', [32, 32]);
+
+// Component untuk update map center
+const MapUpdater = ({ center }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (center) {
+      map.setView(center, map.getZoom());
+    }
+  }, [center, map]);
+  
+  return null;
+};
+
 const TrackingPage = () => {
-  // const { user } = useAuth(); // Removed unused variable
   const { socket } = useSocket();
   const [activeSessions, setActiveSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [trackingData, setTrackingData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [map, setMap] = useState(null);
-  const [directionsService, setDirectionsService] = useState(null);
-  const [directionsRenderer, setDirectionsRenderer] = useState(null);
+  const [mapCenter, setMapCenter] = useState([-6.5971, 106.8060]); // Kota Bogor center
+  const [routePolyline, setRoutePolyline] = useState([]);
   const mapRef = useRef(null);
-
-  // Initialize Google Maps
-  useEffect(() => {
-    const initMap = () => {
-      if (window.google && mapRef.current) {
-        try {
-          const mapInstance = new window.google.maps.Map(mapRef.current, {
-            center: { lat: -6.5971, lng: 106.8060 }, // Kota Bogor center
-            zoom: 12,
-            styles: [
-              {
-                featureType: 'poi.medical',
-                elementType: 'labels',
-                stylers: [{ visibility: 'on' }]
-              }
-            ]
-          });
-
-          const directionsServiceInstance = new window.google.maps.DirectionsService();
-          const directionsRendererInstance = new window.google.maps.DirectionsRenderer({
-            suppressMarkers: true,
-            polylineOptions: {
-              strokeColor: '#4285F4',
-              strokeWeight: 5,
-              strokeOpacity: 0.8
-            }
-          });
-
-          directionsRendererInstance.setMap(mapInstance);
-
-          setMap(mapInstance);
-          setDirectionsService(directionsServiceInstance);
-          setDirectionsRenderer(directionsRendererInstance);
-          
-          console.log('🗺️ Google Maps initialized successfully');
-        } catch (error) {
-          console.error('❌ Error initializing Google Maps:', error);
-        }
-      }
-    };
-
-    // Check if Google Maps is already loaded
-    if (window.google && window.google.maps) {
-      console.log('🗺️ Google Maps already loaded');
-      initMap();
-    } else {
-      // Check if script is already being loaded
-      const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-      if (existingScript) {
-        console.log('🗺️ Google Maps script already loading, waiting...');
-        existingScript.onload = initMap;
-      } else {
-        // Load Google Maps script
-        const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-        if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
-          console.warn('⚠️ Google Maps API key not configured. Please set REACT_APP_GOOGLE_MAPS_API_KEY in .env file');
-          return;
-        }
-        
-        console.log('🗺️ Loading Google Maps script...');
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry,places&loading=async`;
-        script.async = true;
-        script.defer = true;
-        script.onload = initMap;
-        script.onerror = () => {
-          console.error('❌ Failed to load Google Maps script');
-        };
-        document.head.appendChild(script);
-      }
-    }
-  }, []);
 
   // Load active tracking sessions
   useEffect(() => {
@@ -92,26 +56,10 @@ const TrackingPage = () => {
   }, []);
 
   const updateMapWithNewPosition = useCallback((data) => {
-    if (!map || !window.trackingMarkers) return;
-
-    // Update current position marker
-    const currentMarker = window.trackingMarkers.find(marker => 
-      marker.getTitle() === 'Posisi Ambulans'
-    );
-
-    if (currentMarker) {
-      currentMarker.setPosition({ lat: data.latitude, lng: data.longitude });
-      
-      // Add rotation if heading is available
-      if (data.heading) {
-        currentMarker.setIcon({
-          url: 'https://maps.google.com/mapfiles/ms/icons/ambulance.png',
-          scaledSize: new window.google.maps.Size(40, 40),
-          rotation: data.heading
-        });
-      }
+    if (data.latitude && data.longitude) {
+      setMapCenter([data.latitude, data.longitude]);
     }
-  }, [map]);
+  }, []);
 
   // Socket.IO events untuk real-time updates
   useEffect(() => {
@@ -129,7 +77,6 @@ const TrackingPage = () => {
 
         socket.on('tracking-update', handleTrackingUpdate);
 
-        // Cleanup function
         return () => {
           if (socket && socket.off) {
             console.log('🔌 Cleaning up socket listeners');
@@ -142,10 +89,8 @@ const TrackingPage = () => {
       }
     };
 
-    // Setup listeners immediately if socket is ready
     const cleanup = setupSocketListeners();
 
-    // If socket is not ready, wait for it to connect
     if (socket && !socket.connected) {
       console.log('⏳ Waiting for socket connection...');
       const timeoutId = setTimeout(() => {
@@ -218,80 +163,22 @@ const TrackingPage = () => {
   };
 
   const renderMapWithTrackingData = (data) => {
-    if (!map || !directionsService || !directionsRenderer) return;
-
     const { tracking, route } = data;
 
-    // Clear existing markers
-    if (window.trackingMarkers) {
-      window.trackingMarkers.forEach(marker => marker.setMap(null));
-    }
-    window.trackingMarkers = [];
-
-    // Add origin marker
-    if (route.origin.lat && route.origin.lng) {
-      const originMarker = new window.google.maps.Marker({
-        position: { lat: route.origin.lat, lng: route.origin.lng },
-        map: map,
-        title: route.origin.name,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
-          scaledSize: new window.google.maps.Size(32, 32)
-        },
-        label: 'A'
-      });
-      window.trackingMarkers.push(originMarker);
-    }
-
-    // Add destination marker
-    if (route.destination.lat && route.destination.lng) {
-      const destMarker = new window.google.maps.Marker({
-        position: { lat: route.destination.lat, lng: route.destination.lng },
-        map: map,
-        title: route.destination.name,
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-          scaledSize: new window.google.maps.Size(32, 32)
-        },
-        label: 'B'
-      });
-      window.trackingMarkers.push(destMarker);
-    }
-
-    // Add current position marker
+    // Set map center to current position
     if (tracking.latitude && tracking.longitude) {
-      const currentMarker = new window.google.maps.Marker({
-        position: { lat: tracking.latitude, lng: tracking.longitude },
-        map: map,
-        title: 'Posisi Ambulans',
-        icon: {
-          url: 'https://maps.google.com/mapfiles/ms/icons/ambulance.png',
-          scaledSize: new window.google.maps.Size(40, 40)
-        }
-      });
-      window.trackingMarkers.push(currentMarker);
-
-      // Center map on current position
-      map.setCenter({ lat: tracking.latitude, lng: tracking.longitude });
+      setMapCenter([tracking.latitude, tracking.longitude]);
     }
 
-    // Draw route
+    // Create route polyline
     if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng) {
-      const request = {
-        origin: { lat: route.origin.lat, lng: route.origin.lng },
-        destination: { lat: route.destination.lat, lng: route.destination.lng },
-        travelMode: window.google.maps.TravelMode.DRIVING
-      };
-
-      directionsService.route(request, (result, status) => {
-        if (status === 'OK') {
-          directionsRenderer.setDirections(result);
-        }
-      });
+      const polyline = [
+        [route.origin.lat, route.origin.lng],
+        [route.destination.lat, route.destination.lng]
+      ];
+      setRoutePolyline(polyline);
     }
   };
-
-
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -385,7 +272,66 @@ const TrackingPage = () => {
         </div>
 
         <div className="tracking-map-container">
-          <div ref={mapRef} className="tracking-map" />
+          <MapContainer 
+            ref={mapRef}
+            center={mapCenter}
+            zoom={12}
+            style={{ height: '600px', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            
+            <MapUpdater center={mapCenter} />
+
+            {/* Route Polyline */}
+            {routePolyline.length > 0 && (
+              <Polyline
+                positions={routePolyline}
+                color="#4285F4"
+                weight={5}
+                opacity={0.8}
+              />
+            )}
+
+            {/* Origin Marker */}
+            {trackingData?.route?.origin?.lat && (
+              <Marker
+                position={[trackingData.route.origin.lat, trackingData.route.origin.lng]}
+                icon={originIcon}
+              >
+                <Popup>
+                  <strong>Asal:</strong> {trackingData.route.origin.name}
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Destination Marker */}
+            {trackingData?.route?.destination?.lat && (
+              <Marker
+                position={[trackingData.route.destination.lat, trackingData.route.destination.lng]}
+                icon={destinationIcon}
+              >
+                <Popup>
+                  <strong>Tujuan:</strong> {trackingData.route.destination.name}
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Current Position Marker */}
+            {trackingData?.tracking?.latitude && (
+              <Marker
+                position={[trackingData.tracking.latitude, trackingData.tracking.longitude]}
+                icon={ambulanceIcon}
+              >
+                <Popup>
+                  <strong>Posisi Ambulans</strong><br />
+                  Status: {getStatusText(trackingData.tracking.status)}
+                </Popup>
+              </Marker>
+            )}
+          </MapContainer>
           
           {selectedSession && trackingData && (
             <div className="tracking-info-panel">
