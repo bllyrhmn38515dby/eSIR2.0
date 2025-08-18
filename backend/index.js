@@ -180,3 +180,30 @@ server.on('error', (error) => {
 
 // Start the server
 startServer();
+
+const databaseMonitor = require('./utils/databaseMonitor');
+
+// Start database monitoring
+databaseMonitor.startMonitoring();
+
+// Add health check endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbStatus = databaseMonitor.getConnectionStatus();
+    const isHealthy = dbStatus.isConnected;
+    
+    res.json({
+      success: true,
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString(),
+      database: dbStatus,
+      uptime: process.uptime()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      status: 'error',
+      message: error.message
+    });
+  }
+});

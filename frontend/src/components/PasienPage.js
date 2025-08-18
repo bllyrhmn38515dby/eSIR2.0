@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Layout from './Layout';
 import './PasienPage.css';
@@ -21,11 +21,7 @@ const PasienPage = () => {
   });
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchPasien();
-  }, []);
-
-  const fetchPasien = async () => {
+  const fetchPasien = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -38,7 +34,11 @@ const PasienPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchPasien();
+  }, [fetchPasien]);
 
   const handleInputChange = (e) => {
     setFormData({

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Login.css';
@@ -12,8 +12,16 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  const { login } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Auto redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      console.log('🔄 User already authenticated, redirecting to dashboard...');
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -31,16 +39,35 @@ const Login = () => {
     setError('');
     setLoading(true);
 
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.message);
+    try {
+      console.log('🚀 Submitting login form...');
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        console.log('✅ Login successful, redirecting to dashboard...');
+        navigate('/dashboard');
+      } else {
+        console.log('❌ Login failed:', result.message);
+        setError(result.message);
+      }
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      setError('Terjadi kesalahan saat login');
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
+
+  // Show loading if auth is still checking
+  if (authLoading) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <div className="loading">Memeriksa autentikasi...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">

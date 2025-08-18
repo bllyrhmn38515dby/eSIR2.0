@@ -50,10 +50,32 @@ const TrackingPage = () => {
   const [routePolyline, setRoutePolyline] = useState([]);
   const mapRef = useRef(null);
 
+  const loadActiveSessions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/tracking/sessions/active', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setActiveSessions(result.data);
+      } else {
+        console.error('Failed to load active sessions');
+      }
+    } catch (error) {
+      console.error('Error loading active sessions:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Load active tracking sessions
   useEffect(() => {
     loadActiveSessions();
-  }, []);
+  }, [loadActiveSessions]);
 
   const updateMapWithNewPosition = useCallback((data) => {
     if (data.latitude && data.longitude) {
@@ -110,28 +132,6 @@ const TrackingPage = () => {
 
     return cleanup;
   }, [socket, selectedSession, updateMapWithNewPosition]);
-
-  const loadActiveSessions = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/tracking/sessions/active', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        setActiveSessions(result.data);
-      } else {
-        console.error('Failed to load active sessions');
-      }
-    } catch (error) {
-      console.error('Error loading active sessions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const selectSession = async (session) => {
     try {

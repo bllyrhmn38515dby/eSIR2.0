@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Layout from './Layout';
 import './LaporanPage.css';
@@ -16,12 +16,7 @@ const LaporanPage = () => {
   const [faskes, setFaskes] = useState([]);
   const [data, setData] = useState({});
 
-  useEffect(() => {
-    fetchFaskes();
-    fetchData();
-  }, [activeTab, filters]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchFaskes = async () => {
+  const fetchFaskes = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -31,9 +26,9 @@ const LaporanPage = () => {
     } catch (error) {
       console.error('Error fetching faskes:', error);
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       let endpoint = '';
@@ -70,7 +65,12 @@ const LaporanPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, filters]);
+
+  useEffect(() => {
+    fetchFaskes();
+    fetchData();
+  }, [fetchFaskes, fetchData]);
 
   const handleExport = async (type) => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import axios from 'axios';
@@ -75,6 +75,18 @@ const MapPage = () => {
   const { socket, isConnected } = useSocket();
   const mapRef = useRef();
 
+  const fetchRujukan = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const response = await axios.get('http://localhost:3001/api/rujukan', { headers });
+      setRujukan(response.data.data);
+    } catch (error) {
+      console.error('Error fetching rujukan:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -99,7 +111,7 @@ const MapPage = () => {
         socket.off('status-update');
       }
     };
-  }, [socket]);
+  }, [socket, fetchRujukan]);
 
   const fetchData = async () => {
     try {
@@ -149,17 +161,7 @@ const MapPage = () => {
     }
   };
 
-  const fetchRujukan = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      
-      const response = await axios.get('http://localhost:3001/api/rujukan', { headers });
-      setRujukan(response.data.data);
-    } catch (error) {
-      console.error('Error fetching rujukan:', error);
-    }
-  };
+
 
   const handleMarkerClick = (faskes) => {
     setSelectedFaskes(faskes);

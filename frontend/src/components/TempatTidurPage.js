@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Layout from './Layout';
 import './TempatTidurPage.css';
@@ -18,11 +18,7 @@ const TempatTidurPage = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterTipe, setFilterTipe] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -44,7 +40,11 @@ const TempatTidurPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleAddBed = () => {
     setEditingBed({

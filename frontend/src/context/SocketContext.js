@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -17,6 +17,22 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const { user } = useAuth();
+
+  const addNotification = useCallback((notification) => {
+    setNotifications(prev => {
+      const newNotifications = [notification, ...prev];
+      // Keep only last 10 notifications
+      return newNotifications.slice(0, 10);
+    });
+
+    // Show browser notification if supported
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/favicon.ico'
+      });
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -128,23 +144,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [user]); // Remove socket from dependency array to prevent infinite re-render
-
-  const addNotification = (notification) => {
-    setNotifications(prev => {
-      const newNotifications = [notification, ...prev];
-      // Keep only last 10 notifications
-      return newNotifications.slice(0, 10);
-    });
-
-    // Show browser notification if supported
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/favicon.ico'
-      });
-    }
-  };
+  }, [user, addNotification]); // Include addNotification in dependency array
 
   const markNotificationAsRead = (notificationId) => {
     setNotifications(prev =>

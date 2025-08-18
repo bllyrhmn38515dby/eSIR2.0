@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import UserManagement from './components/UserManagement';
@@ -19,77 +20,78 @@ import './App.css';
 
 function App() {
   return (
-    <AuthProvider>
-      <SocketProvider>
-        <Router>
-          <div className="App">
-            <Routes>
-                            <Route path="/login" element={<Login />} />
-              <Route
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route
-                path="/user-management" 
-                element={
-                  <ProtectedRoute>
-                    <UserManagement />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/pasien" 
-                element={
-                  <ProtectedRoute>
-                    <PasienPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/rujukan" 
-                element={
-                  <ProtectedRoute>
-                    <RujukanPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/peta" 
-                element={
-                  <ProtectedRoute>
-                    <MapPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/tempat-tidur" 
-                element={
-                  <ProtectedRoute>
-                    <TempatTidurPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/laporan" 
-                element={
-                  <ProtectedRoute>
-                    <LaporanPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/faskes" 
-                element={
-                  <ProtectedRoute>
-                    <FaskesPage />
-                  </ProtectedRoute>
-                } 
-              />
-                              <Route 
+    <ErrorBoundary>
+      <AuthProvider>
+        <SocketProvider>
+          <Router>
+            <div className="App">
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route
+                  path="/user-management" 
+                  element={
+                    <ProtectedRoute>
+                      <UserManagement />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/pasien" 
+                  element={
+                    <ProtectedRoute>
+                      <PasienPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/rujukan" 
+                  element={
+                    <ProtectedRoute>
+                      <RujukanPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/peta" 
+                  element={
+                    <ProtectedRoute>
+                      <MapPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/tempat-tidur" 
+                  element={
+                    <ProtectedRoute>
+                      <TempatTidurPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/laporan" 
+                  element={
+                    <ProtectedRoute>
+                      <LaporanPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/faskes" 
+                  element={
+                    <ProtectedRoute>
+                      <FaskesPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
                   path="/search" 
                   element={
                     <ProtectedRoute>
@@ -113,12 +115,13 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
-              <Route path="/" element={<Navigate to="/login" replace />} />
-            </Routes>
-          </div>
-        </Router>
-      </SocketProvider>
-    </AuthProvider>
+                <Route path="/" element={<Navigate to="/login" replace />} />
+              </Routes>
+            </div>
+          </Router>
+        </SocketProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Layout from './Layout';
 import './FaskesPage.css';
@@ -18,11 +18,7 @@ const FaskesPage = () => {
   });
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchFaskes();
-  }, []);
-
-  const fetchFaskes = async () => {
+  const fetchFaskes = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
@@ -35,7 +31,11 @@ const FaskesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchFaskes();
+  }, [fetchFaskes]);
 
   const handleInputChange = (e) => {
     setFormData({

@@ -1,47 +1,59 @@
 require('dotenv').config();
-const bcrypt = require('bcryptjs');
-const mysql = require('mysql2');
+const axios = require('axios');
 
 async function testLogin() {
+  const baseURL = 'http://localhost:3001';
+  
   try {
-    const connection = mysql.createConnection({
-      host: process.env.DB_HOST,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      port: process.env.DB_PORT
+    console.log('🧪 Testing login functionality...\n');
+    
+    // Test server connection
+    console.log('1. Testing server connection...');
+    const testResponse = await axios.get(`${baseURL}/test`);
+    console.log('✅ Server is running:', testResponse.data);
+    
+    // Test login with valid credentials
+    console.log('\n2. Testing login with admin credentials...');
+    const loginResponse = await axios.post(`${baseURL}/api/auth/login`, {
+      email: 'admin@pusat.com',
+      password: 'admin123'
     });
-
-    console.log('Mencoba koneksi ke database...');
-
-    // Cari user berdasarkan email
-    const [users] = await connection.promise().execute(
-      'SELECT * FROM users WHERE email = ?',
-      ['admin@pusat.com']
-    );
-
-    if (users.length === 0) {
-      console.log('User tidak ditemukan');
-      return;
+    
+    console.log('✅ Login successful!');
+    console.log('📋 Response:', {
+      success: loginResponse.data.success,
+      message: loginResponse.data.message,
+      hasUser: !!loginResponse.data.data?.user,
+      hasToken: !!loginResponse.data.data?.token,
+      userRole: loginResponse.data.data?.user?.role
+    });
+    
+    if (loginResponse.data.success && loginResponse.data.data?.token) {
+      const token = loginResponse.data.data.token;
+      
+      // Test profile endpoint with token
+      console.log('\n3. Testing profile endpoint with token...');
+      const profileResponse = await axios.get(`${baseURL}/api/auth/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log('✅ Profile endpoint working!');
+      console.log('👤 User profile:', {
+        id: profileResponse.data.data?.id,
+        nama_lengkap: profileResponse.data.data?.nama_lengkap,
+        email: profileResponse.data.data?.email,
+        role: profileResponse.data.data?.role
+      });
     }
-
-    const user = users[0];
-    console.log('User ditemukan:', {
-      id: user.id,
-      nama: user.nama,
-      email: user.email,
-      role: user.role
-    });
-
-    // Test password
-    const isValidPassword = await bcrypt.compare('password123', user.password);
-    console.log('Password valid:', isValidPassword);
-
-    await connection.promise().end();
-
+    
+    console.log('\n🎉 Login test completed successfully!');
+    
   } catch (error) {
-    console.error('Error:', error);
-    process.exit(1);
+    console.error('❌ Error testing login:', error.response?.data || error.message);
+    
+    if (error.code === 'ECONNREFUSED') {
+      console.log('💡 Backend server is not running. Please start it with: npm start');
+    }
   }
 }
 

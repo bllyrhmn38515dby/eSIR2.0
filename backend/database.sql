@@ -144,7 +144,8 @@ CREATE TABLE IF NOT EXISTS tracking_sessions (
 -- Insert data awal untuk roles
 INSERT INTO roles (nama_role, deskripsi) VALUES
 ('admin_pusat', 'Administrator Pusat - Akses penuh ke semua fitur'),
-('admin_faskes', 'Administrator Faskes - Akses terbatas sesuai faskes');
+('admin_faskes', 'Administrator Faskes - Akses terbatas sesuai faskes'),
+('operator', 'Operator - Akses terbatas untuk input data');
 
 -- Insert data awal untuk faskes dengan koordinat Surabaya
 INSERT INTO faskes (nama_faskes, alamat, tipe, telepon, latitude, longitude) VALUES

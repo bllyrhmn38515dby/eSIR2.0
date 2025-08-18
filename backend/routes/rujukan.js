@@ -378,24 +378,64 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 // Get rujukan statistics
 router.get('/stats/overview', verifyToken, async (req, res) => {
   try {
+    console.log('📊 Fetching rujukan stats for user:', req.user.nama_lengkap);
     console.log('User role:', req.user.role);
     console.log('User faskes_id:', req.user.faskes_id);
     
-    // For now, return default stats to avoid database issues
-    const defaultStats = {
-      total: 0,
-      pending: 0,
-      diterima: 0,
-      ditolak: 0,
-      selesai: 0
-    };
+    let query = `
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'menunggu' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'diterima' THEN 1 ELSE 0 END) as diterima,
+        SUM(CASE WHEN status = 'ditolak' THEN 1 ELSE 0 END) as ditolak,
+        SUM(CASE WHEN status = 'selesai' THEN 1 ELSE 0 END) as selesai
+      FROM rujukan
+    `;
+    
+    const params = [];
+
+    // Filter berdasarkan role user
+    if (req.user.role === 'admin_faskes' && req.user.faskes_id) {
+      query += ' WHERE (faskes_asal_id = ? OR faskes_tujuan_id = ?)';
+      params.push(req.user.faskes_id, req.user.faskes_id);
+    }
+
+    console.log('🔍 Executing stats query:', query);
+    console.log('🔍 Query params:', params);
+    
+    const [rows] = await db.execute(query, params);
+    
+    if (rows.length === 0) {
+      console.log('⚠️ No stats data found, returning defaults');
+      const defaultStats = {
+        total: 0,
+        pending: 0,
+        diterima: 0,
+        ditolak: 0,
+        selesai: 0
+      };
+      
+      return res.json({
+        success: true,
+        data: defaultStats
+      });
+    }
+
+    const stats = rows[0];
+    console.log('✅ Stats calculated successfully:', stats);
 
     res.json({
       success: true,
-      data: defaultStats
+      data: {
+        total: parseInt(stats.total) || 0,
+        pending: parseInt(stats.pending) || 0,
+        diterima: parseInt(stats.diterima) || 0,
+        ditolak: parseInt(stats.ditolak) || 0,
+        selesai: parseInt(stats.selesai) || 0
+      }
     });
   } catch (error) {
-    console.error('Error fetching rujukan stats:', error);
+    console.error('❌ Error fetching rujukan stats:', error);
     
     // Return default stats if there's an error
     const defaultStats = {

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 import Layout from './Layout';
 import './Dashboard.css';
 
@@ -8,31 +9,69 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
   const { isConnected } = useSocket();
+  const { isRefreshing } = useAuth();
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async (retryAttempt = 0) => {
     try {
+      setError('');
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Token tidak ditemukan, silakan login ulang');
+        setLoading(false);
+        return;
+      }
+
       const headers = { Authorization: `Bearer ${token}` };
       
+      console.log('📊 Fetching dashboard stats...');
       const response = await axios.get('http://localhost:3001/api/rujukan/stats/overview', { headers });
-      setStats(response.data.data);
+      
+      if (response.data.success) {
+        setStats(response.data.data);
+        console.log('✅ Stats loaded successfully:', response.data.data);
+      } else {
+        throw new Error('Response format tidak valid');
+      }
     } catch (error) {
-      setError('Gagal memuat statistik dashboard');
-      console.error('Error fetching stats:', error);
+      console.error('❌ Error fetching stats:', error);
+      
+      // Jika error 401 dan masih ada retry attempt, coba lagi
+      if (error.response?.status === 401 && retryAttempt < 2) {
+        console.log(`🔄 Retrying stats fetch (attempt ${retryAttempt + 1})...`);
+        setTimeout(() => {
+          fetchStats(retryAttempt + 1);
+        }, 1000);
+        return;
+      }
+      
+      setError('Gagal memuat statistik dashboard. Silakan refresh halaman.');
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  // Retry mechanism
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
+    setLoading(true);
+    fetchStats();
   };
 
-  if (loading) {
+  // Loading state dengan refresh indicator
+  if (loading || isRefreshing) {
     return (
       <Layout>
-        <div className="loading">Memuat dashboard...</div>
+        <div className="loading">
+          <div className="loading-spinner"></div>
+          <p>{isRefreshing ? 'Memperbarui token...' : 'Memuat dashboard...'}</p>
+        </div>
       </Layout>
     );
   }
@@ -54,7 +93,13 @@ const Dashboard = () => {
 
         {error && (
           <div className="error-message">
-            {error}
+            <div className="error-content">
+              <span className="error-icon">⚠️</span>
+              <span className="error-text">{error}</span>
+              <button onClick={handleRetry} className="retry-button">
+                🔄 Coba Lagi
+              </button>
+            </div>
           </div>
         )}
 
