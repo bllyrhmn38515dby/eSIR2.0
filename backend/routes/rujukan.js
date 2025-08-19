@@ -1,8 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { verifyToken, requireRole } = require('../middleware/auth');
+const { verifyToken } = require('../middleware/auth');
 const db = require('../config/db');
 const { sendRujukanNotification, sendStatusUpdateNotification } = require('../utils/notificationHelper');
+
+// Constants for status
+const STATUSES = {
+  PENDING: 'pending',
+  DITERIMA: 'diterima',
+  DITOLAK: 'ditolak',
+  SELESAI: 'selesai',
+};
 
 // Generate nomor rujukan otomatis
 const generateNomorRujukan = async () => {
@@ -19,7 +27,7 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     let query = `
       SELECT r.*, 
-             p.nama_pasien, p.nik as nik_pasien,
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as user_nama
@@ -40,15 +48,8 @@ router.get('/', verifyToken, async (req, res) => {
 
     query += ' ORDER BY r.tanggal_rujukan DESC';
 
-    console.log('🔍 Executing query:', query);
-    console.log('🔍 Query params:', params);
-    
     const [rows] = await db.execute(query, params);
     
-    console.log('✅ Query executed successfully');
-    console.log('📊 Rows count:', rows.length);
-    console.log('📋 Sample row:', rows[0]);
-
     res.json({
       success: true,
       data: rows
@@ -67,7 +68,7 @@ router.get('/:id', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien, p.nik as nik_pasien,
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as user_nama
@@ -103,14 +104,12 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.post('/with-pasien', verifyToken, async (req, res) => {
   try {
     const {
-      // Data Pasien
       nik,
       nama_pasien,
       tanggal_lahir,
       jenis_kelamin,
       alamat,
       telepon,
-      // Data Rujukan
       faskes_asal_id,
       faskes_tujuan_id,
       diagnosa,
@@ -118,7 +117,7 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       catatan_asal
     } = req.body;
 
-    // Validasi input
+    // Validate input
     if (!nik || !nama_pasien || !tanggal_lahir || !jenis_kelamin || !alamat ||
         !faskes_asal_id || !faskes_tujuan_id || !diagnosa || !alasan_rujukan) {
       return res.status(400).json({
@@ -127,7 +126,7 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       });
     }
 
-    // Validasi NIK (16 digit)
+    // Validate NIK (16 digit)
     if (nik.length !== 16 || !/^\d+$/.test(nik)) {
       return res.status(400).json({
         success: false,
@@ -137,25 +136,25 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
 
     let pasienId;
 
-    // Cek apakah pasien sudah ada
+    // Check if pasien already exists
     const [existingPasien] = await db.execute(
       'SELECT id FROM pasien WHERE nik = ?',
       [nik]
     );
 
     if (existingPasien.length > 0) {
-      // Update pasien yang sudah ada
+      // Update existing pasien
       pasienId = existingPasien[0].id;
       await db.execute(`
         UPDATE pasien 
-        SET nama_pasien = ?, tanggal_lahir = ?, jenis_kelamin = ?, 
+        SET nama_lengkap = ?, tanggal_lahir = ?, jenis_kelamin = ?, 
             alamat = ?, telepon = ?, updated_at = NOW()
         WHERE id = ?
       `, [nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon, pasienId]);
     } else {
-      // Buat pasien baru
+      // Create new pasien
       const [pasienResult] = await db.execute(`
-        INSERT INTO pasien (nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon)
+        INSERT INTO pasien (nik, nama_lengkap, tanggal_lahir, jenis_kelamin, alamat, telepon)
         VALUES (?, ?, ?, ?, ?, ?)
       `, [nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon]);
       
@@ -170,16 +169,16 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       INSERT INTO rujukan (
         nomor_rujukan, pasien_id, faskes_asal_id, faskes_tujuan_id,
         diagnosa, alasan_rujukan, catatan_asal, status, tanggal_rujukan, user_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     `, [
       nomorRujukan, pasienId, faskes_asal_id, faskes_tujuan_id,
-      diagnosa, alasan_rujukan, catatan_asal || '', req.user.id
+      diagnosa, alasan_rujukan, catatan_asal || '', STATUSES.PENDING, req.user.id
     ]);
 
     // Get the created rujukan with details
     const [rujukanData] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien, p.nik as nik_pasien,
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -188,15 +187,6 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
       WHERE r.id = ?
     `, [result.insertId]);
-
-    // Send notification
-    if (global.io) {
-      try {
-        await sendRujukanNotification(global.io, rujukanData[0], req.user.id);
-      } catch (error) {
-        console.error('Error sending notification:', error);
-      }
-    }
 
     const message = existingPasien.length > 0 
       ? 'Pasien berhasil diupdate dan rujukan berhasil dibuat'
@@ -227,7 +217,7 @@ router.post('/', verifyToken, async (req, res) => {
       catatan_asal
     } = req.body;
 
-    // Validasi input
+    // Validate input
     if (!pasien_id || !faskes_tujuan_id || !diagnosa || !alasan_rujukan) {
       return res.status(400).json({
         success: false,
@@ -243,16 +233,16 @@ router.post('/', verifyToken, async (req, res) => {
       INSERT INTO rujukan (
         nomor_rujukan, pasien_id, faskes_asal_id, faskes_tujuan_id,
         diagnosa, alasan_rujukan, catatan_asal, status, tanggal_rujukan, user_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     `, [
       nomorRujukan, pasien_id, req.user.faskes_id, faskes_tujuan_id,
-      diagnosa, alasan_rujukan, catatan_asal || '', req.user.id
+      diagnosa, alasan_rujukan, catatan_asal || '', STATUSES.PENDING, req.user.id
     ]);
 
     // Get the created rujukan with details
     const [rujukanData] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien, p.nik as nik_pasien,
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -261,15 +251,6 @@ router.post('/', verifyToken, async (req, res) => {
       LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
       WHERE r.id = ?
     `, [result.insertId]);
-
-    // Send notification
-    if (global.io) {
-      try {
-        await sendRujukanNotification(global.io, rujukanData[0], req.user.id);
-      } catch (error) {
-        console.error('Error sending notification:', error);
-      }
-    }
 
     res.status(201).json({
       success: true,
@@ -291,9 +272,8 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     const { status, catatan_tujuan } = req.body;
     const rujukanId = req.params.id;
 
-    // Validasi status
-    const validStatuses = ['pending', 'diterima', 'ditolak', 'selesai'];
-    if (!validStatuses.includes(status)) {
+    // Validate status
+    if (!Object.values(STATUSES).includes(status)) {
       return res.status(400).json({
         success: false,
         message: 'Status tidak valid'
@@ -303,7 +283,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get current rujukan data
     const [currentRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien, p.nik as nik_pasien,
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -342,7 +322,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien, p.nik as nik_pasien,
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -378,21 +358,17 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 // Get rujukan statistics
 router.get('/stats/overview', verifyToken, async (req, res) => {
   try {
-    console.log('📊 Fetching rujukan stats for user:', req.user.nama_lengkap);
-    console.log('User role:', req.user.role);
-    console.log('User faskes_id:', req.user.faskes_id);
-    
     let query = `
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN status = 'menunggu' THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN status = 'diterima' THEN 1 ELSE 0 END) as diterima,
-        SUM(CASE WHEN status = 'ditolak' THEN 1 ELSE 0 END) as ditolak,
-        SUM(CASE WHEN status = 'selesai' THEN 1 ELSE 0 END) as selesai
+        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as diterima,
+        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as ditolak,
+        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as selesai
       FROM rujukan
     `;
     
-    const params = [];
+    const params = [STATUSES.PENDING, STATUSES.DITERIMA, STATUSES.DITOLAK, STATUSES.SELESAI];
 
     // Filter berdasarkan role user
     if (req.user.role === 'admin_faskes' && req.user.faskes_id) {
@@ -400,29 +376,15 @@ router.get('/stats/overview', verifyToken, async (req, res) => {
       params.push(req.user.faskes_id, req.user.faskes_id);
     }
 
-    console.log('🔍 Executing stats query:', query);
-    console.log('🔍 Query params:', params);
-    
     const [rows] = await db.execute(query, params);
     
-    if (rows.length === 0) {
-      console.log('⚠️ No stats data found, returning defaults');
-      const defaultStats = {
-        total: 0,
-        pending: 0,
-        diterima: 0,
-        ditolak: 0,
-        selesai: 0
-      };
-      
-      return res.json({
-        success: true,
-        data: defaultStats
-      });
-    }
-
-    const stats = rows[0];
-    console.log('✅ Stats calculated successfully:', stats);
+    const stats = rows.length > 0 ? rows[0] : {
+      total: 0,
+      pending: 0,
+      diterima: 0,
+      ditolak: 0,
+      selesai: 0
+    };
 
     res.json({
       success: true,
@@ -435,20 +397,18 @@ router.get('/stats/overview', verifyToken, async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('❌ Error fetching rujukan stats:', error);
+    console.error('Error fetching rujukan stats:', error);
     
     // Return default stats if there's an error
-    const defaultStats = {
-      total: 0,
-      pending: 0,
-      diterima: 0,
-      ditolak: 0,
-      selesai: 0
-    };
-
     res.json({
       success: true,
-      data: defaultStats
+      data: {
+        total: 0,
+        pending: 0,
+        diterima: 0,
+        ditolak: 0,
+        selesai: 0
+      }
     });
   }
 });

@@ -1,49 +1,37 @@
-const axios = require('axios');
+const { exec } = require('child_process');
 
-async function testSimpleEndpoints() {
-  const baseURL = 'http://localhost:3004';
-  
-  try {
-    console.log('🧪 Testing simple endpoints...\n');
-    
-    // Test POST
-    console.log('1. Testing POST /api/auth/users...');
-    const postResponse = await axios.post(`${baseURL}/api/auth/users`, {
-      nama_lengkap: 'Test User',
-      email: 'test@example.com',
-      password: 'password123',
-      role: 'admin_faskes'
-    });
-    console.log('✅ POST successful:', postResponse.data);
-    
-    // Test PUT
-    console.log('\n2. Testing PUT /api/auth/users/1...');
-    const putResponse = await axios.put(`${baseURL}/api/auth/users/1`, {
-      nama_lengkap: 'Updated User',
-      email: 'updated@example.com',
-      role: 'admin_faskes'
-    });
-    console.log('✅ PUT successful:', putResponse.data);
-    
-    // Test DELETE
-    console.log('\n3. Testing DELETE /api/auth/users/1...');
-    const deleteResponse = await axios.delete(`${baseURL}/api/auth/users/1`);
-    console.log('✅ DELETE successful:', deleteResponse.data);
-    
-    // Test GET
-    console.log('\n4. Testing GET /api/auth/users...');
-    const getResponse = await axios.get(`${baseURL}/api/auth/users`);
-    console.log('✅ GET successful:', getResponse.data);
-    
-    console.log('\n🎉 All simple endpoint tests passed!');
-    
-  } catch (error) {
-    console.error('❌ Error testing simple endpoints:', error.message);
-    
-    if (error.code === 'ECONNREFUSED') {
-      console.log('💡 Simple test server is not running. Please start it first.');
+function testSimpleEndpoints() {
+  console.log('🧪 Testing simple endpoints...\n');
+
+  // Test 1: Basic server
+  console.log('1. Testing basic server...');
+  exec('curl -X GET "http://localhost:3001/test"', (error, stdout, stderr) => {
+    if (error) {
+      console.log('❌ Error:', error.message);
+      return;
     }
-  }
+    console.log('✅ Server response:', stdout);
+    
+    // Test 2: Auth endpoint
+    console.log('\n2. Testing auth endpoint...');
+    exec('curl -X GET "http://localhost:3001/api/auth/test"', (error, stdout, stderr) => {
+      if (error) {
+        console.log('❌ Auth error:', error.message);
+        return;
+      }
+      console.log('✅ Auth response:', stdout);
+      
+      // Test 3: Tracking endpoint without auth
+      console.log('\n3. Testing tracking endpoint without auth...');
+      exec('curl -X POST "http://localhost:3001/api/tracking/start-session" -H "Content-Type: application/json" -d "{\\"rujukan_id\\": 1}"', (error, stdout, stderr) => {
+        if (error) {
+          console.log('❌ Tracking error:', error.message);
+          return;
+        }
+        console.log('✅ Tracking response:', stdout);
+      });
+    });
+  });
 }
 
 testSimpleEndpoints();

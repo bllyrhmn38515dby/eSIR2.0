@@ -16,12 +16,80 @@ const AmbulanceTracker = () => {
   const [loadingRujukan, setLoadingRujukan] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualPosition, setManualPosition] = useState({ latitude: '', longitude: '' });
   const watchIdRef = useRef(null);
 
   // Load rujukan yang bisa di-track
   useEffect(() => {
     loadRujukanList();
+    loadActiveSessions();
   }, []);
+
+  // Check existing session when rujukan changes
+  useEffect(() => {
+    if (rujukanId) {
+      checkExistingSession();
+    }
+  }, [rujukanId]);
+
+  const checkExistingSession = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Cek apakah ada session aktif untuk rujukan yang dipilih
+      if (rujukanId) {
+        const response = await fetch(`http://localhost:3001/api/tracking/session/${rujukanId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Found existing session:', result.data);
+          
+          // Auto-resume existing session
+          setSessionToken(result.data.session_token);
+          setTrackingData({
+            nomor_rujukan: result.data.nomor_rujukan,
+            nama_pasien: result.data.nama_pasien,
+            faskes_asal_nama: result.data.faskes_asal_nama,
+            faskes_tujuan_nama: result.data.faskes_tujuan_nama,
+            status: result.data.rujukan_status
+          });
+          setIsTracking(true);
+          setSuccess('Session tracking aktif ditemukan, melanjutkan...');
+          
+          // Start GPS tracking
+          startGPSTracking();
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing session:', error);
+    }
+  };
+
+  const loadActiveSessions = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:3001/api/tracking/sessions/active', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Active sessions:', result.data);
+        // Handle active sessions if needed
+      }
+    } catch (error) {
+      console.error('Error loading active sessions:', error);
+    }
+  };
 
   const loadRujukanList = async () => {
     try {
@@ -79,7 +147,7 @@ const AmbulanceTracker = () => {
       setLoading(true);
       setError('');
 
-      const response = await fetch('/api/tracking/start-session', {
+      const response = await fetch('http://localhost:3001/api/tracking/start-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +164,12 @@ const AmbulanceTracker = () => {
         setSessionToken(result.data.session_token);
         setTrackingData(result.data.rujukan);
         setIsTracking(true);
-        setSuccess('Session tracking berhasil dimulai!');
+        
+        if (result.data.is_existing) {
+          setSuccess('Session tracking sudah aktif, melanjutkan tracking...');
+        } else {
+          setSuccess('Session tracking berhasil dimulai!');
+        }
         
         // Start GPS tracking
         startGPSTracking();
@@ -118,29 +191,69 @@ const AmbulanceTracker = () => {
       return;
     }
 
-    const options = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 0
+    // Clear any previous error
+    setError('');
+
+    // Try with high accuracy first, then fallback to lower accuracy
+    const tryGetPosition = (highAccuracy = true) => {
+      const options = {
+        enableHighAccuracy: highAccuracy,
+        timeout: highAccuracy ? 15000 : 30000, // Longer timeout for low accuracy
+        maximumAge: highAccuracy ? 0 : 60000 // Allow cached position for low accuracy
+      };
+
+      console.log(`🔄 Mencoba mendapatkan posisi GPS (${highAccuracy ? 'high accuracy' : 'low accuracy'})...`);
+
+      // Get initial position
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('✅ Posisi GPS berhasil didapatkan:', position.coords);
+          setCurrentPosition({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+          updatePosition(position.coords);
+          
+          // Start watching position with same options
+          startWatchingPosition(options);
+        },
+        (error) => {
+          console.error('❌ Error getting position:', error);
+          
+          let errorMessage = '';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Izin lokasi ditolak. Silakan izinkan akses lokasi di browser.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Informasi lokasi tidak tersedia.';
+              break;
+            case error.TIMEOUT:
+              if (highAccuracy) {
+                console.log('⏰ Timeout dengan high accuracy, mencoba low accuracy...');
+                setError('Mencoba mendapatkan posisi dengan akurasi rendah...');
+                setTimeout(() => tryGetPosition(false), 1000);
+                return;
+              } else {
+                errorMessage = 'Timeout mendapatkan posisi GPS. Pastikan GPS aktif dan coba lagi.';
+              }
+              break;
+            default:
+              errorMessage = 'Gagal mendapatkan posisi GPS.';
+          }
+          
+          setError(errorMessage);
+        },
+        options
+      );
     };
 
-    // Get initial position
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCurrentPosition({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy
-        });
-        updatePosition(position.coords);
-      },
-      (error) => {
-        console.error('Error getting position:', error);
-        setError('Gagal mendapatkan posisi GPS');
-      },
-      options
-    );
+    // Start with high accuracy
+    tryGetPosition(true);
+  };
 
+  const startWatchingPosition = (options) => {
     // Watch position changes
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
@@ -157,7 +270,12 @@ const AmbulanceTracker = () => {
       },
       (error) => {
         console.error('Error watching position:', error);
-        setError('Gagal memantau perubahan posisi GPS');
+        
+        // Don't show error for watching, just log it
+        // The user can still manually update status
+        if (error.code === error.TIMEOUT) {
+          console.log('⏰ Timeout watching position, akan mencoba lagi...');
+        }
       },
       options
     );
@@ -167,7 +285,7 @@ const AmbulanceTracker = () => {
     if (!sessionToken) return;
 
     try {
-      const response = await fetch('/api/tracking/update-position', {
+      const response = await fetch('http://localhost:3001/api/tracking/update-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -217,31 +335,61 @@ const AmbulanceTracker = () => {
   };
 
   const updateStatus = async (status) => {
-    if (!sessionToken || !currentPosition) return;
+    if (!sessionToken) {
+      setError('Session token tidak ditemukan');
+      return;
+    }
 
     try {
-      const response = await fetch('/api/tracking/update-position', {
+      // Gunakan posisi default jika tidak ada GPS
+      const position = currentPosition || {
+        latitude: -6.5971,
+        longitude: 106.8060,
+        accuracy: 1000,
+        speed: null,
+        heading: null
+      };
+
+      const requestBody = {
+        session_token: sessionToken,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        status: status,
+        speed: position.speed,
+        heading: position.heading,
+        accuracy: position.accuracy,
+        battery_level: getBatteryLevel()
+      };
+
+      console.log('🔄 Updating status:', status);
+      console.log('📡 Request body:', requestBody);
+
+      const response = await fetch('http://localhost:3001/api/tracking/update-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          session_token: sessionToken,
-          latitude: currentPosition.latitude,
-          longitude: currentPosition.longitude,
-          status: status,
-          speed: currentPosition.speed,
-          heading: currentPosition.heading,
-          accuracy: currentPosition.accuracy,
-          battery_level: getBatteryLevel()
-        })
+        body: JSON.stringify(requestBody)
       });
 
+      console.log('📡 Response status:', response.status);
+
       if (response.ok) {
-        setSuccess(`Status berhasil diupdate ke: ${status}`);
+        const result = await response.json();
+        console.log('✅ Update successful:', result);
+        setSuccess(`Status berhasil diupdate ke: ${getStatusText(status)}`);
+        
+        // Update current position jika berhasil
+        if (!currentPosition) {
+          setCurrentPosition(position);
+        }
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Error response:', errorData);
+        setError(errorData.message || 'Gagal mengupdate status');
       }
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error('❌ Error updating status:', error);
       setError('Gagal mengupdate status');
     }
   };
@@ -254,6 +402,56 @@ const AmbulanceTracker = () => {
       case 'tiba': return 'Tiba';
       default: return status;
     }
+  };
+
+  const handleManualPositionSubmit = () => {
+    const lat = parseFloat(manualPosition.latitude);
+    const lng = parseFloat(manualPosition.longitude);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      setError('Latitude dan longitude harus berupa angka');
+      return;
+    }
+    
+    if (lat < -90 || lat > 90) {
+      setError('Latitude harus antara -90 dan 90');
+      return;
+    }
+    
+    if (lng < -180 || lng > 180) {
+      setError('Longitude harus antara -180 dan 180');
+      return;
+    }
+
+    const position = {
+      latitude: lat,
+      longitude: lng,
+      accuracy: 100, // Manual input accuracy
+      speed: null,
+      heading: null
+    };
+
+    setCurrentPosition(position);
+    updatePosition(position);
+    setShowManualInput(false);
+    setError('');
+    setSuccess('Posisi manual berhasil diupdate');
+  };
+
+  const useDefaultPosition = () => {
+    // Default position di Bogor
+    const defaultPosition = {
+      latitude: -6.5971,
+      longitude: 106.8060,
+      accuracy: 1000, // Low accuracy for default position
+      speed: null,
+      heading: null
+    };
+
+    setCurrentPosition(defaultPosition);
+    updatePosition(defaultPosition);
+    setError('');
+    setSuccess('Menggunakan posisi default Bogor');
   };
 
   return (
@@ -419,11 +617,73 @@ const AmbulanceTracker = () => {
                       <span>{currentPosition.heading}°</span>
                     </div>
                   )}
+                  <div className="position-actions">
+                    <button 
+                      onClick={() => setShowManualInput(true)}
+                      className="manual-btn"
+                    >
+                      📝 Input Manual
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="no-position">
                   <p>Posisi GPS belum tersedia</p>
                   <p>Pastikan GPS aktif dan izin lokasi diberikan</p>
+                  <div className="position-fallback">
+                    <button 
+                      onClick={() => setShowManualInput(true)}
+                      className="manual-btn"
+                    >
+                      📝 Input Posisi Manual
+                    </button>
+                    <button 
+                      onClick={useDefaultPosition}
+                      className="default-btn"
+                    >
+                      🏠 Gunakan Posisi Default
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showManualInput && (
+                <div className="manual-input">
+                  <h4>📝 Input Posisi Manual</h4>
+                  <div className="input-group">
+                    <label>Latitude:</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={manualPosition.latitude}
+                      onChange={(e) => setManualPosition(prev => ({ ...prev, latitude: e.target.value }))}
+                      placeholder="-6.5971"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Longitude:</label>
+                    <input
+                      type="number"
+                      step="any"
+                      value={manualPosition.longitude}
+                      onChange={(e) => setManualPosition(prev => ({ ...prev, longitude: e.target.value }))}
+                      placeholder="106.8060"
+                    />
+                  </div>
+                  <div className="manual-actions">
+                    <button 
+                      onClick={handleManualPositionSubmit}
+                      className="submit-btn"
+                    >
+                      ✅ Submit
+                    </button>
+                    <button 
+                      onClick={() => setShowManualInput(false)}
+                      className="cancel-btn"
+                    >
+                      ❌ Batal
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

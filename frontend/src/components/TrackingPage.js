@@ -3,6 +3,7 @@ import { useSocket } from '../context/SocketContext';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import Layout from './Layout';
 import './TrackingPage.css';
 
 // Fix Leaflet default marker icons
@@ -13,19 +14,35 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// Custom icons
-const createCustomIcon = (iconUrl, size = [32, 32]) => {
+// Custom icons dengan fallback yang lebih baik
+const createCustomIcon = (iconUrl, size = [32, 32], className = '') => {
   return L.icon({
     iconUrl,
     iconSize: size,
     iconAnchor: [size[0] / 2, size[1] / 2],
-    popupAnchor: [0, -size[1] / 2]
+    popupAnchor: [0, -size[1] / 2],
+    className: className
   });
 };
 
-const ambulanceIcon = createCustomIcon('https://maps.google.com/mapfiles/ms/icons/ambulance.png', [40, 40]);
-const originIcon = createCustomIcon('https://maps.google.com/mapfiles/ms/icons/green-dot.png', [32, 32]);
-const destinationIcon = createCustomIcon('https://maps.google.com/mapfiles/ms/icons/red-dot.png', [32, 32]);
+// Icons dengan fallback yang lebih reliable
+const ambulanceIcon = createCustomIcon(
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNjY2NjYiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHg9IjgiIHk9IjgiPgo8cGF0aCBkPSJNMTIgMkMxMy4xIDIgMTQgMi45IDE0IDRWMTRIMThWNEgxNkMxNiAyLjkgMTUuMSAyIDE0IDJIMTJaIi8+CjxwYXRoIGQ9Ik0xOCAxNkgyMFYxOEgyMlYyMEgyMlYyMkgyMFYyNEgxOFYyMkgxNlYyMEgxNlYxOEgxOFYxNloiLz4KPHN2Zz4KPC9zdmc+', 
+  [40, 40], 
+  'custom-ambulance-icon'
+);
+
+const originIcon = createCustomIcon(
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTIiIGZpbGw9IiMzNEE4NTMiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+', 
+  [32, 32], 
+  'custom-origin-icon'
+);
+
+const destinationIcon = createCustomIcon(
+  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTIiIGZpbGw9IiNGRjM0MzQiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+', 
+  [32, 32], 
+  'custom-destination-icon'
+);
 
 // Component untuk update map center
 const MapUpdater = ({ center }) => {
@@ -53,7 +70,7 @@ const TrackingPage = () => {
   const loadActiveSessions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/tracking/sessions/active', {
+      const response = await fetch('http://localhost:3001/api/tracking/sessions/active', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -144,7 +161,7 @@ const TrackingPage = () => {
       }
 
       // Load tracking data
-      const response = await fetch(`/api/tracking/${session.rujukan_id}`, {
+      const response = await fetch(`http://localhost:3001/api/tracking/${session.rujukan_id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -209,183 +226,194 @@ const TrackingPage = () => {
   };
 
   return (
-    <div className="tracking-page">
-      <div className="tracking-header">
-        <h1>🛰️ Real-Time Route Tracking</h1>
-        <p>Monitor perjalanan ambulans dan pasien secara real-time di Kota Bogor</p>
-      </div>
+    <Layout>
+      <div className="tracking-page">
+        <div className="tracking-header">
+          <h1>🛰️ Real-Time Route Tracking</h1>
+          <p>Monitor perjalanan ambulans dan pasien secara real-time di Kota Bogor</p>
+        </div>
 
-      <div className="tracking-container">
-        <div className="tracking-sidebar">
-          <div className="sidebar-header">
-            <h3>📋 Sesi Tracking Aktif</h3>
-            <button 
-              className="refresh-btn"
-              onClick={loadActiveSessions}
-              disabled={loading}
-            >
-              🔄 Refresh
-            </button>
+        <div className="tracking-container">
+          <div className="tracking-sidebar">
+            <div className="sidebar-header">
+              <h3>📋 Sesi Tracking Aktif</h3>
+              <button 
+                className="refresh-btn"
+                onClick={loadActiveSessions}
+                disabled={loading}
+              >
+                🔄 Refresh
+              </button>
+            </div>
+
+            {loading ? (
+              <div className="loading">Loading...</div>
+            ) : activeSessions.length === 0 ? (
+              <div className="no-sessions">
+                <p>Belum ada sesi tracking aktif</p>
+              </div>
+            ) : (
+              <div className="sessions-list">
+                {activeSessions.map((session) => (
+                  <div 
+                    key={session.id}
+                    className={`session-card ${selectedSession?.id === session.id ? 'active' : ''}`}
+                    onClick={() => selectSession(session)}
+                  >
+                    <div className="session-header">
+                      <h4>{session.nomor_rujukan}</h4>
+                      <span 
+                        className="status-badge"
+                        style={{ backgroundColor: getStatusColor(session.status) }}
+                      >
+                        {getStatusText(session.status)}
+                      </span>
+                    </div>
+                    
+                    <div className="session-details">
+                      <p><strong>Pasien:</strong> {session.nama_pasien}</p>
+                      <p><strong>Dari:</strong> {session.faskes_asal_nama}</p>
+                      <p><strong>Ke:</strong> {session.faskes_tujuan_nama}</p>
+                      <p><strong>Petugas:</strong> {session.petugas_nama}</p>
+                    </div>
+
+                    {(session.estimated_time || session.estimated_distance) && (
+                      <div className="session-estimates">
+                        {session.estimated_time && (
+                          <span>⏱️ {formatTime(session.estimated_time)}</span>
+                        )}
+                        {session.estimated_distance && typeof session.estimated_distance === 'number' && (
+                          <span>📏 {session.estimated_distance.toFixed(1)} km</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {loading ? (
-            <div className="loading">Loading...</div>
-          ) : activeSessions.length === 0 ? (
-            <div className="no-sessions">
-              <p>Belum ada sesi tracking aktif</p>
-            </div>
-          ) : (
-            <div className="sessions-list">
-              {activeSessions.map((session) => (
-                <div 
-                  key={session.id}
-                  className={`session-card ${selectedSession?.id === session.id ? 'active' : ''}`}
-                  onClick={() => selectSession(session)}
+          <div className="tracking-map-container">
+            <MapContainer 
+              ref={mapRef}
+              center={mapCenter}
+              zoom={12}
+              style={{ height: '600px', width: '100%' }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              
+              <MapUpdater center={mapCenter} />
+
+              {/* Route Polyline */}
+              {routePolyline.length > 0 && (
+                <Polyline
+                  positions={routePolyline}
+                  color="#4285F4"
+                  weight={5}
+                  opacity={0.8}
+                />
+              )}
+
+              {/* Origin Marker */}
+              {trackingData?.route?.origin?.lat && (
+                <Marker
+                  position={[trackingData.route.origin.lat, trackingData.route.origin.lng]}
+                  icon={originIcon}
                 >
-                  <div className="session-header">
-                    <h4>{session.nomor_rujukan}</h4>
-                    <span 
-                      className="status-badge"
-                      style={{ backgroundColor: getStatusColor(session.status) }}
-                    >
-                      {getStatusText(session.status)}
+                  <Popup>
+                    <strong>Asal:</strong> {trackingData.route.origin.name}
+                  </Popup>
+                </Marker>
+              )}
+
+              {/* Destination Marker */}
+              {trackingData?.route?.destination?.lat && (
+                <Marker
+                  position={[trackingData.route.destination.lat, trackingData.route.destination.lng]}
+                  icon={destinationIcon}
+                >
+                  <Popup>
+                    <strong>Tujuan:</strong> {trackingData.route.destination.name}
+                  </Popup>
+                </Marker>
+              )}
+
+              {/* Current Position Marker */}
+              {trackingData?.tracking?.latitude && (
+                <Marker
+                  position={[trackingData.tracking.latitude, trackingData.tracking.longitude]}
+                  icon={ambulanceIcon}
+                >
+                  <Popup>
+                    <strong>Posisi Ambulans</strong><br />
+                    Status: {getStatusText(trackingData.tracking.status)}
+                  </Popup>
+                </Marker>
+              )}
+            </MapContainer>
+            
+            {selectedSession && trackingData && (
+              <div className="tracking-info-panel">
+                <div className="info-header">
+                  <h3>📍 Info Tracking</h3>
+                  <span 
+                    className="status-badge"
+                    style={{ backgroundColor: getStatusColor(trackingData.tracking.status) }}
+                  >
+                    {getStatusText(trackingData.tracking.status)}
+                  </span>
+                </div>
+                
+                <div className="info-content">
+                  <div className="info-row">
+                    <span>Nomor Rujukan:</span>
+                    <span>{trackingData.rujukan.nomor_rujukan}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Pasien:</span>
+                    <span>{trackingData.rujukan.nama_pasien}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Dari:</span>
+                    <span>{trackingData.route.origin.name}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Ke:</span>
+                    <span>{trackingData.route.destination.name}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Estimasi Waktu:</span>
+                    <span>{formatTime(trackingData.tracking.estimated_time)}</span>
+                  </div>
+                  <div className="info-row">
+                    <span>Jarak Tersisa:</span>
+                    <span>
+                      {trackingData.tracking.estimated_distance && typeof trackingData.tracking.estimated_distance === 'number' 
+                        ? `${trackingData.tracking.estimated_distance.toFixed(1)} km`
+                        : '-'
+                      }
                     </span>
                   </div>
-                  
-                  <div className="session-details">
-                    <p><strong>Pasien:</strong> {session.nama_pasien}</p>
-                    <p><strong>Dari:</strong> {session.faskes_asal_nama}</p>
-                    <p><strong>Ke:</strong> {session.faskes_tujuan_nama}</p>
-                    <p><strong>Petugas:</strong> {session.petugas_nama}</p>
-                  </div>
-
-                  {session.estimated_time && (
-                    <div className="session-estimates">
-                      <span>⏱️ {formatTime(session.estimated_time)}</span>
-                      <span>📏 {session.estimated_distance?.toFixed(1)} km</span>
+                  {trackingData.tracking.speed && typeof trackingData.tracking.speed === 'number' && (
+                    <div className="info-row">
+                      <span>Kecepatan:</span>
+                      <span>{trackingData.tracking.speed.toFixed(1)} km/h</span>
                     </div>
                   )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="tracking-map-container">
-          <MapContainer 
-            ref={mapRef}
-            center={mapCenter}
-            zoom={12}
-            style={{ height: '600px', width: '100%' }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            
-            <MapUpdater center={mapCenter} />
-
-            {/* Route Polyline */}
-            {routePolyline.length > 0 && (
-              <Polyline
-                positions={routePolyline}
-                color="#4285F4"
-                weight={5}
-                opacity={0.8}
-              />
-            )}
-
-            {/* Origin Marker */}
-            {trackingData?.route?.origin?.lat && (
-              <Marker
-                position={[trackingData.route.origin.lat, trackingData.route.origin.lng]}
-                icon={originIcon}
-              >
-                <Popup>
-                  <strong>Asal:</strong> {trackingData.route.origin.name}
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Destination Marker */}
-            {trackingData?.route?.destination?.lat && (
-              <Marker
-                position={[trackingData.route.destination.lat, trackingData.route.destination.lng]}
-                icon={destinationIcon}
-              >
-                <Popup>
-                  <strong>Tujuan:</strong> {trackingData.route.destination.name}
-                </Popup>
-              </Marker>
-            )}
-
-            {/* Current Position Marker */}
-            {trackingData?.tracking?.latitude && (
-              <Marker
-                position={[trackingData.tracking.latitude, trackingData.tracking.longitude]}
-                icon={ambulanceIcon}
-              >
-                <Popup>
-                  <strong>Posisi Ambulans</strong><br />
-                  Status: {getStatusText(trackingData.tracking.status)}
-                </Popup>
-              </Marker>
-            )}
-          </MapContainer>
-          
-          {selectedSession && trackingData && (
-            <div className="tracking-info-panel">
-              <div className="info-header">
-                <h3>📍 Info Tracking</h3>
-                <span 
-                  className="status-badge"
-                  style={{ backgroundColor: getStatusColor(trackingData.tracking.status) }}
-                >
-                  {getStatusText(trackingData.tracking.status)}
-                </span>
-              </div>
-              
-              <div className="info-content">
-                <div className="info-row">
-                  <span>Nomor Rujukan:</span>
-                  <span>{trackingData.rujukan.nomor_rujukan}</span>
-                </div>
-                <div className="info-row">
-                  <span>Pasien:</span>
-                  <span>{trackingData.rujukan.nama_pasien}</span>
-                </div>
-                <div className="info-row">
-                  <span>Dari:</span>
-                  <span>{trackingData.route.origin.name}</span>
-                </div>
-                <div className="info-row">
-                  <span>Ke:</span>
-                  <span>{trackingData.route.destination.name}</span>
-                </div>
-                <div className="info-row">
-                  <span>Estimasi Waktu:</span>
-                  <span>{formatTime(trackingData.tracking.estimated_time)}</span>
-                </div>
-                <div className="info-row">
-                  <span>Jarak Tersisa:</span>
-                  <span>{trackingData.tracking.estimated_distance?.toFixed(1)} km</span>
-                </div>
-                {trackingData.tracking.speed && (
                   <div className="info-row">
-                    <span>Kecepatan:</span>
-                    <span>{trackingData.tracking.speed.toFixed(1)} km/h</span>
+                    <span>Update Terakhir:</span>
+                    <span>{new Date(trackingData.tracking.updated_at).toLocaleTimeString()}</span>
                   </div>
-                )}
-                <div className="info-row">
-                  <span>Update Terakhir:</span>
-                  <span>{new Date(trackingData.tracking.updated_at).toLocaleTimeString()}</span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

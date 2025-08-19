@@ -384,3 +384,42 @@
 .status-badge[style*="34A853"] {
   background-color: #34A853 !important;
 }
+
+/* Leaflet Marker Icon Fixes */
+.leaflet-marker-icon {
+  background: none !important;
+  border: none !important;
+}
+
+.leaflet-marker-icon img {
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.custom-ambulance-icon {
+  background: none !important;
+  border: none !important;
+}
+
+.custom-origin-icon {
+  background: none !important;
+  border: none !important;
+}
+
+.custom-destination-icon {
+  background: none !important;
+  border: none !important;
+}
+
+/* Ensure marker icons are visible */
+.leaflet-marker-icon-zoom-animated {
+  background: none !important;
+  border: none !important;
+}
+
+.leaflet-marker-icon-zoom-animated img {
+  max-width: none !important;
+  max-height: none !important;
+  width: auto !important;
+  height: auto !important;
+}

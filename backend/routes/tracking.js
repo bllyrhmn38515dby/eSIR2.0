@@ -58,9 +58,17 @@ router.post('/start-session', verifyToken, async (req, res) => {
     `, [rujukan_id]);
 
     if (existingSession.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Sudah ada session tracking aktif untuk rujukan ini'
+      // Jika sudah ada session aktif, return session yang sudah ada
+      const existingSessionData = existingSession[0];
+      return res.status(200).json({
+        success: true,
+        message: 'Session tracking sudah aktif',
+        data: {
+          session_id: existingSessionData.id,
+          session_token: existingSessionData.session_token,
+          rujukan: rujukan,
+          is_existing: true
+        }
       });
     }
 
@@ -101,6 +109,8 @@ router.post('/start-session', verifyToken, async (req, res) => {
 // Update position (untuk petugas ambulans)
 router.post('/update-position', async (req, res) => {
   try {
+    console.log('🔄 Update position request:', req.body);
+    
     const { 
       session_token, 
       latitude, 
@@ -113,19 +123,23 @@ router.post('/update-position', async (req, res) => {
     } = req.body;
 
     if (!session_token || !latitude || !longitude) {
+      console.log('❌ Missing required fields:', { session_token: !!session_token, latitude: !!latitude, longitude: !!longitude });
       return res.status(400).json({
         success: false,
         message: 'session_token, latitude, dan longitude wajib diisi'
       });
     }
 
-    // Validasi koordinat (dalam area Kota Bogor)
-    if (latitude < -6.7 || latitude > -6.5 || longitude < 106.7 || longitude > 106.9) {
+    // Validasi koordinat (dalam area Jawa Barat - sangat fleksibel)
+    console.log('📍 Validating coordinates:', { latitude, longitude });
+    if (latitude < -7.5 || latitude > -5.5 || longitude < 106.0 || longitude > 108.5) {
+      console.log('❌ Coordinates out of range');
       return res.status(400).json({
         success: false,
-        message: 'Koordinat di luar area Kota Bogor'
+        message: 'Koordinat di luar area Jawa Barat'
       });
     }
+    console.log('✅ Coordinates valid');
 
     // Cek session token
     const [sessionRows] = await db.execute(`
@@ -235,7 +249,7 @@ router.get('/:rujukan_id', verifyToken, async (req, res) => {
 
     // Get rujukan details
     const [rujukanRows] = await db.execute(`
-      SELECT r.*, p.nama_pasien, p.no_rm,
+      SELECT r.*, p.nama_lengkap as nama_pasien, p.nik,
              fa.nama_faskes as faskes_asal_nama, fa.latitude as asal_lat, fa.longitude as asal_lng,
              ft.nama_faskes as faskes_tujuan_nama, ft.latitude as tujuan_lat, ft.longitude as tujuan_lng
       FROM rujukan r
@@ -289,12 +303,56 @@ router.get('/:rujukan_id', verifyToken, async (req, res) => {
   }
 });
 
+// Get active session for specific rujukan
+router.get('/session/:rujukan_id', verifyToken, async (req, res) => {
+  try {
+    const { rujukan_id } = req.params;
+
+    const [rows] = await db.execute(`
+      SELECT ts.*, td.latitude, td.longitude, td.status as tracking_status, td.estimated_time, td.estimated_distance,
+             r.nomor_rujukan, r.status as rujukan_status, p.nama_lengkap as nama_pasien,
+             fa.nama_faskes as faskes_asal_nama,
+             ft.nama_faskes as faskes_tujuan_nama,
+             u.nama_lengkap as petugas_nama
+      FROM tracking_sessions ts
+      LEFT JOIN tracking_data td ON ts.rujukan_id = td.rujukan_id
+      LEFT JOIN rujukan r ON ts.rujukan_id = r.id
+      LEFT JOIN pasien p ON r.pasien_id = p.id
+      LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
+      LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
+      LEFT JOIN users u ON ts.user_id = u.id
+      WHERE ts.rujukan_id = ? AND ts.is_active = TRUE
+      ORDER BY ts.started_at DESC
+      LIMIT 1
+    `, [rujukan_id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Tidak ada session aktif untuk rujukan ini'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error getting active session:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data session aktif'
+    });
+  }
+});
+
 // Get all active tracking sessions
 router.get('/sessions/active', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.execute(`
-      SELECT ts.*, td.latitude, td.longitude, td.status, td.estimated_time, td.estimated_distance,
-             r.nomor_rujukan, p.nama_pasien,
+      SELECT ts.*, td.latitude, td.longitude, td.status as tracking_status, td.estimated_time, td.estimated_distance,
+             r.nomor_rujukan, r.status as rujukan_status, p.nama_lengkap as nama_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as petugas_nama
