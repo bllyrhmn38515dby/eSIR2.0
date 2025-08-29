@@ -175,7 +175,7 @@ const UserManagement = () => {
     const roleConfig = {
       'admin_pusat': { text: 'Admin Pusat', class: 'role-admin-pusat' },
       'admin_faskes': { text: 'Admin Faskes', class: 'role-admin-faskes' },
-      'operator': { text: 'Operator', class: 'role-operator' }
+      'sopir_ambulans': { text: 'Sopir Ambulans', class: 'role-sopir-ambulans' }
     };
     
     const config = roleConfig[role] || { text: role, class: 'role-default' };
@@ -239,6 +239,121 @@ const UserManagement = () => {
               </div>
             )}
 
+            {/* User Form Modal */}
+            {showForm && (
+              <div className="form-modal">
+                <div className="form-content">
+                  <div className="form-header">
+                    <h2>{editingUser ? 'Edit User' : 'Tambah User Baru'}</h2>
+                    <button 
+                      className="close-btn"
+                      onClick={() => {
+                        setShowForm(false);
+                        resetForm();
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <form onSubmit={handleSubmit}>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Nama Lengkap *</label>
+                        <input
+                          type="text"
+                          name="nama_lengkap"
+                          value={formData.nama_lengkap}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="Masukkan nama lengkap"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Email *</label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="user@example.com"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Password {!editingUser && '*'}</label>
+                        <input
+                          type="password"
+                          name="password"
+                          value={formData.password}
+                          onChange={handleInputChange}
+                          required={!editingUser}
+                          placeholder={editingUser ? "Kosongkan jika tidak ingin mengubah password" : "Masukkan password"}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>Role *</label>
+                        <select
+                          name="role"
+                          value={formData.role}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="admin_pusat">Admin Pusat</option>
+                          <option value="admin_faskes">Admin Faskes</option>
+                          <option value="sopir_ambulans">Sopir Ambulans</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Faskes</label>
+                        <select
+                          name="faskes_id"
+                          value={formData.faskes_id}
+                          onChange={handleInputChange}
+                          disabled={formData.role === 'admin_pusat'}
+                        >
+                          <option value="">Pilih Faskes</option>
+                          {faskes.map(faskes => (
+                            <option key={faskes.id} value={faskes.id}>
+                              {faskes.nama_faskes}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label>Telepon</label>
+                        <input
+                          type="tel"
+                          name="telepon"
+                          value={formData.telepon}
+                          onChange={handleInputChange}
+                          placeholder="08123456789"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-actions">
+                      <button type="button" className="btn-secondary" onClick={() => {
+                        setShowForm(false);
+                        resetForm();
+                      }}>
+                        Batal
+                      </button>
+                      <button type="submit" className="btn-primary">
+                        {editingUser ? 'Update' : 'Simpan'}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
             <div className="user-management-content">
               <div className="stats-grid">
                 <div className="stat-card">
@@ -263,10 +378,10 @@ const UserManagement = () => {
                   </div>
                 </div>
                 <div className="stat-card">
-                  <div className="stat-icon">⚙️</div>
+                  <div className="stat-icon">🚑</div>
                   <div className="stat-content">
-                    <h3>Operator</h3>
-                    <p className="stat-number">{users.filter(u => u.role === 'operator').length}</p>
+                    <h3>Sopir Ambulans</h3>
+                    <p className="stat-number">{users.filter(u => u.role === 'sopir_ambulans').length}</p>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,9 @@
 -- Database schema untuk eSIR 2.0
 
+-- Buat dan gunakan database esirv2
+CREATE DATABASE IF NOT EXISTS esirv2;
+USE esirv2;
+
 -- Tabel faskes (fasilitas kesehatan)
 CREATE TABLE IF NOT EXISTS faskes (
     id INT AUTO_INCREMENT PRIMARY KEY,

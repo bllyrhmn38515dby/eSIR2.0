@@ -50,14 +50,17 @@ const MapBoundsUpdater = ({ faskes }) => {
   
   useEffect(() => {
     if (faskes.length > 0) {
-      const bounds = L.latLngBounds(
-        faskes
-          .filter(f => f.latitude && f.longitude)
-          .map(f => [parseFloat(f.latitude), parseFloat(f.longitude)])
-      );
+      const validFaskes = faskes.filter(f => f.latitude && f.longitude);
       
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, { padding: [20, 20] });
+      if (validFaskes.length > 0) {
+        const bounds = L.latLngBounds(
+          validFaskes.map(f => [parseFloat(f.latitude), parseFloat(f.longitude)])
+        );
+        
+        // Check if bounds are valid before fitting
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, { padding: [20, 20] });
+        }
       }
     }
   }, [faskes, map]);

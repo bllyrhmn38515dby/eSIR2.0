@@ -74,7 +74,14 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const refreshToken = async () => {
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    console.log('👋 User logged out');
+  }, []);
+
+  const refreshToken = useCallback(async () => {
     if (isRefreshing) {
       return { success: false };
     }
@@ -86,25 +93,35 @@ export const AuthProvider = ({ children }) => {
         return { success: false };
       }
 
+      console.log('🔄 Attempting to refresh token...');
       const response = await axios.post('http://localhost:3001/api/auth/refresh', {
         token: currentToken
       });
 
       if (response.data.success) {
         const newToken = response.data.data.token;
+        const userData = response.data.data.user;
+        
         setToken(newToken);
+        setUser(userData);
         localStorage.setItem('token', newToken);
+        
+        // Update axios default header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        
+        console.log('✅ Token refreshed successfully');
         return { success: true, token: newToken };
       } else {
+        console.log('❌ Token refresh failed: Invalid response');
         return { success: false };
       }
     } catch (error) {
-      console.error('Refresh token error:', error);
+      console.error('❌ Refresh token error:', error.response?.data || error.message);
       return { success: false };
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [isRefreshing]);
 
   const checkAuth = useCallback(async () => {
     const currentToken = localStorage.getItem('token');
@@ -121,12 +138,15 @@ export const AuthProvider = ({ children }) => {
         if (response.data.success && response.data.data) {
           setUser(response.data.data);
           setToken(currentToken);
+          // Set axios default header
+          axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
           console.log('👤 User authenticated:', response.data.data.nama_lengkap);
         } else {
-          console.log('❌ Invalid profile response format');
-          // Jangan langsung logout, coba refresh token dulu
+          console.log('❌ Invalid profile response format, trying refresh...');
+          // Coba refresh token dulu
           const refreshResult = await refreshToken();
           if (!refreshResult.success) {
+            console.log('❌ Refresh failed, logging out...');
             logout();
           }
         }
@@ -135,6 +155,7 @@ export const AuthProvider = ({ children }) => {
         // Coba refresh token sebelum logout
         const refreshResult = await refreshToken();
         if (!refreshResult.success) {
+          console.log('❌ Refresh failed, logging out...');
           logout();
         }
       }
@@ -142,7 +163,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔍 No token found, user not authenticated');
     }
     setLoading(false);
-  }, []);
+  }, [refreshToken, logout]);
 
   // Check if user is authenticated on app load
   useEffect(() => {
@@ -200,13 +221,6 @@ export const AuthProvider = ({ children }) => {
         message: error.response?.data?.message || 'Registrasi gagal'
       };
     }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    console.log('👋 User logged out');
   };
 
   const value = {

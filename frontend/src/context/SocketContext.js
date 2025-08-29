@@ -25,14 +25,100 @@ export const SocketProvider = ({ children }) => {
       return newNotifications.slice(0, 10);
     });
 
-    // Show browser notification if supported
-    if ('Notification' in window && Notification.permission === 'granted') {
+    // Get notification settings
+    const savedSettings = localStorage.getItem('notificationSettings');
+    const settings = savedSettings ? JSON.parse(savedSettings) : {
+      browserNotifications: true,
+      soundNotifications: true,
+      toastNotifications: true,
+      rujukanBaru: true,
+      statusUpdate: true,
+      trackingUpdate: true,
+      systemNotifications: true,
+      quietHours: false
+    };
+
+    // Check if notification type is enabled
+    const isTypeEnabled = (type) => {
+      switch (type) {
+        case 'rujukan-baru':
+          return settings.rujukanBaru;
+        case 'status-update':
+          return settings.statusUpdate;
+        case 'tracking-update':
+          return settings.trackingUpdate;
+        case 'system':
+          return settings.systemNotifications;
+        default:
+          return true;
+      }
+    };
+
+    if (!isTypeEnabled(notification.type)) {
+      return; // Don't show notification if type is disabled
+    }
+
+    // Check quiet hours
+    if (settings.quietHours && settings.soundNotifications) {
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const startTime = parseInt(settings.quietHoursStart.split(':')[0]) * 60 + parseInt(settings.quietHoursStart.split(':')[1]);
+      const endTime = parseInt(settings.quietHoursEnd.split(':')[0]) * 60 + parseInt(settings.quietHoursEnd.split(':')[1]);
+      
+      if (currentTime >= startTime || currentTime <= endTime) {
+        // In quiet hours, don't play sound
+        settings.soundNotifications = false;
+      }
+    }
+
+    // Show browser notification if enabled
+    if (settings.browserNotifications && 'Notification' in window && Notification.permission === 'granted') {
       new Notification(notification.title, {
         body: notification.message,
         icon: '/favicon.ico'
       });
     }
-  }, []);
+
+    // Show toast notification if enabled
+    if (settings.toastNotifications) {
+      import('../components/ToastContainer').then(({ showToast }) => {
+        showToast(notification);
+      });
+    }
+
+    // Play sound notification if enabled
+    if (settings.soundNotifications) {
+      playNotificationSound();
+    }
+  }, []); // Empty dependency array to prevent infinite loop
+
+  const playNotificationSound = () => {
+    try {
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(error => {
+        console.log('Audio play failed:', error);
+        // Fallback: create a simple beep sound
+        const context = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, context.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+        
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 0.5);
+      });
+    } catch (error) {
+      console.log('Sound notification failed:', error);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -144,7 +230,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       newSocket.disconnect();
     };
-  }, [user, addNotification]); // Include addNotification in dependency array
+  }, [user, addNotification]); // Include addNotification in dependencies
 
   const markNotificationAsRead = (notificationId) => {
     setNotifications(prev =>

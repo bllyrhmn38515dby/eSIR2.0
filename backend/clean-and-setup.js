@@ -8,7 +8,7 @@ async function cleanAndSetup() {
       host: 'localhost',
       user: 'root',
       password: '',
-      database: 'esir_db',
+      database: 'esirv2',
       port: 3306
     };
 

@@ -1,0 +1,324 @@
+@startuml eSIR2.0_UseCaseByActor
+
+!theme plain
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+    ArrowColor DarkBlue
+    FontSize 10
+}
+skinparam actor {
+    FontSize 14
+    FontStyle bold
+}
+
+title Use Case Diagram - Sistem eSIR 2.0 (Per Aktor)
+
+' ========================================
+' ACTORS
+' ========================================
+
+actor "👨‍💼 Admin Pusat" as AP #LightGreen
+actor "🏥 Admin Faskes" as AF #LightBlue
+actor "🚑 Sopir Ambulans" as SA #Orange
+actor "👤 Pasien" as P #Pink
+
+actor "💾 Database" as DB #Gray
+actor "📧 Email Service" as ES #LightCyan
+actor "📍 GPS System" as GPS #Yellow
+actor "🔔 Push Notification" as PNS #LightPink
+
+' ========================================
+' SYSTEM BOUNDARY
+' ========================================
+
+rectangle "SISTEM eSIR 2.0" {
+    
+    ' ========================================
+    ' ADMIN PUSAT USE CASES
+    ' ========================================
+    package "👨‍💼 Admin Pusat" {
+        usecase "Login/Logout" as AP1
+        usecase "Reset Password" as AP2
+        usecase "Create User" as AP3
+        usecase "Read User Data" as AP4
+        usecase "Update User" as AP5
+        usecase "Delete User" as AP6
+        usecase "Assign Roles" as AP7
+        usecase "Create Faskes" as AP8
+        usecase "Read Faskes Data" as AP9
+        usecase "Update Faskes" as AP10
+        usecase "Delete Faskes" as AP11
+        usecase "Generate Reports" as AP12
+        usecase "View Statistics" as AP13
+        usecase "Export Data" as AP14
+        usecase "Dashboard Analytics" as AP15
+    }
+    
+    ' ========================================
+    ' ADMIN FASKES USE CASES
+    ' ========================================
+    package "🏥 Admin Faskes" {
+        usecase "Create Referral" as AF1
+        usecase "Read Referral Data" as AF2
+        usecase "Update Referral Status" as AF3
+        usecase "Cancel Referral" as AF4
+        usecase "Add Referral Notes" as AF5
+        usecase "View Bed Availability" as AF6
+        usecase "Update Bed Status" as AF7
+        usecase "Reserve Bed" as AF8
+        usecase "Assign Patient to Bed" as AF9
+        usecase "Upload Documents" as AF10
+        usecase "Download Documents" as AF11
+        usecase "Delete Documents" as AF12
+        usecase "View Document History" as AF13
+        usecase "Real-time Location Tracking" as AF14
+        usecase "Journey Status Monitoring" as AF15
+        usecase "ETA Updates" as AF16
+        usecase "Route Optimization" as AF17
+        usecase "Send Notifications" as AF18
+        usecase "Receive Notifications" as AF19
+        usecase "Search Patients" as AF20
+        usecase "Search Referrals" as AF21
+        usecase "Filter by Status" as AF22
+        usecase "Advanced Search" as AF23
+    }
+    
+    ' ========================================
+    ' SOPIR AMBULANS USE CASES
+    ' ========================================
+    package "🚑 Sopir Ambulans" {
+        usecase "Start Tracking Session" as SA1
+        usecase "Stop Tracking Session" as SA2
+        usecase "Real-time Location Tracking" as SA3
+        usecase "Journey Status Monitoring" as SA4
+        usecase "ETA Updates" as SA5
+        usecase "Route Optimization" as SA6
+        usecase "Read Referral Data" as SA7
+        usecase "Update Referral Status" as SA8
+        usecase "Receive Notifications" as SA9
+        usecase "Push Notifications" as SA10
+        usecase "GPS Tracking" as SA11
+        usecase "Background Tracking" as SA12
+        usecase "Voice Commands" as SA13
+        usecase "Offline Mode" as SA14
+        usecase "Battery Optimization" as SA15
+        usecase "Device Information" as SA16
+    }
+    
+    ' ========================================
+    ' PASIEN USE CASES
+    ' ========================================
+    package "👤 Pasien" {
+        usecase "Read Referral Data" as P1
+        usecase "Receive Notifications" as P2
+        usecase "Push Notifications" as P3
+        usecase "Offline Mode" as P4
+        usecase "Device Information" as P5
+    }
+    
+    ' ========================================
+    ' SHARED USE CASES
+    ' ========================================
+    package "🔐 Shared" {
+        usecase "Login/Logout" as SH1
+        usecase "Reset Password" as SH2
+        usecase "Session Management" as SH3
+    }
+    
+    ' ========================================
+    ' EXTERNAL SYSTEM USE CASES
+    ' ========================================
+    package "💾 Data Storage" {
+        usecase "Store User Data" as DS1
+        usecase "Store Patient Data" as DS2
+        usecase "Store Referral Data" as DS3
+        usecase "Store Tracking Data" as DS4
+        usecase "Store Document Data" as DS5
+        usecase "Store Bed Management Data" as DS6
+        usecase "Store Search Logs" as DS7
+    }
+    
+    package "📍 Location Services" {
+        usecase "Provide Location Data" as LS1
+        usecase "Calculate Distance & ETA" as LS2
+        usecase "Geocoding Services" as LS3
+    }
+    
+    package "🔔 Notification Services" {
+        usecase "Send Notifications" as NS1
+        usecase "Push Notifications" as NS2
+        usecase "Emergency Alerts" as NS3
+    }
+}
+
+' ========================================
+' ADMIN PUSAT RELATIONSHIPS
+' ========================================
+
+AP --> AP1
+AP --> AP2
+AP --> AP3
+AP --> AP4
+AP --> AP5
+AP --> AP6
+AP --> AP7
+AP --> AP8
+AP --> AP9
+AP --> AP10
+AP --> AP11
+AP --> AP12
+AP --> AP13
+AP --> AP14
+AP --> AP15
+
+' ========================================
+' ADMIN FASKES RELATIONSHIPS
+' ========================================
+
+AF --> SH1
+AF --> SH2
+AF --> AF1
+AF --> AF2
+AF --> AF3
+AF --> AF4
+AF --> AF5
+AF --> AF6
+AF --> AF7
+AF --> AF8
+AF --> AF9
+AF --> AF10
+AF --> AF11
+AF --> AF12
+AF --> AF13
+AF --> AF14
+AF --> AF15
+AF --> AF16
+AF --> AF17
+AF --> AF18
+AF --> AF19
+AF --> AF20
+AF --> AF21
+AF --> AF22
+AF --> AF23
+
+' ========================================
+' SOPIR AMBULANS RELATIONSHIPS
+' ========================================
+
+SA --> SH1
+SA --> SH2
+SA --> SA1
+SA --> SA2
+SA --> SA3
+SA --> SA4
+SA --> SA5
+SA --> SA6
+SA --> SA7
+SA --> SA8
+SA --> SA9
+SA --> SA10
+SA --> SA11
+SA --> SA12
+SA --> SA13
+SA --> SA14
+SA --> SA15
+SA --> SA16
+
+' ========================================
+' PASIEN RELATIONSHIPS
+' ========================================
+
+P --> P1
+P --> P2
+P --> P3
+P --> P4
+P --> P5
+
+' ========================================
+' EXTERNAL SYSTEM RELATIONSHIPS
+' ========================================
+
+DB --> DS1
+DB --> DS2
+DB --> DS3
+DB --> DS4
+DB --> DS5
+DB --> DS6
+DB --> DS7
+
+ES --> NS1
+ES --> SH2
+ES --> NS3
+
+GPS --> LS1
+GPS --> LS2
+GPS --> LS3
+
+PNS --> NS2
+PNS --> NS3
+
+' ========================================
+' INCLUDE RELATIONSHIPS
+' ========================================
+
+SH1 ..> SH3 : <<include>>
+AF1 ..> AF10 : <<include>>
+SA1 ..> LS1 : <<include>>
+NS1 ..> DS1 : <<include>>
+
+' ========================================
+' EXTEND RELATIONSHIPS
+' ========================================
+
+NS3 ..> NS2 : <<extend>>
+SA13 ..> SA11 : <<extend>>
+SA14 ..> SA11 : <<extend>>
+SA15 ..> SA11 : <<extend>>
+
+' ========================================
+' GENERALIZATION
+' ========================================
+
+AP -|> AF : <<generalization>>
+
+' ========================================
+' NOTES
+' ========================================
+
+note right of AP
+  **Admin Pusat**
+  - 15 use cases
+  - Full system access
+  - User & Faskes management
+  - Reporting & analytics
+end note
+
+note right of AF
+  **Admin Faskes**
+  - 23 use cases
+  - Referral management
+  - Bed management
+  - Document handling
+  - Tracking monitoring
+end note
+
+note right of SA
+  **Sopir Ambulans**
+  - 16 use cases
+  - GPS tracking
+  - Mobile features
+  - Real-time updates
+  - Voice commands
+end note
+
+note right of P
+  **Pasien**
+  - 5 use cases
+  - Status monitoring
+  - Notifications
+  - Mobile access
+end note
+
+@enduml

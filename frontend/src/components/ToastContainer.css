@@ -1,0 +1,242 @@
+/* Toast Container Base */
+.toast-container {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Position Variants */
+.toast-container.top-right {
+  top: 20px;
+  right: 20px;
+  align-items: flex-end;
+}
+
+.toast-container.top-left {
+  top: 20px;
+  left: 20px;
+  align-items: flex-start;
+}
+
+.toast-container.bottom-right {
+  bottom: 20px;
+  right: 20px;
+  align-items: flex-end;
+  flex-direction: column-reverse;
+}
+
+.toast-container.bottom-left {
+  bottom: 20px;
+  left: 20px;
+  align-items: flex-start;
+  flex-direction: column-reverse;
+}
+
+/* Stacking Animation */
+.toast-container .toast-notification {
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.toast-container .toast-notification:nth-child(1) {
+  transform: translateX(0) translateY(0);
+}
+
+.toast-container .toast-notification:nth-child(2) {
+  transform: translateX(0) translateY(8px);
+}
+
+.toast-container .toast-notification:nth-child(3) {
+  transform: translateX(0) translateY(16px);
+}
+
+.toast-container .toast-notification:nth-child(4) {
+  transform: translateX(0) translateY(24px);
+}
+
+.toast-container .toast-notification:nth-child(5) {
+  transform: translateX(0) translateY(32px);
+}
+
+/* Hover Effects for Stacking */
+.toast-container .toast-notification:hover {
+  transform: translateX(0) translateY(0) scale(1.02) !important;
+  z-index: 10000 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .toast-container.top-right,
+  .toast-container.top-left {
+    top: 10px;
+  }
+  
+  .toast-container.bottom-right,
+  .toast-container.bottom-left {
+    bottom: 10px;
+  }
+  
+  .toast-container {
+    gap: 6px;
+  }
+  
+  .toast-container .toast-notification:nth-child(2) {
+    transform: translateX(0) translateY(6px);
+  }
+  
+  .toast-container .toast-notification:nth-child(3) {
+    transform: translateX(0) translateY(12px);
+  }
+  
+  .toast-container .toast-notification:nth-child(4) {
+    transform: translateX(0) translateY(18px);
+  }
+  
+  .toast-container .toast-notification:nth-child(5) {
+    transform: translateX(0) translateY(24px);
+  }
+}
+
+@media (max-width: 480px) {
+  .toast-container.top-right,
+  .toast-container.top-left {
+    top: 5px;
+    right: 5px;
+    left: 5px;
+  }
+  
+  .toast-container.bottom-right,
+  .toast-container.bottom-left {
+    bottom: 5px;
+    right: 5px;
+    left: 5px;
+  }
+  
+  .toast-container {
+    gap: 4px;
+  }
+  
+  .toast-container .toast-notification:nth-child(2) {
+    transform: translateX(0) translateY(4px);
+  }
+  
+  .toast-container .toast-notification:nth-child(3) {
+    transform: translateX(0) translateY(8px);
+  }
+  
+  .toast-container .toast-notification:nth-child(4) {
+    transform: translateX(0) translateY(12px);
+  }
+  
+  .toast-container .toast-notification:nth-child(5) {
+    transform: translateX(0) translateY(16px);
+  }
+}
+
+/* Animation for new toasts */
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%) translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+@keyframes toastSlideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%) translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+.toast-container.top-right .toast-notification,
+.toast-container.bottom-right .toast-notification {
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.toast-container.top-left .toast-notification,
+.toast-container.bottom-left .toast-notification {
+  animation: toastSlideInLeft 0.3s ease-out;
+}
+
+/* Exit animations */
+@keyframes toastSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) translateY(0);
+  }
+}
+
+@keyframes toastSlideOutLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100%) translateY(0);
+  }
+}
+
+.toast-container.top-right .toast-notification.exit,
+.toast-container.bottom-right .toast-notification.exit {
+  animation: toastSlideOut 0.3s ease-in;
+}
+
+.toast-container.top-left .toast-notification.exit,
+.toast-container.bottom-left .toast-notification.exit {
+  animation: toastSlideOutLeft 0.3s ease-in;
+}
+
+/* Performance optimizations */
+.toast-container {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.toast-container .toast-notification {
+  will-change: transform, opacity;
+  contain: layout style paint;
+}
+
+/* Accessibility */
+.toast-container:focus-within {
+  outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .toast-container .toast-notification {
+    border: 2px solid #000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .toast-container .toast-notification {
+    animation: none;
+    transition: opacity 0.2s ease;
+  }
+  
+  .toast-container .toast-notification:nth-child(n) {
+    transform: none;
+  }
+  
+  .toast-container .toast-notification:hover {
+    transform: scale(1.01) !important;
+  }
+}

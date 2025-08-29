@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLastPage } from '../context/LastPageContext';
 import './Login.css';
 
 const Login = () => {
@@ -13,15 +14,17 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   
   const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { getLastPage, clearLastPage } = useLastPage();
   const navigate = useNavigate();
 
   // Auto redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      console.log('🔄 User already authenticated, redirecting to dashboard...');
-      navigate('/dashboard');
+      const lastPage = getLastPage();
+      console.log('🔄 User already authenticated, redirecting to:', lastPage);
+      navigate(lastPage);
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate, getLastPage]);
 
   const handleChange = (e) => {
     setFormData({
@@ -44,8 +47,11 @@ const Login = () => {
       const result = await login(formData.email, formData.password);
       
       if (result.success) {
-        console.log('✅ Login successful, redirecting to dashboard...');
-        navigate('/dashboard');
+        const lastPage = getLastPage();
+        console.log('✅ Login successful, redirecting to:', lastPage);
+        navigate(lastPage);
+        // Clear the last page after successful redirect
+        clearLastPage();
       } else {
         console.log('❌ Login failed:', result.message);
         setError(result.message);
@@ -101,7 +107,7 @@ const Login = () => {
             <label htmlFor="password">Password</label>
             <div className="password-input-container">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 name="password"
                 value={formData.password}
@@ -111,29 +117,28 @@ const Login = () => {
               />
               <button
                 type="button"
-                className="password-toggle-btn"
+                className="password-toggle"
                 onClick={togglePasswordVisibility}
-                title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
-                {showPassword ? "🙈" : "👁️"}
+                {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
           </div>
           
           <button 
             type="submit" 
-            className="login-button"
+            className="btn-submit"
             disabled={loading}
           >
-            {loading ? 'Memproses...' : 'Masuk'}
+            {loading ? 'Masuk...' : 'Masuk'}
           </button>
+          
+          <div className="form-footer">
+            <Link to="/forgot-password" className="forgot-password-link">
+              Lupa Password?
+            </Link>
+          </div>
         </form>
-        
-        <div className="login-footer">
-          <p>
-            Hubungi administrator untuk membuat akun baru
-          </p>
-        </div>
       </div>
     </div>
   );

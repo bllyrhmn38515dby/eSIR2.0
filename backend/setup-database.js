@@ -1,57 +1,74 @@
-require('dotenv').config();
 const mysql = require('mysql2/promise');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
+require('dotenv').config();
 
 async function setupDatabase() {
+  let connection;
+  
   try {
-    console.log('Setting up database...');
-    
-    // Create connection without database
-    const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: ''
+    // Connect to database
+    connection = await mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'esir_db'
     });
 
-    console.log('✅ MySQL connection successful');
-    
-    // Create database if not exists
-    await connection.execute('CREATE DATABASE IF NOT EXISTS esir_db');
-    console.log('✅ Database esir_db created/verified');
-    
-    // Use the database
-    await connection.execute('USE esir_db');
-    
-    // Read and execute SQL file
+    console.log('🔗 Connected to database');
+
+    // Read SQL file
     const sqlFile = path.join(__dirname, 'database.sql');
-    const sqlContent = fs.readFileSync(sqlFile, 'utf8');
+    const sqlContent = await fs.readFile(sqlFile, 'utf8');
     
-    // Split SQL by semicolon and execute each statement
-    const statements = sqlContent.split(';').filter(stmt => stmt.trim());
-    
-    for (let statement of statements) {
+    // Split SQL statements and filter out USE statements
+    const statements = sqlContent
+      .split(';')
+      .map(stmt => stmt.trim())
+      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--') && !stmt.startsWith('USE'));
+
+    console.log(`📋 Found ${statements.length} SQL statements`);
+
+    // Execute each statement
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
       if (statement.trim()) {
         try {
-          await connection.execute(statement);
-          console.log('✅ Executed SQL statement');
+          await connection.query(statement);
+          console.log(`✅ Executed statement ${i + 1}`);
         } catch (error) {
-          console.log('⚠️ SQL statement error (might be duplicate):', error.message);
+          if (error.code === 'ER_TABLE_EXISTS_ERROR') {
+            console.log(`⚠️ Table already exists (statement ${i + 1})`);
+          } else {
+            console.error(`❌ Error in statement ${i + 1}:`, error.message);
+          }
         }
       }
     }
-    
+
     console.log('✅ Database setup completed');
-    
+
     // Verify tables
-    const [tables] = await connection.execute('SHOW TABLES');
-    console.log('Tables created:', tables.map(t => Object.values(t)[0]));
-    
-    await connection.end();
-    
+    const [tables] = await connection.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = '${process.env.DB_NAME || 'esir_db'}'
+    `);
+
+    console.log('\n📊 Database tables:');
+    tables.forEach(table => {
+      console.log(`  - ${table.table_name}`);
+    });
+
   } catch (error) {
-    console.error('❌ Database setup error:', error.message);
+    console.error('❌ Error:', error.message);
+  } finally {
+    if (connection) {
+      await connection.end();
+      console.log('🔌 Database connection closed');
+    }
   }
 }
 
+// Run the setup
 setupDatabase();

@@ -1,9 +1,12 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLastPage } from '../context/LastPageContext';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const { setLastPage } = useLastPage();
+  const location = useLocation();
 
   console.log('🔒 ProtectedRoute - Auth status:', { isAuthenticated, loading });
 
@@ -39,7 +42,9 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.log('🚫 Access denied, redirecting to login');
+    console.log('🚫 Access denied, saving current page and redirecting to login');
+    // Save the current page before redirecting to login
+    setLastPage(location.pathname);
     return <Navigate to="/login" replace />;
   }
 

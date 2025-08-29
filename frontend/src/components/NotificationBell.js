@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../context/SocketContext';
+import NotificationSettings from './NotificationSettings';
 import './NotificationBell.css';
 
 const NotificationBell = () => {
   const { notifications, getUnreadCount, markNotificationAsRead, markAllNotificationsAsRead, clearNotifications, isConnected } = useSocket();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   // Request notification permission on component mount
   useEffect(() => {
@@ -71,6 +73,13 @@ const NotificationBell = () => {
           <div className="notification-header">
             <h3>Notifikasi</h3>
             <div className="notification-actions">
+              <button 
+                className="settings-btn"
+                onClick={() => setShowSettings(true)}
+                title="Pengaturan Notifikasi"
+              >
+                ⚙️
+              </button>
               {unreadCount > 0 && (
                 <button 
                   className="mark-all-read"
@@ -132,6 +141,11 @@ const NotificationBell = () => {
           className="notification-overlay"
           onClick={() => setShowDropdown(false)}
         />
+      )}
+
+      {/* Notification Settings Modal */}
+      {showSettings && (
+        <NotificationSettings onClose={() => setShowSettings(false)} />
       )}
     </div>
   );

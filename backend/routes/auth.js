@@ -1,248 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../config/db');
 const { verifyToken } = require('../middleware/auth');
+const { sendResetPasswordEmail } = require('../utils/emailService');
 
 const router = express.Router();
-
-// Register user baru (hanya untuk admin)
-router.post('/register', verifyToken, async (req, res) => {
-  try {
-    // Cek apakah user adalah admin
-    if (req.user.role !== 'admin_pusat') {
-      return res.status(403).json({
-        success: false,
-        message: 'Akses ditolak. Hanya admin pusat yang dapat membuat akun baru.'
-      });
-    }
-
-    const { username, password, email, nama_lengkap, role } = req.body;
-
-    // Validasi input
-    if (!username || !password || !email || !nama_lengkap || !role) {
-      return res.status(400).json({
-        success: false,
-        message: 'Semua field wajib diisi'
-      });
-    }
-
-    // Cek apakah email sudah ada
-    const [existingUsers] = await pool.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
-
-    if (existingUsers.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email sudah terdaftar'
-      });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Get role_id from role name
-    const [roles] = await pool.execute(
-      'SELECT id FROM roles WHERE nama_role = ?',
-      [role]
-    );
-
-    if (roles.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Role tidak valid'
-      });
-    }
-
-    const role_id = roles[0].id;
-
-    // Insert user baru
-    const [result] = await pool.execute(
-      'INSERT INTO users (nama_lengkap, username, password, email, role_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
-      [nama_lengkap, username, hashedPassword, email, role_id]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'User berhasil didaftarkan',
-      data: {
-        id: result.insertId,
-        nama: nama_lengkap,
-        email,
-        role
-      }
-    });
-
-  } catch (error) {
-    console.error('Error register:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan server'
-    });
-  }
-});
-
-// Login user
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validasi input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email dan password wajib diisi'
-      });
-    }
-
-    // Cari user berdasarkan email dengan role
-    const [users] = await pool.execute(
-      `SELECT u.*, r.nama_role as role 
-       FROM users u 
-       LEFT JOIN roles r ON u.role_id = r.id 
-       WHERE u.email = ?`,
-      [email]
-    );
-
-    if (users.length === 0) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email atau password salah'
-      });
-    }
-
-    const user = users[0];
-
-    // Verifikasi password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({
-        success: false,
-        message: 'Email atau password salah'
-      });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email,
-        role: user.role 
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
-
-    // Hapus password dari response
-    delete user.password;
-
-    res.json({
-      success: true,
-      message: 'Login berhasil',
-      data: {
-        user,
-        token
-      }
-    });
-
-  } catch (error) {
-    console.error('Error login:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan server'
-    });
-  }
-});
-
-
-
-// Create user baru (hanya untuk admin pusat)
-router.post('/users', verifyToken, async (req, res) => {
-  try {
-    // Cek apakah user adalah admin pusat
-    if (req.user.role !== 'admin_pusat') {
-      return res.status(403).json({
-        success: false,
-        message: 'Akses ditolak. Hanya admin pusat yang dapat membuat akun baru.'
-      });
-    }
-
-    const { password, email, nama_lengkap, role, faskes_id, telepon } = req.body;
-
-    // Validasi input
-    if (!password || !email || !nama_lengkap || !role) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password, email, nama lengkap, dan role wajib diisi'
-      });
-    }
-
-    // Cek apakah email sudah ada
-    const [existingUsers] = await pool.execute(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
-
-    if (existingUsers.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email sudah terdaftar'
-      });
-    }
-
-    // Get role_id from role name
-    const [roles] = await pool.execute(
-      'SELECT id FROM roles WHERE nama_role = ?',
-      [role]
-    );
-
-    if (roles.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Role tidak valid'
-      });
-    }
-
-    const role_id = roles[0].id;
-
-    // Generate username from email
-    const username = email.split('@')[0];
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Insert user baru
-    const [result] = await pool.execute(
-      'INSERT INTO users (nama_lengkap, username, password, email, role_id, faskes_id, telepon, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
-      [nama_lengkap, username, hashedPassword, email, role_id, faskes_id, telepon || null]
-    );
-
-    // Ambil data user yang baru dibuat
-    const [newUser] = await pool.execute(
-      `SELECT u.id, u.nama_lengkap, u.username, u.email, u.faskes_id, u.telepon, u.created_at, u.updated_at, r.nama_role as role, f.nama_faskes
-       FROM users u 
-       LEFT JOIN roles r ON u.role_id = r.id 
-       LEFT JOIN faskes f ON u.faskes_id = f.id
-       WHERE u.id = ?`,
-      [result.insertId]
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'User berhasil dibuat',
-      data: newUser[0]
-    });
-
-  } catch (error) {
-    console.error('Error create user:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan server'
-    });
-  }
-});
 
 // Get all users (hanya untuk admin)
 router.get('/users', verifyToken, async (req, res) => {
@@ -366,38 +130,85 @@ router.get('/roles', verifyToken, async (req, res) => {
   }
 });
 
-// Get user profile (harus sebelum route dengan parameter)
-router.get('/profile', verifyToken, async (req, res) => {
+// Create user baru (hanya untuk admin pusat)
+router.post('/users', verifyToken, async (req, res) => {
   try {
-    console.log('🔍 Profile request for user ID:', req.user.id);
-    
-    // Get fresh user data from database
-    const [users] = await pool.execute(
+    // Cek apakah user adalah admin pusat
+    if (req.user.role !== 'admin_pusat') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Hanya admin pusat yang dapat membuat akun baru.'
+      });
+    }
+
+    const { password, email, nama_lengkap, role, faskes_id, telepon } = req.body;
+
+    // Validasi input
+    if (!password || !email || !nama_lengkap || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password, email, nama lengkap, dan role wajib diisi'
+      });
+    }
+
+    // Cek apakah email sudah ada
+    const [existingUsers] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email sudah terdaftar'
+      });
+    }
+
+    // Get role_id from role name
+    const [roles] = await pool.execute(
+      'SELECT id FROM roles WHERE nama_role = ?',
+      [role]
+    );
+
+    if (roles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role tidak valid'
+      });
+    }
+
+    const role_id = roles[0].id;
+
+    // Generate username from email
+    const username = email.split('@')[0];
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Insert user baru
+    const [result] = await pool.execute(
+      'INSERT INTO users (nama_lengkap, username, password, email, role_id, faskes_id, telepon, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())',
+      [nama_lengkap, username, hashedPassword, email, role_id, faskes_id, telepon || null]
+    );
+
+    // Ambil data user yang baru dibuat
+    const [newUser] = await pool.execute(
       `SELECT u.id, u.nama_lengkap, u.username, u.email, u.faskes_id, u.telepon, u.created_at, u.updated_at, r.nama_role as role, f.nama_faskes
        FROM users u 
        LEFT JOIN roles r ON u.role_id = r.id 
        LEFT JOIN faskes f ON u.faskes_id = f.id
        WHERE u.id = ?`,
-      [req.user.id]
+      [result.insertId]
     );
 
-    if (users.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User tidak ditemukan'
-      });
-    }
-
-    const userData = users[0];
-    console.log('✅ Profile data retrieved:', userData.nama_lengkap);
-
-    res.json({
+    res.status(201).json({
       success: true,
-      data: userData
+      message: 'User berhasil dibuat',
+      data: newUser[0]
     });
 
   } catch (error) {
-    console.error('❌ Error get profile:', error);
+    console.error('Error create user:', error);
     res.status(500).json({
       success: false,
       message: 'Terjadi kesalahan server'
@@ -572,6 +383,342 @@ router.delete('/users/:id', verifyToken, async (req, res) => {
   }
 });
 
+// Register user baru (hanya untuk admin)
+router.post('/register', verifyToken, async (req, res) => {
+  try {
+    // Cek apakah user adalah admin
+    if (req.user.role !== 'admin_pusat') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Hanya admin pusat yang dapat membuat akun baru.'
+      });
+    }
+
+    const { username, password, email, nama_lengkap, role } = req.body;
+
+    // Validasi input
+    if (!username || !password || !email || !nama_lengkap || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Semua field wajib diisi'
+      });
+    }
+
+    // Cek apakah email sudah ada
+    const [existingUsers] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (existingUsers.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email sudah terdaftar'
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Get role_id from role name
+    const [roles] = await pool.execute(
+      'SELECT id FROM roles WHERE nama_role = ?',
+      [role]
+    );
+
+    if (roles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Role tidak valid'
+      });
+    }
+
+    const role_id = roles[0].id;
+
+    // Insert user baru
+    const [result] = await pool.execute(
+      'INSERT INTO users (nama_lengkap, username, password, email, role_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())',
+      [nama_lengkap, username, hashedPassword, email, role_id]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'User berhasil didaftarkan',
+      data: {
+        id: result.insertId,
+        nama: nama_lengkap,
+        email,
+        role
+      }
+    });
+
+  } catch (error) {
+    console.error('Error register:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Login user
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validasi input
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email dan password wajib diisi'
+      });
+    }
+
+    // Cari user berdasarkan email dengan role
+    const [users] = await pool.execute(
+      `SELECT u.*, r.nama_role as role 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.email = ?`,
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email atau password salah'
+      });
+    }
+
+    const user = users[0];
+
+    // Verifikasi password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email atau password salah'
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.json({
+      success: true,
+      message: 'Login berhasil',
+      data: {
+        token,
+        user: {
+          id: user.id,
+          nama_lengkap: user.nama_lengkap,
+          email: user.email,
+          role: user.role
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error login:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Request reset password
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validasi input
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email wajib diisi'
+      });
+    }
+
+    // Cari user berdasarkan email
+    const [users] = await pool.execute(
+      'SELECT id, nama_lengkap, email FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      // Untuk keamanan, jangan beri tahu bahwa email tidak ada
+      return res.json({
+        success: true,
+        message: 'Jika email terdaftar, link reset password akan dikirim ke email Anda'
+      });
+    }
+
+    const user = users[0];
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 jam
+
+    // Simpan token ke database
+    await pool.execute(
+      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
+      [user.id, resetToken, expiresAt]
+    );
+
+    // Kirim email reset password
+    try {
+      await sendResetPasswordEmail(user.email, resetToken, user.nama_lengkap);
+      
+      // Log email success
+      await pool.execute(
+        'INSERT INTO email_logs (user_id, email, type, subject, status, message_id) VALUES (?, ?, ?, ?, ?, ?)',
+        [user.id, user.email, 'reset_password', 'Reset Password - eSIR 2.0', 'sent', 'manual']
+      );
+
+      res.json({
+        success: true,
+        message: 'Link reset password telah dikirim ke email Anda'
+      });
+    } catch (emailError) {
+      console.error('Error sending reset email:', emailError);
+      
+      // Log email failure
+      await pool.execute(
+        'INSERT INTO email_logs (user_id, email, type, subject, status, error_message) VALUES (?, ?, ?, ?, ?, ?)',
+        [user.id, user.email, 'reset_password', 'Reset Password - eSIR 2.0', 'failed', emailError.message]
+      );
+
+      res.status(500).json({
+        success: false,
+        message: 'Gagal mengirim email reset password. Silakan coba lagi.'
+      });
+    }
+
+  } catch (error) {
+    console.error('Error forgot password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Reset password dengan token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    // Validasi input
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token dan password baru wajib diisi'
+      });
+    }
+
+    // Validasi password (minimal 6 karakter)
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password minimal 6 karakter'
+      });
+    }
+
+    // Cari token yang valid
+    const [tokens] = await pool.execute(
+      `SELECT prt.*, u.email, u.nama_lengkap 
+       FROM password_reset_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = ? AND prt.expires_at > NOW() AND prt.used = FALSE`,
+      [token]
+    );
+
+    if (tokens.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token tidak valid atau sudah kadaluarsa'
+      });
+    }
+
+    const resetToken = tokens[0];
+
+    // Hash password baru
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+    // Update password user
+    await pool.execute(
+      'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
+      [hashedPassword, resetToken.user_id]
+    );
+
+    // Mark token sebagai used
+    await pool.execute(
+      'UPDATE password_reset_tokens SET used = TRUE WHERE id = ?',
+      [resetToken.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Password berhasil direset. Silakan login dengan password baru.'
+    });
+
+  } catch (error) {
+    console.error('Error reset password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Verify reset token
+router.get('/verify-reset-token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Cari token yang valid
+    const [tokens] = await pool.execute(
+      `SELECT prt.*, u.email, u.nama_lengkap 
+       FROM password_reset_tokens prt
+       JOIN users u ON prt.user_id = u.id
+       WHERE prt.token = ? AND prt.expires_at > NOW() AND prt.used = FALSE`,
+      [token]
+    );
+
+    if (tokens.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token tidak valid atau sudah kadaluarsa'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Token valid',
+      data: {
+        email: tokens[0].email,
+        nama_lengkap: tokens[0].nama_lengkap
+      }
+    });
+
+  } catch (error) {
+    console.error('Error verify reset token:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
 // Refresh token endpoint
 router.post('/refresh', async (req, res) => {
   try {
@@ -584,12 +731,12 @@ router.post('/refresh', async (req, res) => {
       });
     }
 
-    // Verify token tanpa expired check
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Cek apakah user masih ada di database
+    // Cek apakah user masih ada
     const [users] = await pool.execute(
-      `SELECT u.*, r.nama_role as role 
+      `SELECT u.id, u.nama_lengkap, u.email, u.username, r.nama_role as role
        FROM users u 
        LEFT JOIN roles r ON u.role_id = r.id 
        WHERE u.id = ?`,
@@ -603,36 +750,71 @@ router.post('/refresh', async (req, res) => {
       });
     }
 
-    const user = users[0];
-
     // Generate token baru
     const newToken = jwt.sign(
       { 
-        userId: user.id, 
-        email: user.email,
-        role: user.role 
+        userId: users[0].id, 
+        email: users[0].email,
+        role: users[0].role 
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: '24h' }
     );
-
-    // Hapus password dari response
-    delete user.password;
 
     res.json({
       success: true,
-      message: 'Token berhasil diperbarui',
       data: {
-        user,
-        token: newToken
+        token: newToken,
+        user: users[0]
       }
     });
 
   } catch (error) {
-    console.error('Error refreshing token:', error);
-    res.status(401).json({
+    console.error('Error refresh token:', error);
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token sudah kadaluarsa'
+      });
+    }
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token tidak valid'
+      });
+    }
+
+    res.status(500).json({
       success: false,
-      message: 'Token tidak valid'
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Get profile user yang login
+router.get('/profile', verifyToken, async (req, res) => {
+  try {
+    // User data sudah tersedia dari middleware verifyToken
+    const userData = {
+      id: req.user.id,
+      nama_lengkap: req.user.nama_lengkap,
+      email: req.user.email,
+      username: req.user.username,
+      role: req.user.role
+    };
+
+    res.json({
+      success: true,
+      data: userData
+    });
+
+  } catch (error) {
+    console.error('Error get profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
     });
   }
 });

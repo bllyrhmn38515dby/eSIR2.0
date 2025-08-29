@@ -173,6 +173,10 @@ router.post('/update-position', async (req, res) => {
       // Estimate time berdasarkan speed (default 30 km/h jika tidak ada speed)
       const avgSpeed = speed || 30;
       estimated_time = Math.round((estimated_distance / avgSpeed) * 60); // dalam menit
+      
+      // Ensure estimated_time is not negative or too large
+      if (estimated_time < 0) estimated_time = 0;
+      if (estimated_time > 1440) estimated_time = 1440; // Max 24 hours
     }
 
     // Update tracking data
@@ -186,6 +190,16 @@ router.post('/update-position', async (req, res) => {
       estimated_distance, speed || 0, heading || null, accuracy || 0, battery_level || null,
       rujukan_id
     ]);
+
+    // Log tracking update for debugging
+    console.log(`📍 Tracking update for rujukan ${rujukan_id}:`, {
+      lat: latitude,
+      lng: longitude,
+      status: status || 'dalam_perjalanan',
+      distance: estimated_distance,
+      time: estimated_time,
+      speed: speed || 0
+    });
 
     // Emit real-time update via Socket.IO
     if (global.io) {
@@ -216,9 +230,19 @@ router.post('/update-position', async (req, res) => {
 
   } catch (error) {
     console.error('Error updating position:', error);
+    
+    // Log detailed error information
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
-      message: 'Gagal mengupdate posisi'
+      message: 'Gagal mengupdate posisi',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -277,13 +301,13 @@ router.get('/:rujukan_id', verifyToken, async (req, res) => {
         route: {
           origin: {
             name: rujukan.faskes_asal_nama,
-            lat: rujukan.asal_lat,
-            lng: rujukan.asal_lng
+            lat: rujukan.asal_lat || -6.5971, // Default koordinat Kota Bogor jika null
+            lng: rujukan.asal_lng || 106.8060
           },
           destination: {
             name: rujukan.faskes_tujuan_nama,
-            lat: rujukan.tujuan_lat,
-            lng: rujukan.tujuan_lng
+            lat: rujukan.tujuan_lat || -6.5971, // Default koordinat Kota Bogor jika null
+            lng: rujukan.tujuan_lng || 106.8060
           },
           current: {
             lat: tracking.latitude,

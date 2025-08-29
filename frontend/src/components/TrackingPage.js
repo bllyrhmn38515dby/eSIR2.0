@@ -184,16 +184,21 @@ const TrackingPage = () => {
 
     // Set map center to current position
     if (tracking.latitude && tracking.longitude) {
-      setMapCenter([tracking.latitude, tracking.longitude]);
+      setMapCenter([parseFloat(tracking.latitude), parseFloat(tracking.longitude)]);
     }
 
     // Create route polyline
     if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng) {
       const polyline = [
-        [route.origin.lat, route.origin.lng],
-        [route.destination.lat, route.destination.lng]
+        [parseFloat(route.origin.lat), parseFloat(route.origin.lng)],
+        [parseFloat(route.destination.lat), parseFloat(route.destination.lng)]
       ];
       setRoutePolyline(polyline);
+      console.log('🛣️ Route polyline created:', polyline);
+    } else {
+      console.log('⚠️ Cannot create route polyline - missing coordinates');
+      console.log('Origin:', route.origin);
+      console.log('Destination:', route.destination);
     }
   };
 
@@ -320,7 +325,7 @@ const TrackingPage = () => {
               {/* Origin Marker */}
               {trackingData?.route?.origin?.lat && (
                 <Marker
-                  position={[trackingData.route.origin.lat, trackingData.route.origin.lng]}
+                  position={[parseFloat(trackingData.route.origin.lat), parseFloat(trackingData.route.origin.lng)]}
                   icon={originIcon}
                 >
                   <Popup>
@@ -332,7 +337,7 @@ const TrackingPage = () => {
               {/* Destination Marker */}
               {trackingData?.route?.destination?.lat && (
                 <Marker
-                  position={[trackingData.route.destination.lat, trackingData.route.destination.lng]}
+                  position={[parseFloat(trackingData.route.destination.lat), parseFloat(trackingData.route.destination.lng)]}
                   icon={destinationIcon}
                 >
                   <Popup>
@@ -344,7 +349,7 @@ const TrackingPage = () => {
               {/* Current Position Marker */}
               {trackingData?.tracking?.latitude && (
                 <Marker
-                  position={[trackingData.tracking.latitude, trackingData.tracking.longitude]}
+                  position={[parseFloat(trackingData.tracking.latitude), parseFloat(trackingData.tracking.longitude)]}
                   icon={ambulanceIcon}
                 >
                   <Popup>

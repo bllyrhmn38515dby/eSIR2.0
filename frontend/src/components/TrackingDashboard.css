@@ -1,0 +1,380 @@
+.tracking-dashboard {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.dashboard-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+.dashboard-header h1 {
+  margin: 0 0 30px 0;
+  color: #2c3e50;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px;
+  border-radius: 15px;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.stat-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+  height: calc(100vh - 250px);
+}
+
+.map-container {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.map-container .leaflet-container {
+  border-radius: 20px;
+}
+
+.sessions-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  overflow-y: auto;
+}
+
+.sessions-panel h3 {
+  margin: 0 0 25px 0;
+  color: #2c3e50;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.session-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.session-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.session-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.session-info h4 {
+  margin: 0 0 5px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.session-info p {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.session-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-details p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #34495e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.session-details strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.no-sessions {
+  text-align: center;
+  padding: 40px;
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+/* Custom marker styles */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.tracking-popup {
+  min-width: 250px;
+  padding: 10px;
+}
+
+.tracking-popup h4 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 8px;
+}
+
+.tracking-popup p {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #34495e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tracking-popup strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  
+  .map-container {
+    height: 500px;
+  }
+  
+  .sessions-panel {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tracking-dashboard {
+    padding: 15px;
+  }
+  
+  .dashboard-header {
+    padding: 20px;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+  
+  .dashboard-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-number {
+    font-size: 2.5rem;
+  }
+  
+  .map-container {
+    height: 400px;
+  }
+  
+  .sessions-panel {
+    max-height: 350px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+  }
+  
+  .map-container {
+    height: 300px;
+  }
+  
+  .session-card {
+    padding: 15px;
+  }
+  
+  .session-header {
+    gap: 10px;
+  }
+}
+
+/* Animation for real-time updates */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.session-card.updating {
+  animation: pulse 1s ease-in-out;
+}
+
+/* Custom scrollbar for sessions panel */
+.sessions-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sessions-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.sessions-panel::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.sessions-panel::-webkit-scrollbar-thumb:hover {
+  background: #5a6fd8;
+}
+
+/* Leaflet popup customization */
+.leaflet-popup-content-wrapper {
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+  border-radius: 15px;
+}
+
+.leaflet-popup-tip {
+  background: white;
+}
+
+/* Status colors for different tracking states */
+.status-menunggu {
+  background-color: #3498db !important;
+}
+
+.status-dijemput {
+  background-color: #f39c12 !important;
+}
+
+.status-dalam_perjalanan {
+  background-color: #e74c3c !important;
+}
+
+.status-tiba {
+  background-color: #27ae60 !important;
+}

@@ -15,6 +15,7 @@ const tempatTidurRoutes = require('./routes/tempatTidur');
 const laporanRoutes = require('./routes/laporan');
 const searchRoutes = require('./routes/search');
 const trackingRoutes = require('./routes/tracking');
+const dokumenRoutes = require('./routes/dokumen');
 
 const app = express();
 const server = http.createServer(app);
@@ -60,9 +61,10 @@ app.use('/api/tempat-tidur', tempatTidurRoutes);
 app.use('/api/laporan', laporanRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/tracking', trackingRoutes);
+app.use('/api/dokumen', dokumenRoutes);
 
 // Socket.IO middleware for authentication
-io.use((socket, next) => {
+io.use(async (socket, next) => {
   const token = socket.handshake.auth.token;
   
   if (!token) {
@@ -70,47 +72,69 @@ io.use((socket, next) => {
   }
 
   try {
-    // Verify token (you can use your existing JWT verification logic)
-    // For now, we'll just check if token exists
-    if (token) {
-      socket.userToken = token;
-      return next();
-    } else {
-      return next(new Error('Authentication error: Invalid token'));
+    // Verify JWT token
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Get user data from database
+    const [users] = await pool.execute(
+      `SELECT u.*, r.nama_role as role 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = ?`,
+      [decoded.userId]
+    );
+
+    if (users.length === 0) {
+      return next(new Error('Authentication error: User not found'));
     }
+
+    // Store user info in socket
+    socket.user = users[0];
+    socket.userToken = token;
+    
+    console.log(`🔐 Socket authenticated: ${socket.user.nama_lengkap} (${socket.user.role})`);
+    return next();
   } catch (error) {
+    console.error('❌ Socket authentication error:', error.message);
     return next(new Error('Authentication error: Token verification failed'));
   }
 });
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {
-  console.log(`✅ User connected: ${socket.id}`);
+  console.log(`✅ User connected: ${socket.id} - ${socket.user?.nama_lengkap} (${socket.user?.role})`);
   
-  // Store user info
-  socket.userToken = socket.handshake.auth.token;
+  // Auto-join rooms based on user role
+  if (socket.user) {
+    if (socket.user.role === 'admin') {
+      socket.join('admin');
+      console.log(`👑 Admin ${socket.user.nama_lengkap} joined admin room: ${socket.id}`);
+    } else if ((socket.user.role === 'puskesmas' || socket.user.role === 'rs') && socket.user.faskes_id) {
+      socket.join(`faskes-${socket.user.faskes_id}`);
+      console.log(`🏥 ${socket.user.role} ${socket.user.nama_lengkap} joined faskes room ${socket.user.faskes_id}: ${socket.id}`);
+    }
+  }
 
-  // Join admin room
+  // Manual room joining (for backward compatibility)
   socket.on('join-admin', () => {
     socket.join('admin');
-    console.log(`👑 Admin joined room: ${socket.id}`);
+    console.log(`👑 Manual admin join: ${socket.id}`);
   });
 
-  // Join faskes room
   socket.on('join-faskes', (faskesId) => {
     socket.join(`faskes-${faskesId}`);
-    console.log(`🏥 Faskes ${faskesId} joined room: ${socket.id}`);
+    console.log(`🏥 Manual faskes join ${faskesId}: ${socket.id}`);
   });
 
-  // Join tracking room
   socket.on('join-tracking', (rujukanId) => {
     socket.join(`tracking-${rujukanId}`);
     console.log(`🛰️ Tracking room ${rujukanId} joined: ${socket.id}`);
   });
 
   // Handle disconnect
-  socket.on('disconnect', () => {
-    console.log(`❌ User disconnected: ${socket.id}`);
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ User disconnected: ${socket.id} - ${socket.user?.nama_lengkap} (${reason})`);
   });
 
   // Handle errors

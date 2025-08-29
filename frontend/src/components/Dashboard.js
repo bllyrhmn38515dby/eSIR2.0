@@ -9,7 +9,7 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [retryCount, setRetryCount] = useState(0);
+  const [, setRetryCount] = useState(0);
   const { isConnected } = useSocket();
   const { isRefreshing } = useAuth();
 

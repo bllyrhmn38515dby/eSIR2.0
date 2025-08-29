@@ -76,6 +76,11 @@ const Navigation = () => {
                   <span>Tracking</span>
                 </Link>
                 
+                <Link to="/tracking-dashboard" className={`dropdown-item ${isActive('/tracking-dashboard')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">📊</i>
+                  <span>Tracking Dashboard</span>
+                </Link>
+                
                 <Link to="/ambulance-tracker" className={`dropdown-item ${isActive('/ambulance-tracker')}`} onClick={closeDropdown}>
                   <i className="nav-icon">🚑</i>
                   <span>Ambulance Tracker</span>

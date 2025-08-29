@@ -1,15 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Layout from './Layout';
+import DokumenManager from './DokumenManager';
+import { useAuth } from '../context/AuthContext';
 import './RujukanPage.css';
 
 const RujukanPage = () => {
+  const { user } = useAuth();
   const [rujukan, setRujukan] = useState([]);
-  const [pasien, setPasien] = useState([]);
+  const [, setPasien] = useState([]);
   const [faskes, setFaskes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDokumenModal, setShowDokumenModal] = useState(false);
   const [selectedRujukan, setSelectedRujukan] = useState(null);
   const [formData, setFormData] = useState({
     // Data Pasien
@@ -33,6 +38,9 @@ const RujukanPage = () => {
   const [statusData, setStatusData] = useState({
     status: 'diterima',
     catatan_tujuan: ''
+  });
+  const [cancelData, setCancelData] = useState({
+    alasan_pembatalan: ''
   });
   const [error, setError] = useState('');
 
@@ -127,117 +135,105 @@ const RujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      // Cari pasien berdasarkan NIK
       const response = await axios.get(`http://localhost:3001/api/pasien/search?nik=${searchNik}`, { headers });
       
       if (response.data.success && response.data.data) {
-        // Pasien ditemukan
         const pasien = response.data.data;
-        console.log('Pasien ditemukan:', pasien); // Debug log
         setFoundPasien(pasien);
         setIsNewPasien(false);
         
-        // Auto-fill form dengan data pasien
-        // Format tanggal jika diperlukan (dari MySQL date format ke HTML date input format)
-        let formattedTanggalLahir = pasien.tanggal_lahir;
-        if (pasien.tanggal_lahir && typeof pasien.tanggal_lahir === 'string') {
-          // Jika tanggal dalam format YYYY-MM-DD, gunakan langsung
-          // Jika dalam format lain, konversi ke YYYY-MM-DD
-          const date = new Date(pasien.tanggal_lahir);
-          if (!isNaN(date.getTime())) {
-            formattedTanggalLahir = date.toISOString().split('T')[0];
-          }
-        }
-        
-        const updatedFormData = {
+        // Auto-fill form dengan data pasien yang ditemukan
+        setFormData({
           ...formData,
           nik: pasien.nik,
-          nama_pasien: pasien.nama_pasien,
-          tanggal_lahir: formattedTanggalLahir,
+          nama_pasien: pasien.nama_lengkap,
+          tanggal_lahir: pasien.tanggal_lahir,
           jenis_kelamin: pasien.jenis_kelamin,
           alamat: pasien.alamat,
           telepon: pasien.telepon || ''
-        };
-        console.log('Form data yang akan diupdate:', updatedFormData); // Debug log
-        setFormData(updatedFormData);
+        });
       } else {
-        // Pasien tidak ditemukan, mode tambah baru
         setFoundPasien(null);
         setIsNewPasien(true);
         
-        // Reset form data pasien
-        setFormData(prev => ({
-          ...prev,
-          nik: searchNik,
-          nama_pasien: '',
-          tanggal_lahir: '',
-          jenis_kelamin: 'L',
-          alamat: '',
-          telepon: ''
-        }));
+        // Set NIK untuk pasien baru
+        setFormData({
+          ...formData,
+          nik: searchNik
+        });
       }
     } catch (error) {
-      if (error.response?.status === 404) {
-        // Pasien tidak ditemukan, mode tambah baru
-        setFoundPasien(null);
-        setIsNewPasien(true);
-        
-        setFormData(prev => ({
-          ...prev,
-          nik: searchNik,
-          nama_pasien: '',
-          tanggal_lahir: '',
-          jenis_kelamin: 'L',
-          alamat: '',
-          telepon: ''
-        }));
-      } else {
-        setError('Gagal mencari pasien');
-        console.error('Error searching pasien:', error);
-      }
+      console.error('Error searching pasien:', error);
+      setFoundPasien(null);
+      setIsNewPasien(true);
+      
+      // Set NIK untuk pasien baru
+      setFormData({
+        ...formData,
+        nik: searchNik
+      });
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const resetPasienSearch = () => {
-    setSearchNik('');
-    setFoundPasien(null);
-    setIsNewPasien(false);
-    setFormData(prev => ({
-      ...prev,
-      nik: '',
-      nama_pasien: '',
-      tanggal_lahir: '',
-      jenis_kelamin: 'L',
-      alamat: '',
-      telepon: ''
-    }));
-  };
-
-  const handleStatusChange = (e) => {
-    setStatusData({
-      ...statusData,
-      [e.target.name]: e.target.value
-    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
+    // Frontend validation
+    const requiredFields = {
+      nik: 'NIK',
+      nama_pasien: 'Nama Pasien',
+      tanggal_lahir: 'Tanggal Lahir',
+      jenis_kelamin: 'Jenis Kelamin',
+      alamat: 'Alamat',
+      faskes_tujuan_id: 'Faskes Tujuan',
+      diagnosa: 'Diagnosa',
+      alasan_rujukan: 'Alasan Rujukan'
+    };
+
+    // Tambahkan faskes_asal_id untuk admin pusat
+    if (user && user.role === 'admin_pusat') {
+      requiredFields.faskes_asal_id = 'Faskes Asal';
+    }
+
+    const missingFields = [];
+    for (const [field, label] of Object.entries(requiredFields)) {
+      if (!formData[field] || formData[field].toString().trim() === '') {
+        missingFields.push(label);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      setError(`Field berikut wajib diisi: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    // Validate NIK
+    if (formData.nik.length !== 16) {
+      setError('NIK harus 16 digit');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      // Kirim data pasien dan rujukan sekaligus
-      await axios.post('http://localhost:3001/api/rujukan/with-pasien', formData, { headers });
-      fetchData();
-      resetForm();
-      resetPasienSearch();
-      setShowForm(false);
+      const response = await axios.post('http://localhost:3001/api/rujukan/with-pasien', formData, { headers });
+      
+      if (response.data.success) {
+        setShowForm(false);
+        resetForm();
+        fetchData();
+        // Show success message
+        alert('Rujukan berhasil dibuat!');
+      } else {
+        setError(response.data.message);
+      }
     } catch (error) {
-      setError(error.response?.data?.message || 'Terjadi kesalahan');
+      console.error('Error creating rujukan:', error);
+      setError(error.response?.data?.message || 'Gagal membuat rujukan');
     }
   };
 
@@ -249,68 +245,103 @@ const RujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      await axios.put(`http://localhost:3001/api/rujukan/${selectedRujukan.id}/status`, statusData, { headers });
-      fetchData();
-      setShowStatusModal(false);
-      setSelectedRujukan(null);
-      setStatusData({ status: 'diterima', catatan_tujuan: '' });
+      const response = await axios.put(
+        `http://localhost:3001/api/rujukan/${selectedRujukan.id}/status`,
+        statusData,
+        { headers }
+      );
+      
+      if (response.data.success) {
+        setShowStatusModal(false);
+        setSelectedRujukan(null);
+        setStatusData({ status: 'diterima', catatan_tujuan: '' });
+        fetchData();
+      } else {
+        setError(response.data.message);
+      }
     } catch (error) {
-      setError(error.response?.data?.message || 'Terjadi kesalahan');
+      console.error('Error updating status:', error);
+      setError(error.response?.data?.message || 'Gagal mengupdate status');
     }
   };
 
-  const handleStatusUpdate = (rujukan) => {
-    setSelectedRujukan(rujukan);
-    setShowStatusModal(true);
+  const handleCancelSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+      
+      const response = await axios.put(
+        `http://localhost:3001/api/rujukan/${selectedRujukan.id}/cancel`,
+        cancelData,
+        { headers }
+      );
+      
+      if (response.data.success) {
+        setShowCancelModal(false);
+        setSelectedRujukan(null);
+        setCancelData({ alasan_pembatalan: '' });
+        fetchData();
+      } else {
+        setError(response.data.message);
+      }
+    } catch (error) {
+      console.error('Error cancelling rujukan:', error);
+      setError(error.response?.data?.message || 'Gagal membatalkan rujukan');
+    }
   };
 
   const resetForm = () => {
     setFormData({
-      // Data Pasien
       nik: '',
       nama_pasien: '',
       tanggal_lahir: '',
       jenis_kelamin: 'L',
       alamat: '',
       telepon: '',
-      // Data Rujukan
       faskes_asal_id: '',
       faskes_tujuan_id: '',
       diagnosa: '',
       alasan_rujukan: '',
       catatan_asal: ''
     });
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('id-ID');
+    setSearchNik('');
+    setFoundPasien(null);
+    setIsNewPasien(false);
   };
 
   const getStatusBadge = (status) => {
-    const statusConfig = {
-      pending: { text: 'Menunggu', class: 'status-pending' },
-      diterima: { text: 'Diterima', class: 'status-accepted' },
-      ditolak: { text: 'Ditolak', class: 'status-rejected' },
-      selesai: { text: 'Selesai', class: 'status-completed' }
+    const badges = {
+      'pending': 'badge-warning',
+      'diterima': 'badge-success',
+      'ditolak': 'badge-danger',
+      'selesai': 'badge-info',
+      'dibatalkan': 'badge-secondary'
     };
-    
-    const config = statusConfig[status] || { text: status, class: 'status-pending' };
-    return <span className={`status-badge ${config.class}`}>{config.text}</span>;
+    return badges[status] || 'badge-secondary';
   };
 
-  const getFaskesName = (id) => {
-    const faskesItem = faskes.find(f => f.id === id);
-    return faskesItem ? faskesItem.nama_faskes : 'Unknown';
+  const getStatusText = (status) => {
+    const texts = {
+      'pending': 'Menunggu',
+      'diterima': 'Diterima',
+      'ditolak': 'Ditolak',
+      'selesai': 'Selesai',
+      'dibatalkan': 'Dibatalkan'
+    };
+    return texts[status] || status;
   };
 
-  const getPasienName = (id) => {
-    const pasienItem = pasien.find(p => p.id === id);
-    return pasienItem ? pasienItem.nama_pasien : 'Unknown';
+  const canCancel = (rujukan) => {
+    // Hanya rujukan dengan status pending yang bisa dibatalkan
+    return rujukan.status === 'pending';
   };
 
-  // Fungsi untuk mendapatkan nama pasien dari data rujukan (jika sudah ada nama_pasien)
-  const getPasienNameFromRujukan = (rujukan) => {
-    return rujukan.nama_pasien || getPasienName(rujukan.pasien_id);
+  const canUpdateStatus = (rujukan) => {
+    // Hanya rujukan dengan status pending yang bisa diupdate
+    return rujukan.status === 'pending';
   };
 
   if (loading) {
@@ -326,14 +357,8 @@ const RujukanPage = () => {
       <div className="rujukan-page">
         <div className="page-header">
           <h1>Manajemen Rujukan</h1>
-          <button 
-            className="btn-primary"
-            onClick={() => {
-              resetForm();
-              setShowForm(true);
-            }}
-          >
-            + Buat Rujukan
+          <button className="btn-primary" onClick={() => setShowForm(true)}>
+            + Buat Rujukan Baru
           </button>
         </div>
 
@@ -343,251 +368,307 @@ const RujukanPage = () => {
           </div>
         )}
 
-        {/* Form Modal untuk Buat Rujukan */}
-        {showForm && (
-          <div className="form-modal">
-            <div className="form-content">
-              <div className="form-header">
-                <h2>Buat Rujukan Baru</h2>
-                <button 
-                  className="close-btn"
-                  onClick={() => {
-                    setShowForm(false);
-                    resetForm();
-                  }}
-                >
-                  ×
-                </button>
-              </div>
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>No. Rujukan</th>
+                <th>Pasien</th>
+                <th>Faskes Asal</th>
+                <th>Faskes Tujuan</th>
+                <th>Diagnosa</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rujukan.map((r) => (
+                <tr key={r.id}>
+                  <td>{r.nomor_rujukan}</td>
+                  <td>
+                    <div>
+                      <strong>{r.nama_pasien}</strong>
+                      <br />
+                      <small>NIK: {r.nik_pasien}</small>
+                    </div>
+                  </td>
+                  <td>{r.faskes_asal_nama}</td>
+                  <td>{r.faskes_tujuan_nama}</td>
+                  <td className="diagnosa-cell">{r.diagnosa}</td>
+                  <td>
+                    <span className={`badge ${getStatusBadge(r.status)}`}>
+                      {getStatusText(r.status)}
+                    </span>
+                  </td>
+                  <td>
+                    {new Date(r.tanggal_rujukan).toLocaleDateString('id-ID')}
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      {canUpdateStatus(r) && (
+                        <button 
+                          className="btn-edit"
+                          onClick={() => {
+                            setSelectedRujukan(r);
+                            setShowStatusModal(true);
+                          }}
+                        >
+                          Update Status
+                        </button>
+                      )}
+                      {canCancel(r) && (
+                        <button 
+                          className="btn-cancel"
+                          onClick={() => {
+                            setSelectedRujukan(r);
+                            setShowCancelModal(true);
+                          }}
+                        >
+                          Batalkan
+                        </button>
+                      )}
+                      <button 
+                        className="btn-view"
+                        onClick={() => {
+                          setSelectedRujukan(r);
+                          // Show detail modal
+                        }}
+                      >
+                        Detail
+                      </button>
+                      <button 
+                        className="btn-dokumen"
+                        onClick={() => {
+                          setSelectedRujukan(r);
+                          setShowDokumenModal(true);
+                        }}
+                      >
+                        📁 Dokumen
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {rujukan.length === 0 && (
+            <div className="no-data">
+              <p>Tidak ada data rujukan</p>
+            </div>
+          )}
+        </div>
 
+        {/* Form Modal */}
+        {showForm && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>Buat Rujukan Baru</h2>
+                <button className="modal-close" onClick={() => setShowForm(false)}>×</button>
+              </div>
+              
               <form onSubmit={handleSubmit}>
-                {/* Pencarian Pasien */}
                 <div className="form-section">
-                  <h3>🔍 Pencarian Pasien</h3>
+                  <h3>Data Pasien</h3>
+                  
                   <div className="form-row">
                     <div className="form-group">
-                      <label>NIK Pasien</label>
+                      <label>NIK</label>
                       <div className="search-container">
                         <input
                           type="text"
                           value={searchNik}
                           onChange={(e) => setSearchNik(e.target.value)}
-                          placeholder="Masukkan 16 digit NIK"
-                          maxLength="16"
-                          pattern="[0-9]{16}"
-                          title="NIK harus 16 digit angka"
+                          placeholder="Masukkan NIK (16 digit)"
+                          maxLength={16}
                         />
-                        <button
-                          type="button"
-                          className="btn-search"
+                        <button 
+                          type="button" 
                           onClick={handleSearchPasien}
                           disabled={isSearching}
                         >
-                          {isSearching ? '🔍 Mencari...' : '🔍 Cari'}
+                          {isSearching ? 'Mencari...' : 'Cari'}
                         </button>
                       </div>
                     </div>
-                    <div className="form-group">
-                      <button
-                        type="button"
+                  </div>
+
+                  {foundPasien && (
+                    <div className="found-pasien">
+                      <p>✅ Pasien ditemukan: <strong>{foundPasien.nama_lengkap}</strong></p>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            nik: foundPasien.nik,
+                            nama_pasien: foundPasien.nama_lengkap,
+                            tanggal_lahir: foundPasien.tanggal_lahir,
+                            jenis_kelamin: foundPasien.jenis_kelamin,
+                            alamat: foundPasien.alamat,
+                            telepon: foundPasien.telepon || ''
+                          });
+                        }}
                         className="btn-secondary"
-                        onClick={resetPasienSearch}
                       >
-                        🔄 Reset
+                        Gunakan Data Pasien Ini
                       </button>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Status Pencarian */}
-                  {foundPasien && (
-                    <div className="search-result success">
-                      ✅ Pasien ditemukan: <strong>{foundPasien.nama_pasien}</strong> (NIK: {foundPasien.nik})
+                  {(isNewPasien || foundPasien) && (
+                    <div className="new-pasien-form">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Nama Pasien *</label>
+                          <input
+                            type="text"
+                            name="nama_pasien"
+                            value={formData.nama_pasien}
+                            onChange={handleInputChange}
+                            required
+                            placeholder="Masukkan nama lengkap pasien"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>Tanggal Lahir *</label>
+                          <input
+                            type="date"
+                            name="tanggal_lahir"
+                            value={formData.tanggal_lahir}
+                            onChange={handleInputChange}
+                            required
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Jenis Kelamin *</label>
+                          <select
+                            name="jenis_kelamin"
+                            value={formData.jenis_kelamin}
+                            onChange={handleInputChange}
+                            required
+                          >
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label>Telepon</label>
+                          <input
+                            type="tel"
+                            name="telepon"
+                            value={formData.telepon}
+                            onChange={handleInputChange}
+                            placeholder="Nomor telepon (opsional)"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Alamat *</label>
+                        <textarea
+                          name="alamat"
+                          value={formData.alamat}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="Masukkan alamat lengkap pasien"
+                          rows="3"
+                        />
+                      </div>
                     </div>
                   )}
-                  {isNewPasien && (
-                    <div className="search-result info">
-                      ℹ️ Pasien baru akan dibuat dengan NIK: <strong>{searchNik}</strong>
-                    </div>
-                  )}
-                </div>
 
-                {/* Data Pasien */}
-                <div className="form-section">
-                  <h3>📋 Data Pasien</h3>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>NIK *</label>
-                      <input
-                        type="text"
-                        name="nik"
-                        value={formData.nik}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="16 digit NIK"
-                        maxLength="16"
-                        pattern="[0-9]{16}"
-                        title="NIK harus 16 digit angka"
-                        readOnly={foundPasien !== null}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Nama Pasien *</label>
-                      <input
-                        type="text"
-                        name="nama_pasien"
-                        value={formData.nama_pasien}
-                        onChange={handleInputChange}
-                        required
-                        placeholder="Nama lengkap pasien"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Tanggal Lahir *</label>
-                      <input
-                        type="date"
-                        name="tanggal_lahir"
-                        value={formData.tanggal_lahir}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Jenis Kelamin *</label>
-                      <select
-                        name="jenis_kelamin"
-                        value={formData.jenis_kelamin}
-                        onChange={handleInputChange}
-                        required
-                      >
-                        <option value="L">Laki-laki</option>
-                        <option value="P">Perempuan</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Alamat *</label>
-                      <textarea
-                        name="alamat"
-                        value={formData.alamat}
-                        onChange={handleInputChange}
-                        placeholder="Alamat lengkap"
-                        rows="2"
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Telepon</label>
-                      <input
-                        type="tel"
-                        name="telepon"
-                        value={formData.telepon}
-                        onChange={handleInputChange}
-                        placeholder="08123456789"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Data Rujukan */}
-                <div className="form-section">
-                  <h3>📄 Data Rujukan</h3>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Faskes Asal *</label>
-                      <select
-                        name="faskes_asal_id"
-                        value={formData.faskes_asal_id}
-                        onChange={handleInputChange}
-                        required
-                      >
-                        <option value="">Pilih Faskes Asal</option>
-                        {console.log('🔍 Rendering faskes dropdown, count:', faskes.length, 'faskes:', faskes)}
-                        {faskes && faskes.length > 0 ? (
-                          faskes.map((f) => {
-                            console.log('📋 Faskes item:', f);
-                            return (
+                  <div className="form-section">
+                    <h3>Data Rujukan</h3>
+                    
+                    <div className="form-row">
+                      {/* Field faskes asal hanya untuk admin pusat */}
+                      {user && user.role === 'admin_pusat' && (
+                        <div className="form-group">
+                          <label>Faskes Asal *</label>
+                          <select
+                            name="faskes_asal_id"
+                            value={formData.faskes_asal_id}
+                            onChange={handleInputChange}
+                            required
+                          >
+                            <option value="">Pilih Faskes Asal</option>
+                            {faskes.map((f) => (
                               <option key={f.id} value={f.id}>
                                 {f.nama_faskes} ({f.tipe})
                               </option>
-                            );
-                          })
-                        ) : (
-                          <option value="" disabled>Loading faskes...</option>
-                        )}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label>Faskes Tujuan *</label>
-                      <select
-                        name="faskes_tujuan_id"
-                        value={formData.faskes_tujuan_id}
-                        onChange={handleInputChange}
-                        required
-                      >
-                        <option value="">Pilih Faskes Tujuan</option>
-                        {faskes && faskes.length > 0 ? (
-                          faskes.map((f) => (
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      
+                      <div className="form-group">
+                        <label>Faskes Tujuan *</label>
+                        <select
+                          name="faskes_tujuan_id"
+                          value={formData.faskes_tujuan_id}
+                          onChange={handleInputChange}
+                          required
+                        >
+                          <option value="">Pilih Faskes Tujuan</option>
+                          {faskes.map((f) => (
                             <option key={f.id} value={f.id}>
                               {f.nama_faskes} ({f.tipe})
                             </option>
-                          ))
-                        ) : (
-                          <option value="" disabled>Loading faskes...</option>
-                        )}
-                      </select>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Diagnosa *</label>
+                      <textarea
+                        name="diagnosa"
+                        value={formData.diagnosa}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Masukkan diagnosa pasien"
+                        rows="3"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Alasan Rujukan *</label>
+                      <textarea
+                        name="alasan_rujukan"
+                        value={formData.alasan_rujukan}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Masukkan alasan rujukan"
+                        rows="3"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Catatan Asal</label>
+                      <textarea
+                        name="catatan_asal"
+                        value={formData.catatan_asal}
+                        onChange={handleInputChange}
+                        placeholder="Catatan tambahan (opsional)"
+                        rows="2"
+                      />
                     </div>
                   </div>
-
-                  <div className="form-group">
-                    <label>Diagnosa *</label>
-                    <textarea
-                      name="diagnosa"
-                      value={formData.diagnosa}
-                      onChange={handleInputChange}
-                      placeholder="Masukkan diagnosa pasien"
-                      rows="3"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Alasan Rujukan *</label>
-                    <textarea
-                      name="alasan_rujukan"
-                      value={formData.alasan_rujukan}
-                      onChange={handleInputChange}
-                      placeholder="Alasan mengapa pasien dirujuk"
-                      rows="3"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Catatan Asal</label>
-                    <textarea
-                      name="catatan_asal"
-                      value={formData.catatan_asal}
-                      onChange={handleInputChange}
-                      placeholder="Catatan tambahan dari faskes asal"
-                      rows="3"
-                    />
-                  </div>
                 </div>
-
-                <div className="form-actions">
-                  <button type="button" className="btn-secondary" onClick={() => {
-                    setShowForm(false);
-                    resetForm();
-                  }}>
+                
+                <div className="modal-footer">
+                  <button type="button" onClick={() => setShowForm(false)}>
                     Batal
                   </button>
                   <button type="submit" className="btn-primary">
-                    {foundPasien ? 'Update Pasien & Buat Rujukan' : 'Buat Pasien & Rujukan'}
+                    Buat Rujukan
                   </button>
                 </div>
               </form>
@@ -595,37 +676,27 @@ const RujukanPage = () => {
           </div>
         )}
 
-        {/* Modal untuk Update Status */}
+        {/* Status Update Modal */}
         {showStatusModal && selectedRujukan && (
-          <div className="form-modal">
-            <div className="form-content">
-              <div className="form-header">
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
                 <h2>Update Status Rujukan</h2>
-                <button 
-                  className="close-btn"
-                  onClick={() => {
-                    setShowStatusModal(false);
-                    setSelectedRujukan(null);
-                  }}
-                >
-                  ×
-                </button>
+                <button className="modal-close" onClick={() => setShowStatusModal(false)}>×</button>
               </div>
-
+              
               <div className="rujukan-info">
-                <p><strong>Nomor Rujukan:</strong> {selectedRujukan.nomor_rujukan}</p>
-                <p><strong>Pasien:</strong> {getPasienNameFromRujukan(selectedRujukan)}</p>
-                <p><strong>Faskes Tujuan:</strong> {selectedRujukan.faskes_tujuan_nama || getFaskesName(selectedRujukan.faskes_tujuan_id)}</p>
-                <p><strong>Diagnosa:</strong> {selectedRujukan.diagnosa}</p>
+                <p><strong>No. Rujukan:</strong> {selectedRujukan.nomor_rujukan}</p>
+                <p><strong>Pasien:</strong> {selectedRujukan.nama_pasien}</p>
+                <p><strong>Faskes Tujuan:</strong> {selectedRujukan.faskes_tujuan_nama}</p>
               </div>
-
+              
               <form onSubmit={handleStatusSubmit}>
                 <div className="form-group">
-                  <label>Status *</label>
+                  <label>Status</label>
                   <select
-                    name="status"
                     value={statusData.status}
-                    onChange={handleStatusChange}
+                    onChange={(e) => setStatusData({...statusData, status: e.target.value})}
                     required
                   >
                     <option value="diterima">Diterima</option>
@@ -633,23 +704,18 @@ const RujukanPage = () => {
                     <option value="selesai">Selesai</option>
                   </select>
                 </div>
-
+                
                 <div className="form-group">
                   <label>Catatan Tujuan</label>
                   <textarea
-                    name="catatan_tujuan"
                     value={statusData.catatan_tujuan}
-                    onChange={handleStatusChange}
-                    placeholder="Catatan dari faskes tujuan"
-                    rows="3"
+                    onChange={(e) => setStatusData({...statusData, catatan_tujuan: e.target.value})}
+                    placeholder="Catatan dari faskes tujuan..."
                   />
                 </div>
-
-                <div className="form-actions">
-                  <button type="button" className="btn-secondary" onClick={() => {
-                    setShowStatusModal(false);
-                    setSelectedRujukan(null);
-                  }}>
+                
+                <div className="modal-footer">
+                  <button type="button" onClick={() => setShowStatusModal(false)}>
                     Batal
                   </button>
                   <button type="submit" className="btn-primary">
@@ -661,63 +727,59 @@ const RujukanPage = () => {
           </div>
         )}
 
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>No Rujukan</th>
-                <th>Pasien</th>
-                <th>Faskes Asal</th>
-                <th>Faskes Tujuan</th>
-                <th>Diagnosa</th>
-                <th>Status</th>
-                <th>Tanggal</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-                         <tbody>
-               {console.log('🔍 Rendering rujukan table, count:', rujukan.length, 'data:', rujukan)}
-               {rujukan.map((r) => (
-                <tr key={r.id}>
-                  <td>{r.nomor_rujukan}</td>
-                  <td>{getPasienNameFromRujukan(r)}</td>
-                  <td>{r.faskes_asal_nama || getFaskesName(r.faskes_asal_id)}</td>
-                  <td>{r.faskes_tujuan_nama || getFaskesName(r.faskes_tujuan_id)}</td>
-                  <td className="diagnosa-cell">{r.diagnosa}</td>
-                  <td>{getStatusBadge(r.status)}</td>
-                  <td>{formatDate(r.tanggal_rujukan)}</td>
-                  <td>
-                    <div className="action-buttons">
-                      {r.status === 'pending' && (
-                        <button 
-                          className="btn-status"
-                          onClick={() => handleStatusUpdate(r)}
-                        >
-                          Update Status
-                        </button>
-                      )}
-                      <button 
-                        className="btn-view"
-                        onClick={() => {
-                          setSelectedRujukan(r);
-                          setShowStatusModal(true);
-                        }}
-                      >
-                        Detail
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          
-          {rujukan.length === 0 && (
-            <div className="empty-state">
-              <p>Belum ada data rujukan</p>
+        {/* Cancel Rujukan Modal */}
+        {showCancelModal && selectedRujukan && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>Batalkan Rujukan</h2>
+                <button className="modal-close" onClick={() => setShowCancelModal(false)}>×</button>
+              </div>
+              
+              <div className="rujukan-info">
+                <p><strong>No. Rujukan:</strong> {selectedRujukan.nomor_rujukan}</p>
+                <p><strong>Pasien:</strong> {selectedRujukan.nama_pasien}</p>
+                <p><strong>Faskes Tujuan:</strong> {selectedRujukan.faskes_tujuan_nama}</p>
+                <p><strong>Status Saat Ini:</strong> {getStatusText(selectedRujukan.status)}</p>
+              </div>
+              
+              <form onSubmit={handleCancelSubmit}>
+                <div className="form-group">
+                  <label>Alasan Pembatalan *</label>
+                  <textarea
+                    value={cancelData.alasan_pembatalan}
+                    onChange={(e) => setCancelData({...cancelData, alasan_pembatalan: e.target.value})}
+                    placeholder="Masukkan alasan pembatalan rujukan..."
+                    required
+                  />
+                </div>
+                
+                <div className="warning-message">
+                  <p>⚠️ <strong>Peringatan:</strong> Pembatalan rujukan tidak dapat dibatalkan kembali.</p>
+                </div>
+                
+                <div className="modal-footer">
+                  <button type="button" onClick={() => setShowCancelModal(false)}>
+                    Batal
+                  </button>
+                  <button type="submit" className="btn-danger">
+                    Batalkan Rujukan
+                  </button>
+                </div>
+              </form>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Dokumen Manager Modal */}
+        {showDokumenModal && selectedRujukan && (
+          <div className="modal-overlay dokumen-modal-overlay">
+            <DokumenManager 
+              rujukanId={selectedRujukan.id}
+              onClose={() => setShowDokumenModal(false)}
+            />
+          </div>
+        )}
       </div>
     </Layout>
   );

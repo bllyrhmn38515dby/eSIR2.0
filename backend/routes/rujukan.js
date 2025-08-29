@@ -10,6 +10,7 @@ const STATUSES = {
   DITERIMA: 'diterima',
   DITOLAK: 'ditolak',
   SELESAI: 'selesai',
+  DIBATALKAN: 'dibatalkan', // Status baru untuk pembatalan
 };
 
 // Generate nomor rujukan otomatis
@@ -117,12 +118,37 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       catatan_asal
     } = req.body;
 
-    // Validate input
-    if (!nik || !nama_pasien || !tanggal_lahir || !jenis_kelamin || !alamat ||
-        !faskes_asal_id || !faskes_tujuan_id || !diagnosa || !alasan_rujukan) {
+    // Validate input - faskes_asal_id akan diambil dari user yang login
+    if (!nik || !nik.toString().trim() || 
+        !nama_pasien || !nama_pasien.toString().trim() || 
+        !tanggal_lahir || !tanggal_lahir.toString().trim() || 
+        !jenis_kelamin || !jenis_kelamin.toString().trim() || 
+        !alamat || !alamat.toString().trim() ||
+        !faskes_tujuan_id || !faskes_tujuan_id.toString().trim() || 
+        !diagnosa || !diagnosa.toString().trim() || 
+        !alasan_rujukan || !alasan_rujukan.toString().trim()) {
       return res.status(400).json({
         success: false,
         message: 'Semua field wajib diisi'
+      });
+    }
+
+    // Get faskes_asal_id from logged in user
+    let userFaskesId = req.user.faskes_id;
+    
+    // Jika user adalah admin pusat, gunakan faskes_asal_id dari request body
+    if (req.user.role === 'admin_pusat') {
+      if (!faskes_asal_id || !faskes_asal_id.toString().trim()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Faskes asal harus dipilih untuk admin pusat'
+        });
+      }
+      userFaskesId = faskes_asal_id;
+    } else if (!userFaskesId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User tidak terhubung dengan faskes manapun'
       });
     }
 
@@ -171,7 +197,7 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
         diagnosa, alasan_rujukan, catatan_asal, status, tanggal_rujukan, user_id
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
     `, [
-      nomorRujukan, pasienId, faskes_asal_id, faskes_tujuan_id,
+      nomorRujukan, pasienId, userFaskesId, faskes_tujuan_id,
       diagnosa, alasan_rujukan, catatan_asal || '', STATUSES.PENDING, req.user.id
     ]);
 
@@ -266,22 +292,31 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// Update rujukan status
+// Update status rujukan
 router.put('/:id/status', verifyToken, async (req, res) => {
   try {
+    const { id } = req.params;
     const { status, catatan_tujuan } = req.body;
-    const rujukanId = req.params.id;
+
+    // Validate input
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status wajib diisi'
+      });
+    }
 
     // Validate status
-    if (!Object.values(STATUSES).includes(status)) {
+    const validStatuses = Object.values(STATUSES);
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
         message: 'Status tidak valid'
       });
     }
 
-    // Get current rujukan data
-    const [currentRujukan] = await db.execute(`
+    // Get rujukan
+    const [rujukanRows] = await db.execute(`
       SELECT r.*, 
              p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
@@ -291,25 +326,26 @@ router.put('/:id/status', verifyToken, async (req, res) => {
       LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
       LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
       WHERE r.id = ?
-    `, [rujukanId]);
+    `, [id]);
 
-    if (currentRujukan.length === 0) {
+    if (rujukanRows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Rujukan tidak ditemukan'
       });
     }
 
-    const rujukan = currentRujukan[0];
+    const rujukan = rujukanRows[0];
+    const oldStatus = rujukan.status;
 
-    // Check if user has permission to update this rujukan
-    if (req.user.role === 'admin_faskes' && 
-        rujukan.faskes_asal_id !== req.user.faskes_id && 
-        rujukan.faskes_tujuan_id !== req.user.faskes_id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Tidak memiliki izin untuk mengupdate rujukan ini'
-      });
+    // Check permission - hanya faskes tujuan yang bisa update status
+    if (req.user.role === 'admin_faskes' && req.user.faskes_id) {
+      if (rujukan.faskes_tujuan_id != req.user.faskes_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Tidak memiliki izin untuk mengupdate status rujukan ini'
+        });
+      }
     }
 
     // Update status
@@ -317,7 +353,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
       UPDATE rujukan 
       SET status = ?, catatan_tujuan = ?, tanggal_respon = NOW()
       WHERE id = ?
-    `, [status, catatan_tujuan || '', rujukanId]);
+    `, [status, catatan_tujuan || null, id]);
 
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
@@ -330,27 +366,117 @@ router.put('/:id/status', verifyToken, async (req, res) => {
       LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
       LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
       WHERE r.id = ?
-    `, [rujukanId]);
-
-    // Send notification
-    if (global.io) {
-      try {
-        await sendStatusUpdateNotification(global.io, updatedRujukan[0], rujukan.status, status, req.user.id);
-      } catch (error) {
-        console.error('Error sending notification:', error);
-      }
-    }
+    `, [id]);
 
     res.json({
       success: true,
       message: 'Status rujukan berhasil diupdate',
       data: updatedRujukan[0]
     });
+
   } catch (error) {
     console.error('Error updating rujukan status:', error);
     res.status(500).json({
       success: false,
       message: 'Gagal mengupdate status rujukan'
+    });
+  }
+});
+
+// Cancel rujukan (pembatalan)
+router.put('/:id/cancel', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { alasan_pembatalan } = req.body;
+
+    // Validate input
+    if (!alasan_pembatalan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Alasan pembatalan wajib diisi'
+      });
+    }
+
+    // Get rujukan
+    const [rujukanRows] = await db.execute(`
+      SELECT r.*, 
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             fa.nama_faskes as faskes_asal_nama,
+             ft.nama_faskes as faskes_tujuan_nama
+      FROM rujukan r
+      LEFT JOIN pasien p ON r.pasien_id = p.id
+      LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
+      LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
+      WHERE r.id = ?
+    `, [id]);
+
+    if (rujukanRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rujukan tidak ditemukan'
+      });
+    }
+
+    const rujukan = rujukanRows[0];
+
+    // Check if rujukan can be cancelled
+    if (rujukan.status === STATUSES.SELESAI) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rujukan yang sudah selesai tidak dapat dibatalkan'
+      });
+    }
+
+    if (rujukan.status === STATUSES.DIBATALKAN) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rujukan sudah dibatalkan sebelumnya'
+      });
+    }
+
+    // Check permission - hanya faskes asal yang bisa membatalkan
+    if (req.user.role === 'admin_faskes' && req.user.faskes_id) {
+      if (rujukan.faskes_asal_id != req.user.faskes_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Tidak memiliki izin untuk membatalkan rujukan ini'
+        });
+      }
+    }
+
+    const oldStatus = rujukan.status;
+
+    // Update status menjadi dibatalkan
+    await db.execute(`
+      UPDATE rujukan 
+      SET status = ?, catatan_tujuan = ?, tanggal_respon = NOW()
+      WHERE id = ?
+    `, [STATUSES.DIBATALKAN, `DIBATALKAN: ${alasan_pembatalan}`, id]);
+
+    // Get updated rujukan
+    const [updatedRujukan] = await db.execute(`
+      SELECT r.*, 
+             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             fa.nama_faskes as faskes_asal_nama,
+             ft.nama_faskes as faskes_tujuan_nama
+      FROM rujukan r
+      LEFT JOIN pasien p ON r.pasien_id = p.id
+      LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
+      LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
+      WHERE r.id = ?
+    `, [id]);
+
+    res.json({
+      success: true,
+      message: 'Rujukan berhasil dibatalkan',
+      data: updatedRujukan[0]
+    });
+
+  } catch (error) {
+    console.error('Error cancelling rujukan:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal membatalkan rujukan'
     });
   }
 });
@@ -361,54 +487,34 @@ router.get('/stats/overview', verifyToken, async (req, res) => {
     let query = `
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as diterima,
-        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as ditolak,
-        SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as selesai
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'diterima' THEN 1 ELSE 0 END) as diterima,
+        SUM(CASE WHEN status = 'ditolak' THEN 1 ELSE 0 END) as ditolak,
+        SUM(CASE WHEN status = 'selesai' THEN 1 ELSE 0 END) as selesai,
+        SUM(CASE WHEN status = 'dibatalkan' THEN 1 ELSE 0 END) as dibatalkan
       FROM rujukan
     `;
-    
-    const params = [STATUSES.PENDING, STATUSES.DITERIMA, STATUSES.DITOLAK, STATUSES.SELESAI];
 
-    // Filter berdasarkan role user
+    const params = [];
+
+    // Filter berdasarkan role
     if (req.user.role === 'admin_faskes' && req.user.faskes_id) {
-      query += ' WHERE (faskes_asal_id = ? OR faskes_tujuan_id = ?)';
+      query += ' WHERE faskes_asal_id = ? OR faskes_tujuan_id = ?';
       params.push(req.user.faskes_id, req.user.faskes_id);
     }
 
     const [rows] = await db.execute(query, params);
-    
-    const stats = rows.length > 0 ? rows[0] : {
-      total: 0,
-      pending: 0,
-      diterima: 0,
-      ditolak: 0,
-      selesai: 0
-    };
 
     res.json({
       success: true,
-      data: {
-        total: parseInt(stats.total) || 0,
-        pending: parseInt(stats.pending) || 0,
-        diterima: parseInt(stats.diterima) || 0,
-        ditolak: parseInt(stats.ditolak) || 0,
-        selesai: parseInt(stats.selesai) || 0
-      }
+      data: rows[0]
     });
+
   } catch (error) {
-    console.error('Error fetching rujukan stats:', error);
-    
-    // Return default stats if there's an error
-    res.json({
-      success: true,
-      data: {
-        total: 0,
-        pending: 0,
-        diterima: 0,
-        ditolak: 0,
-        selesai: 0
-      }
+    console.error('Error getting rujukan stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil statistik rujukan'
     });
   }
 });

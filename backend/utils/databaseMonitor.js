@@ -15,7 +15,10 @@ class DatabaseMonitor {
       const [rows] = await db.execute('SELECT 1 as test');
       this.isConnected = true;
       this.reconnectAttempts = 0;
-      console.log('✅ Database connection test successful');
+      // Only log on first successful connection or reconnection
+      if (!this.isConnected) {
+        console.log('✅ Database connection test successful');
+      }
       return true;
     } catch (error) {
       console.error('❌ Database connection test failed:', error.message);
@@ -43,7 +46,7 @@ class DatabaseMonitor {
         console.error('🚨 Max reconnection attempts reached. Database connection failed.');
         this.stopMonitoring();
       }
-    }, 30000); // Check every 30 seconds
+    }, 300000); // Check every 5 minutes instead of 30 seconds
   }
 
   // Stop monitoring

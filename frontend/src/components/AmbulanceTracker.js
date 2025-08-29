@@ -31,7 +31,7 @@ const AmbulanceTracker = () => {
     if (rujukanId) {
       checkExistingSession();
     }
-  }, [rujukanId]);
+  }, [rujukanId, checkExistingSession]);
 
   const checkExistingSession = async () => {
     try {

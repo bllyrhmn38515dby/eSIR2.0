@@ -20,7 +20,7 @@ router.get('/', verifyToken, async (req, res) => {
     const params = [];
 
     // Filter berdasarkan role
-    if (req.user.role === 'puskesmas' || req.user.role === 'rs') {
+    if (req.user.role === 'admin_faskes') {
       query += ' WHERE tt.faskes_id = ?';
       params.push(req.user.faskes_id || 0);
     }
@@ -48,7 +48,7 @@ router.get('/faskes/:faskesId', verifyToken, async (req, res) => {
     const { faskesId } = req.params;
 
     // Check permission
-    if (req.user.role === 'puskesmas' || req.user.role === 'rs') {
+    if (req.user.role === 'admin_faskes') {
       if (req.user.faskes_id != faskesId) {
         return res.status(403).json({
           success: false,
@@ -89,7 +89,7 @@ router.get('/statistik', verifyToken, async (req, res) => {
     const params = [];
 
     // Filter berdasarkan role
-    if (req.user.role === 'puskesmas' || req.user.role === 'rs') {
+    if (req.user.role === 'admin_faskes') {
       whereClause = 'WHERE tt.faskes_id = ?';
       params.push(req.user.faskes_id || 0);
     }
@@ -211,7 +211,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     }
 
     // Check permission
-    if (req.user.role === 'puskesmas' || req.user.role === 'rs') {
+    if (req.user.role === 'admin_faskes') {
       if (bed[0].faskes_id != req.user.faskes_id) {
         return res.status(403).json({
           success: false,
