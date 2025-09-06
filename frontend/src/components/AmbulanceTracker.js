@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from './Layout';
 import './AmbulanceTracker.css';
 
 const AmbulanceTracker = () => {
   const navigate = useNavigate();
-  // const { user } = useAuth(); // Removed unused variable
   const [sessionToken, setSessionToken] = useState('');
   const [rujukanId, setRujukanId] = useState('');
   const [isTracking, setIsTracking] = useState(false);
@@ -20,24 +19,136 @@ const AmbulanceTracker = () => {
   const [manualPosition, setManualPosition] = useState({ latitude: '', longitude: '' });
   const watchIdRef = useRef(null);
 
-  // Load rujukan yang bisa di-track
-  useEffect(() => {
-    loadRujukanList();
-    loadActiveSessions();
+  // Define all functions before they are used to avoid temporal dead zone
+  const getBatteryLevel = useCallback(() => {
+    if ('getBattery' in navigator) {
+      navigator.getBattery().then(battery => {
+        return Math.round(battery.level * 100);
+      });
+    }
+    return null;
   }, []);
 
-  // Check existing session when rujukan changes
-  useEffect(() => {
-    if (rujukanId) {
-      checkExistingSession();
-    }
-  }, [rujukanId, checkExistingSession]);
+  const updatePosition = useCallback(async (coords) => {
+    if (!sessionToken) return;
 
-  const checkExistingSession = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/tracking/update-position', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          session_token: sessionToken,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          status: 'dalam_perjalanan',
+          speed: coords.speed,
+          heading: coords.heading,
+          accuracy: coords.accuracy,
+          battery_level: getBatteryLevel()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error updating position:', errorData);
+      }
+    } catch (error) {
+      console.error('Error updating position:', error);
+    }
+  }, [sessionToken, getBatteryLevel]);
+
+  const startWatchingPosition = useCallback((options) => {
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (position) => {
+        const newPosition = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          heading: position.coords.heading,
+          speed: position.coords.speed ? position.coords.speed * 3.6 : null
+        };
+        
+        setCurrentPosition(newPosition);
+        updatePosition(newPosition);
+      },
+      (error) => {
+        console.error('Error watching position:', error);
+        if (error.code === error.TIMEOUT) {
+          console.log('⏰ Timeout watching position, akan mencoba lagi...');
+        }
+      },
+      options
+    );
+  }, [updatePosition]);
+
+  const startGPSTracking = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation tidak didukung di browser ini');
+      return;
+    }
+
+    setError('');
+
+    const tryGetPosition = (highAccuracy = true) => {
+      const options = {
+        enableHighAccuracy: highAccuracy,
+        timeout: highAccuracy ? 15000 : 30000,
+        maximumAge: highAccuracy ? 0 : 60000
+      };
+
+      console.log(`🔄 Mencoba mendapatkan posisi GPS (${highAccuracy ? 'high accuracy' : 'low accuracy'})...`);
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('✅ Posisi GPS berhasil didapatkan:', position.coords);
+          setCurrentPosition({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+          updatePosition(position.coords);
+          startWatchingPosition(options);
+        },
+        (error) => {
+          console.error('❌ Error getting position:', error);
+          
+          let errorMessage = '';
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Izin lokasi ditolak. Silakan izinkan akses lokasi di browser.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Informasi lokasi tidak tersedia.';
+              break;
+            case error.TIMEOUT:
+              if (highAccuracy) {
+                console.log('⏰ Timeout dengan high accuracy, mencoba low accuracy...');
+                setError('Mencoba mendapatkan posisi dengan akurasi rendah...');
+                setTimeout(() => tryGetPosition(false), 1000);
+                return;
+              } else {
+                errorMessage = 'Timeout mendapatkan posisi GPS. Pastikan GPS aktif dan coba lagi.';
+              }
+              break;
+            default:
+              errorMessage = 'Gagal mendapatkan posisi GPS.';
+          }
+          
+          setError(errorMessage);
+        },
+        options
+      );
+    };
+
+    tryGetPosition(true);
+  }, [updatePosition, startWatchingPosition]);
+
+  const checkExistingSession = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       
-      // Cek apakah ada session aktif untuk rujukan yang dipilih
       if (rujukanId) {
         const response = await fetch(`http://localhost:3001/api/tracking/session/${rujukanId}`, {
           headers: {
@@ -50,7 +161,6 @@ const AmbulanceTracker = () => {
           const result = await response.json();
           console.log('Found existing session:', result.data);
           
-          // Auto-resume existing session
           setSessionToken(result.data.session_token);
           setTrackingData({
             nomor_rujukan: result.data.nomor_rujukan,
@@ -62,15 +172,27 @@ const AmbulanceTracker = () => {
           setIsTracking(true);
           setSuccess('Session tracking aktif ditemukan, melanjutkan...');
           
-          // Start GPS tracking
           startGPSTracking();
         }
       }
     } catch (error) {
       console.error('Error checking existing session:', error);
     }
-  };
+  }, [rujukanId, startGPSTracking]);
 
+  // useEffect hooks
+  useEffect(() => {
+    loadRujukanList();
+    loadActiveSessions();
+  }, []);
+
+  useEffect(() => {
+    if (rujukanId) {
+      checkExistingSession();
+    }
+  }, [rujukanId, checkExistingSession]);
+
+  // Rest of the component functions
   const loadActiveSessions = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -84,7 +206,6 @@ const AmbulanceTracker = () => {
       if (response.ok) {
         const result = await response.json();
         console.log('Active sessions:', result.data);
-        // Handle active sessions if needed
       }
     } catch (error) {
       console.error('Error loading active sessions:', error);
@@ -112,7 +233,6 @@ const AmbulanceTracker = () => {
         console.log('Rujukan API response:', result);
         
         if (result.success && result.data) {
-          // Filter rujukan yang statusnya 'diterima', 'dalam_perjalanan', atau 'pending'
           const activeRujukan = result.data.filter(rujukan => 
             ['diterima', 'dalam_perjalanan', 'pending'].includes(rujukan.status)
           );
@@ -171,7 +291,6 @@ const AmbulanceTracker = () => {
           setSuccess('Session tracking berhasil dimulai!');
         }
         
-        // Start GPS tracking
         startGPSTracking();
       } else {
         const errorData = await response.json();
@@ -183,142 +302,6 @@ const AmbulanceTracker = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const startGPSTracking = () => {
-    if (!navigator.geolocation) {
-      setError('Geolocation tidak didukung di browser ini');
-      return;
-    }
-
-    // Clear any previous error
-    setError('');
-
-    // Try with high accuracy first, then fallback to lower accuracy
-    const tryGetPosition = (highAccuracy = true) => {
-      const options = {
-        enableHighAccuracy: highAccuracy,
-        timeout: highAccuracy ? 15000 : 30000, // Longer timeout for low accuracy
-        maximumAge: highAccuracy ? 0 : 60000 // Allow cached position for low accuracy
-      };
-
-      console.log(`🔄 Mencoba mendapatkan posisi GPS (${highAccuracy ? 'high accuracy' : 'low accuracy'})...`);
-
-      // Get initial position
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          console.log('✅ Posisi GPS berhasil didapatkan:', position.coords);
-          setCurrentPosition({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
-          });
-          updatePosition(position.coords);
-          
-          // Start watching position with same options
-          startWatchingPosition(options);
-        },
-        (error) => {
-          console.error('❌ Error getting position:', error);
-          
-          let errorMessage = '';
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = 'Izin lokasi ditolak. Silakan izinkan akses lokasi di browser.';
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = 'Informasi lokasi tidak tersedia.';
-              break;
-            case error.TIMEOUT:
-              if (highAccuracy) {
-                console.log('⏰ Timeout dengan high accuracy, mencoba low accuracy...');
-                setError('Mencoba mendapatkan posisi dengan akurasi rendah...');
-                setTimeout(() => tryGetPosition(false), 1000);
-                return;
-              } else {
-                errorMessage = 'Timeout mendapatkan posisi GPS. Pastikan GPS aktif dan coba lagi.';
-              }
-              break;
-            default:
-              errorMessage = 'Gagal mendapatkan posisi GPS.';
-          }
-          
-          setError(errorMessage);
-        },
-        options
-      );
-    };
-
-    // Start with high accuracy
-    tryGetPosition(true);
-  };
-
-  const startWatchingPosition = (options) => {
-    // Watch position changes
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        const newPosition = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          heading: position.coords.heading,
-          speed: position.coords.speed ? position.coords.speed * 3.6 : null // Convert m/s to km/h
-        };
-        
-        setCurrentPosition(newPosition);
-        updatePosition(newPosition);
-      },
-      (error) => {
-        console.error('Error watching position:', error);
-        
-        // Don't show error for watching, just log it
-        // The user can still manually update status
-        if (error.code === error.TIMEOUT) {
-          console.log('⏰ Timeout watching position, akan mencoba lagi...');
-        }
-      },
-      options
-    );
-  };
-
-  const updatePosition = async (coords) => {
-    if (!sessionToken) return;
-
-    try {
-      const response = await fetch('http://localhost:3001/api/tracking/update-position', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          session_token: sessionToken,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          status: 'dalam_perjalanan',
-          speed: coords.speed,
-          heading: coords.heading,
-          accuracy: coords.accuracy,
-          battery_level: getBatteryLevel()
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error updating position:', errorData);
-      }
-    } catch (error) {
-      console.error('Error updating position:', error);
-    }
-  };
-
-  const getBatteryLevel = () => {
-    // Try to get battery level if available
-    if ('getBattery' in navigator) {
-      navigator.getBattery().then(battery => {
-        return Math.round(battery.level * 100);
-      });
-    }
-    return null;
   };
 
   const stopTracking = () => {
@@ -341,7 +324,6 @@ const AmbulanceTracker = () => {
     }
 
     try {
-      // Gunakan posisi default jika tidak ada GPS
       const position = currentPosition || {
         latitude: -6.5971,
         longitude: 106.8060,
@@ -379,7 +361,6 @@ const AmbulanceTracker = () => {
         console.log('✅ Update successful:', result);
         setSuccess(`Status berhasil diupdate ke: ${getStatusText(status)}`);
         
-        // Update current position jika berhasil
         if (!currentPosition) {
           setCurrentPosition(position);
         }
@@ -426,7 +407,7 @@ const AmbulanceTracker = () => {
     const position = {
       latitude: lat,
       longitude: lng,
-      accuracy: 100, // Manual input accuracy
+      accuracy: 100,
       speed: null,
       heading: null
     };
@@ -439,11 +420,10 @@ const AmbulanceTracker = () => {
   };
 
   const useDefaultPosition = () => {
-    // Default position di Bogor
     const defaultPosition = {
       latitude: -6.5971,
       longitude: 106.8060,
-      accuracy: 1000, // Low accuracy for default position
+      accuracy: 1000,
       speed: null,
       heading: null
     };
@@ -479,58 +459,58 @@ const AmbulanceTracker = () => {
             <div className="session-controls">
               <h3>🎯 Kontrol Session</h3>
               
-                             {!isTracking ? (
-                 <div className="start-session">
-                   {loadingRujukan ? (
-                     <div className="loading-rujukan">
-                       <p>🔄 Memuat data rujukan...</p>
-                     </div>
-                   ) : (
-                     <>
-                       <div className="rujukan-info">
-                         <div className="rujukan-header">
-                           <p>📋 Ditemukan {rujukanList.length} rujukan aktif</p>
-                           <button 
-                             onClick={loadRujukanList}
-                             className="refresh-btn"
-                             title="Refresh data rujukan"
-                           >
-                             🔄
-                           </button>
-                         </div>
-                       </div>
-                       
-                       <select 
-                         value={rujukanId}
-                         onChange={(e) => setRujukanId(e.target.value)}
-                         className="rujukan-select"
-                       >
-                         <option value="">Pilih Rujukan</option>
-                         {rujukanList.map(rujukan => (
-                           <option key={rujukan.id} value={rujukan.id}>
-                             {rujukan.nomor_rujukan} - {rujukan.nama_pasien} ({rujukan.status})
-                           </option>
-                         ))}
-                       </select>
+              {!isTracking ? (
+                <div className="start-session">
+                  {loadingRujukan ? (
+                    <div className="loading-rujukan">
+                      <p>🔄 Memuat data rujukan...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="rujukan-info">
+                        <div className="rujukan-header">
+                          <p>📋 Ditemukan {rujukanList.length} rujukan aktif</p>
+                          <button 
+                            onClick={loadRujukanList}
+                            className="refresh-btn"
+                            title="Refresh data rujukan"
+                          >
+                            🔄
+                          </button>
+                        </div>
+                      </div>
+                      
+                      <select 
+                        value={rujukanId}
+                        onChange={(e) => setRujukanId(e.target.value)}
+                        className="rujukan-select"
+                      >
+                        <option value="">Pilih Rujukan</option>
+                        {rujukanList.map(rujukan => (
+                          <option key={rujukan.id} value={rujukan.id}>
+                            {rujukan.nomor_rujukan} - {rujukan.nama_pasien} ({rujukan.status})
+                          </option>
+                        ))}
+                      </select>
 
-                       {rujukanList.length === 0 && (
-                         <div className="no-rujukan">
-                           <p>❌ Tidak ada rujukan aktif</p>
-                           <p>Buat rujukan baru di menu Rujukan</p>
-                         </div>
-                       )}
+                      {rujukanList.length === 0 && (
+                        <div className="no-rujukan">
+                          <p>❌ Tidak ada rujukan aktif</p>
+                          <p>Buat rujukan baru di menu Rujukan</p>
+                        </div>
+                      )}
 
-                       <button 
-                         onClick={startTrackingSession}
-                         disabled={loading || !rujukanId || rujukanList.length === 0}
-                         className="start-btn"
-                       >
-                         {loading ? 'Memulai...' : '🚀 Mulai Tracking'}
-                       </button>
-                     </>
-                   )}
-                 </div>
-               ) : (
+                      <button 
+                        onClick={startTrackingSession}
+                        disabled={loading || !rujukanId || rujukanList.length === 0}
+                        className="start-btn"
+                      >
+                        {loading ? 'Memulai...' : '🚀 Mulai Tracking'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : (
                 <div className="stop-session">
                   <button 
                     onClick={stopTracking}

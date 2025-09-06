@@ -86,6 +86,13 @@ const Navigation = () => {
                   <span>Ambulance Tracker</span>
                 </Link>
                 
+                {user?.role === 'sopir_ambulans' && (
+                  <Link to="/driver" className={`dropdown-item ${isActive('/driver')}`} onClick={closeDropdown}>
+                    <i className="nav-icon">🚗</i>
+                    <span>Dashboard Sopir</span>
+                  </Link>
+                )}
+                
                 <Link to="/pasien" className={`dropdown-item ${isActive('/pasien')}`} onClick={closeDropdown}>
                   <i className="nav-icon">👥</i>
                   <span>Pasien</span>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLastPage } from '../context/LastPageContext';
@@ -9,6 +9,14 @@ const ProtectedRoute = ({ children }) => {
   const location = useLocation();
 
   console.log('🔒 ProtectedRoute - Auth status:', { isAuthenticated, loading });
+
+  // Save current page when user is not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      console.log('🚫 Access denied, saving current page and redirecting to login');
+      setLastPage(location.pathname);
+    }
+  }, [loading, isAuthenticated, location.pathname, setLastPage]);
 
   if (loading) {
     return (
@@ -42,9 +50,6 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    console.log('🚫 Access denied, saving current page and redirecting to login');
-    // Save the current page before redirecting to login
-    setLastPage(location.pathname);
     return <Navigate to="/login" replace />;
   }
 

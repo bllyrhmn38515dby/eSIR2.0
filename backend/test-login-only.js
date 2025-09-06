@@ -5,8 +5,8 @@ async function testLogin() {
     console.log('🔗 Testing login...');
     
     const response = await axios.post('http://localhost:3001/api/auth/login', {
-      email: 'admin@esirv2.com',
-      password: 'password'
+      email: 'admin@esir.com',
+      password: 'admin123'
     }, {
       timeout: 5000
     });

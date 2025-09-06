@@ -14,10 +14,10 @@ async function restoreMissingTables() {
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_DATABASE || 'esirv2'
+      database: process.env.DB_DATABASE || 'prodsysesirv02'
     });
     
-    console.log('✅ Connected to database esirv2');
+    console.log('✅ Connected to database prodsysesirv02');
     
     // 1. Check current tables
     console.log('\n1️⃣ Checking current tables...');

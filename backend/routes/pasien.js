@@ -8,7 +8,7 @@ const router = express.Router();
 router.get('/', verifyToken, async (req, res) => {
   try {
     const [pasien] = await pool.execute(
-      'SELECT * FROM pasien ORDER BY created_at DESC'
+      'SELECT *, nama_pasien as nama_lengkap FROM pasien ORDER BY created_at DESC'
     );
 
     res.json({
@@ -25,23 +25,6 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Get all pasien
-router.get('/', verifyToken, async (req, res) => {
-  try {
-    const [rows] = await pool.execute('SELECT * FROM pasien ORDER BY nama_pasien');
-    
-    res.json({
-      success: true,
-      data: rows
-    });
-  } catch (error) {
-    console.error('Error fetching pasien:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan server'
-    });
-  }
-});
 
 // Search pasien by NIK
 router.get('/search', verifyToken, async (req, res) => {
@@ -56,7 +39,7 @@ router.get('/search', verifyToken, async (req, res) => {
     }
 
     const [pasien] = await pool.execute(
-      'SELECT * FROM pasien WHERE nik = ?',
+      'SELECT *, nama_pasien as nama_lengkap FROM pasien WHERE nik = ?',
       [nik]
     );
 
@@ -87,7 +70,7 @@ router.get('/:id', verifyToken, async (req, res) => {
     const { id } = req.params;
 
     const [pasien] = await pool.execute(
-      'SELECT * FROM pasien WHERE id = ?',
+      'SELECT *, nama_pasien as nama_lengkap FROM pasien WHERE id = ?',
       [id]
     );
 
@@ -181,7 +164,7 @@ router.post('/', verifyToken, async (req, res) => {
 
     // Ambil data pasien yang baru dibuat
     const [newPasien] = await pool.execute(
-      'SELECT * FROM pasien WHERE id = ?',
+      'SELECT *, nama_pasien as nama_lengkap FROM pasien WHERE id = ?',
       [result.insertId]
     );
 
@@ -285,7 +268,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     // Ambil data pasien yang diupdate
     const [updatedPasien] = await pool.execute(
-      'SELECT * FROM pasien WHERE id = ?',
+      'SELECT *, nama_pasien as nama_lengkap FROM pasien WHERE id = ?',
       [id]
     );
 

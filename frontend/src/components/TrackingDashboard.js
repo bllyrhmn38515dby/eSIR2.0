@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { Link } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useSocket } from '../context/SocketContext';
+import Navigation from './Navigation';
 import './TrackingDashboard.css';
 
 // Fix Leaflet default marker icons
@@ -248,8 +250,29 @@ const TrackingDashboard = () => {
 
   return (
     <div className="tracking-dashboard">
+      <Navigation />
+      
       <div className="dashboard-header">
-        <h1>🚑 eSIR2.0 Tracking Dashboard</h1>
+        <div className="header-content">
+          <div className="header-left">
+            <Link to="/dashboard" className="back-button">
+              <i className="back-icon">←</i>
+              Kembali ke Dashboard
+            </Link>
+            <h1>🚑 eSIR2.0 Tracking Dashboard</h1>
+          </div>
+          <div className="header-actions">
+            <button 
+              className="refresh-button"
+              onClick={loadActiveSessions}
+              disabled={loading}
+            >
+              <i className="refresh-icon">🔄</i>
+              {loading ? 'Loading...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+        
         <div className="dashboard-stats">
           <div className="stat-card">
             <div className="stat-number">{stats.total}</div>

@@ -9,12 +9,9 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     let query = `
       SELECT tt.*, 
-             f.nama_faskes,
-             p.nama_pasien,
-             p.no_rm
+             f.nama_faskes
       FROM tempat_tidur tt
       LEFT JOIN faskes f ON tt.faskes_id = f.id
-      LEFT JOIN pasien p ON tt.pasien_id = p.id
     `;
 
     const params = [];
@@ -59,12 +56,9 @@ router.get('/faskes/:faskesId', verifyToken, async (req, res) => {
 
     const [rows] = await db.execute(`
       SELECT tt.*, 
-             f.nama_faskes,
-             p.nama_pasien,
-             p.no_rm
+             f.nama_faskes
       FROM tempat_tidur tt
       LEFT JOIN faskes f ON tt.faskes_id = f.id
-      LEFT JOIN pasien p ON tt.pasien_id = p.id
       WHERE tt.faskes_id = ?
       ORDER BY tt.nomor_kamar, tt.nomor_bed
     `, [faskesId]);
@@ -251,10 +245,9 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 
     // Get updated data
     const [updatedBed] = await db.execute(`
-      SELECT tt.*, f.nama_faskes, p.nama_pasien, p.no_rm
+      SELECT tt.*, f.nama_faskes
       FROM tempat_tidur tt
       LEFT JOIN faskes f ON tt.faskes_id = f.id
-      LEFT JOIN pasien p ON tt.pasien_id = p.id
       WHERE tt.id = ?
     `, [id]);
 

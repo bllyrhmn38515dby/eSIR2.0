@@ -19,9 +19,11 @@ import SearchPage from './components/SearchPage';
 import TrackingPage from './components/TrackingPage';
 import TrackingDashboard from './components/TrackingDashboard';
 import AmbulanceTracker from './components/AmbulanceTracker';
+import DriverDashboard from './pages/DriverDashboard';
 import NotFoundPage from './components/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/ToastContainer';
+// import PWAInstall from './components/PWAInstall'; // DISABLED
 import './App.css';
 
 function App() {
@@ -132,12 +134,23 @@ function App() {
                         </ProtectedRoute>
                       } 
                     />
+                    <Route 
+                      path="/driver" 
+                      element={
+                        <ProtectedRoute>
+                          <DriverDashboard />
+                        </ProtectedRoute>
+                      } 
+                    />
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                   
                   {/* Toast Container for notifications */}
                   <ToastContainer position="top-right" maxToasts={5} />
+                  
+                  {/* PWA Install Component - DISABLED */}
+                  {/* <PWAInstall /> */}
                 </div>
               </LastPageProvider>
             </Router>

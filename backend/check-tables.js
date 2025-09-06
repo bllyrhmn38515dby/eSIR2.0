@@ -10,7 +10,7 @@ async function checkTables() {
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME || 'esir_db'
+      database: process.env.DB_DATABASE || 'esirv2'
     });
 
     console.log('🔗 Connected to database');
@@ -19,7 +19,7 @@ async function checkTables() {
     const [tables] = await connection.query(`
       SELECT table_name 
       FROM information_schema.tables 
-      WHERE table_schema = '${process.env.DB_NAME || 'esir_db'}'
+      WHERE table_schema = '${process.env.DB_DATABASE || 'esirv2'}'
       ORDER BY table_name
     `);
 

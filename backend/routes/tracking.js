@@ -35,10 +35,12 @@ router.post('/start-session', verifyToken, async (req, res) => {
 
     // Cek apakah rujukan exists dan user punya akses
     const [rujukanRows] = await db.execute(`
-      SELECT r.*, fa.nama_faskes as faskes_asal_nama, ft.nama_faskes as faskes_tujuan_nama
+      SELECT r.*, fa.nama_faskes as faskes_asal_nama, ft.nama_faskes as faskes_tujuan_nama,
+             p.nama_pasien
       FROM rujukan r
       LEFT JOIN faskes fa ON r.faskes_asal_id = fa.id
       LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
+      LEFT JOIN pasien p ON r.pasien_id = p.id
       WHERE r.id = ?
     `, [rujukan_id]);
 
@@ -201,21 +203,34 @@ router.post('/update-position', async (req, res) => {
       speed: speed || 0
     });
 
-    // Emit real-time update via Socket.IO
+    // Emit real-time update via Socket.IO (with throttling)
     if (global.io) {
-      global.io.to(`tracking-${rujukan_id}`).emit('tracking-update', {
-        rujukan_id,
-        latitude,
-        longitude,
-        status: status || 'dalam_perjalanan',
-        estimated_time,
-        estimated_distance,
-        speed,
-        heading,
-        accuracy,
-        battery_level,
-        updated_at: new Date()
-      });
+      // Check if we should emit (throttle to prevent spam)
+      const lastEmitKey = `last_emit_${rujukan_id}`;
+      const now = Date.now();
+      const lastEmit = global.lastEmitTimes?.[lastEmitKey] || 0;
+      
+      // Only emit if 5 seconds have passed since last emit
+      if (now - lastEmit > 5000) {
+        global.lastEmitTimes = global.lastEmitTimes || {};
+        global.lastEmitTimes[lastEmitKey] = now;
+        
+        global.io.to(`tracking-${rujukan_id}`).emit('tracking-update', {
+          rujukan_id,
+          latitude,
+          longitude,
+          status: status || 'dalam_perjalanan',
+          estimated_time,
+          estimated_distance,
+          speed,
+          heading,
+          accuracy,
+          battery_level,
+          updated_at: new Date()
+        });
+        
+        console.log(`📍 Tracking update emitted for rujukan ${rujukan_id} (throttled)`);
+      }
     }
 
     res.json({
@@ -273,7 +288,7 @@ router.get('/:rujukan_id', verifyToken, async (req, res) => {
 
     // Get rujukan details
     const [rujukanRows] = await db.execute(`
-      SELECT r.*, p.nama_lengkap as nama_pasien, p.nik,
+      SELECT r.*, p.nama_pasien as nama_pasien, p.nik,
              fa.nama_faskes as faskes_asal_nama, fa.latitude as asal_lat, fa.longitude as asal_lng,
              ft.nama_faskes as faskes_tujuan_nama, ft.latitude as tujuan_lat, ft.longitude as tujuan_lng
       FROM rujukan r
@@ -334,7 +349,7 @@ router.get('/session/:rujukan_id', verifyToken, async (req, res) => {
 
     const [rows] = await db.execute(`
       SELECT ts.*, td.latitude, td.longitude, td.status as tracking_status, td.estimated_time, td.estimated_distance,
-             r.nomor_rujukan, r.status as rujukan_status, p.nama_lengkap as nama_pasien,
+             r.nomor_rujukan, r.status as rujukan_status, p.nama_pasien as nama_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as petugas_nama
@@ -374,9 +389,12 @@ router.get('/session/:rujukan_id', verifyToken, async (req, res) => {
 // Get all active tracking sessions
 router.get('/sessions/active', verifyToken, async (req, res) => {
   try {
+    console.log('🔍 Getting active tracking sessions...');
+    console.log('👤 User:', req.user);
+    
     const [rows] = await db.execute(`
       SELECT ts.*, td.latitude, td.longitude, td.status as tracking_status, td.estimated_time, td.estimated_distance,
-             r.nomor_rujukan, r.status as rujukan_status, p.nama_lengkap as nama_pasien,
+             r.nomor_rujukan, r.status as rujukan_status, p.nama_pasien as nama_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as petugas_nama
@@ -391,13 +409,19 @@ router.get('/sessions/active', verifyToken, async (req, res) => {
       ORDER BY ts.started_at DESC
     `);
 
+    console.log('📊 Active sessions found:', rows.length);
+    console.log('📋 Sessions data:', rows);
+    
     res.json({
       success: true,
       data: rows
     });
 
   } catch (error) {
-    console.error('Error getting active sessions:', error);
+    console.error('❌ Error getting active sessions:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error sqlState:', error.sqlState);
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil data session aktif'

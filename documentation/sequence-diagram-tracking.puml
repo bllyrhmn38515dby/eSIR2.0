@@ -1,0 +1,54 @@
+@startuml Sequence Diagram - Tracking Ambulans
+
+title Tracking Ambulans Real-time
+
+actor "Pasien" as pasien
+actor "Driver" as driver
+participant "Mobile" as mobile
+participant "API" as api
+participant "WebSocket" as ws
+participant "Database" as db
+participant "Web" as web
+
+== Start Tracking ==
+driver -> mobile: Login + aktifkan GPS
+mobile -> api: POST /tracking/start
+api -> db: Create tracking session
+api -> ws: Broadcast tracking started
+ws -> web: Notify tracking started
+web --> pasien: Show tracking started
+
+== GPS Updates ==
+loop Every 10 seconds
+    mobile -> api: PUT /tracking/location
+    api -> db: Update location
+    api -> ws: Broadcast location
+    ws -> web: Send location update
+    web --> pasien: Update map
+end
+
+== Status Updates ==
+driver -> mobile: Update status
+mobile -> api: PUT /tracking/status
+api -> db: Update status
+api -> ws: Broadcast status
+ws -> web: Send status update
+web --> pasien: Show new status
+
+== Real-time Chat ==
+pasien -> web: Send message
+web -> api: POST /tracking/message
+api -> db: Save message
+api -> ws: Broadcast message
+ws -> mobile: Send message
+mobile --> driver: Show message
+
+== Complete Tracking ==
+driver -> mobile: Mark complete
+mobile -> api: PUT /tracking/complete
+api -> db: Update status
+api -> ws: Broadcast complete
+ws -> web: Notify complete
+web --> pasien: Show completed
+
+@enduml

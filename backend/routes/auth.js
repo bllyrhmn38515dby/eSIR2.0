@@ -8,6 +8,9 @@ const { sendResetPasswordEmail } = require('../utils/emailService');
 
 const router = express.Router();
 
+// DEVELOPMENT MODE: Nonaktifkan hash password untuk testing
+const DEV_MODE = true; // Set ke false untuk production
+
 // Get all users (hanya untuk admin)
 router.get('/users', verifyToken, async (req, res) => {
   try {
@@ -182,8 +185,14 @@ router.post('/users', verifyToken, async (req, res) => {
     // Generate username from email
     const username = email.split('@')[0];
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash password (atau tidak di development mode)
+    let hashedPassword;
+    if (DEV_MODE) {
+      hashedPassword = password; // Plain text di development
+      console.log('🔧 DEV MODE: Password stored as plain text');
+    } else {
+      hashedPassword = await bcrypt.hash(password, 12);
+    }
 
     // Insert user baru
     const [result] = await pool.execute(
@@ -289,7 +298,13 @@ router.put('/users/:id', verifyToken, async (req, res) => {
 
     // Jika password diisi, update password juga
     if (password && password.trim() !== '') {
-      const hashedPassword = await bcrypt.hash(password, 12);
+      let hashedPassword;
+      if (DEV_MODE) {
+        hashedPassword = password; // Plain text di development
+        console.log('🔧 DEV MODE: Password updated as plain text');
+      } else {
+        hashedPassword = await bcrypt.hash(password, 12);
+      }
       updateQuery += ', password = ?';
       updateParams.push(hashedPassword);
     }
@@ -417,8 +432,14 @@ router.post('/register', verifyToken, async (req, res) => {
       });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash password (atau tidak di development mode)
+    let hashedPassword;
+    if (DEV_MODE) {
+      hashedPassword = password; // Plain text di development
+      console.log('🔧 DEV MODE: Password stored as plain text');
+    } else {
+      hashedPassword = await bcrypt.hash(password, 12);
+    }
 
     // Get role_id from role name
     const [roles] = await pool.execute(
@@ -464,42 +485,60 @@ router.post('/register', verifyToken, async (req, res) => {
 // Login user
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    console.log('🔐 Login request received:', req.body);
+    const { emailOrUsername, password } = req.body;
+    console.log('📥 Extracted data:', { emailOrUsername, password: password ? '***' : 'empty' });
 
     // Validasi input
-    if (!email || !password) {
+    if (!emailOrUsername || !password) {
+      console.log('❌ Validation failed:', { emailOrUsername: !!emailOrUsername, password: !!password });
       return res.status(400).json({
         success: false,
-        message: 'Email dan password wajib diisi'
+        message: 'Email/Username dan password wajib diisi'
       });
     }
 
-    // Cari user berdasarkan email dengan role
+    // Cari user berdasarkan email atau username dengan role
     const [users] = await pool.execute(
       `SELECT u.*, r.nama_role as role 
        FROM users u 
        LEFT JOIN roles r ON u.role_id = r.id 
-       WHERE u.email = ?`,
-      [email]
+       WHERE u.email = ? OR u.username = ?`,
+      [emailOrUsername, emailOrUsername]
     );
 
     if (users.length === 0) {
       return res.status(401).json({
         success: false,
-        message: 'Email atau password salah'
+        message: 'Email/Username atau password salah'
       });
     }
 
     const user = users[0];
 
     // Verifikasi password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    let isValidPassword;
+    if (DEV_MODE) {
+      // Development mode: password plain text
+      isValidPassword = (password === user.password);
+      console.log('🔧 DEV MODE: Password comparison (plain text)');
+    } else {
+      // Production mode: bcrypt hash
+      isValidPassword = await bcrypt.compare(password, user.password);
+    }
+    
     if (!isValidPassword) {
       return res.status(401).json({
         success: false,
-        message: 'Email atau password salah'
+        message: 'Email/Username atau password salah'
       });
     }
+
+    // Update last_login timestamp
+    await pool.execute(
+      'UPDATE users SET last_login = NOW() WHERE id = ?',
+      [user.id]
+    );
 
     // Generate JWT token
     const token = jwt.sign(
@@ -512,16 +551,28 @@ router.post('/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
 
+    // Get updated user data with last_login
+    const [updatedUsers] = await pool.execute(
+      `SELECT u.*, r.nama_role as role 
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = ?`,
+      [user.id]
+    );
+
+    const updatedUser = updatedUsers[0];
+
     res.json({
       success: true,
       message: 'Login berhasil',
       data: {
         token,
         user: {
-          id: user.id,
-          nama_lengkap: user.nama_lengkap,
-          email: user.email,
-          role: user.role
+          id: updatedUser.id,
+          nama_lengkap: updatedUser.nama_lengkap,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          last_login: updatedUser.last_login
         }
       }
     });
@@ -651,8 +702,14 @@ router.post('/reset-password', async (req, res) => {
 
     const resetToken = tokens[0];
 
-    // Hash password baru
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    // Hash password baru (atau tidak di development mode)
+    let hashedPassword;
+    if (DEV_MODE) {
+      hashedPassword = newPassword; // Plain text di development
+      console.log('🔧 DEV MODE: Reset password stored as plain text');
+    } else {
+      hashedPassword = await bcrypt.hash(newPassword, 12);
+    }
 
     // Update password user
     await pool.execute(
@@ -796,13 +853,29 @@ router.post('/refresh', async (req, res) => {
 // Get profile user yang login
 router.get('/profile', verifyToken, async (req, res) => {
   try {
-    // User data sudah tersedia dari middleware verifyToken
+    // Get fresh user data from database
+    const [users] = await pool.execute(
+      `SELECT u.id, u.nama_lengkap, u.email, u.username, u.last_login, r.nama_role as role
+       FROM users u 
+       LEFT JOIN roles r ON u.role_id = r.id 
+       WHERE u.id = ?`,
+      [req.user.id]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User tidak ditemukan'
+      });
+    }
+
     const userData = {
-      id: req.user.id,
-      nama_lengkap: req.user.nama_lengkap,
-      email: req.user.email,
-      username: req.user.username,
-      role: req.user.role
+      id: users[0].id,
+      nama_lengkap: users[0].nama_lengkap,
+      email: users[0].email,
+      username: users[0].username,
+      role: users[0].role,
+      last_login: users[0].last_login
     };
 
     res.json({
@@ -812,6 +885,29 @@ router.get('/profile', verifyToken, async (req, res) => {
 
   } catch (error) {
     console.error('Error get profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan server'
+    });
+  }
+});
+
+// Force logout dari browser lain (optional feature)
+router.post('/force-logout', verifyToken, async (req, res) => {
+  try {
+    // Update last_login untuk invalidate token lama
+    await pool.execute(
+      'UPDATE users SET last_login = NOW() WHERE id = ?',
+      [req.user.id]
+    );
+
+    res.json({
+      success: true,
+      message: 'Force logout berhasil. Token lama akan di-invalidate.'
+    });
+
+  } catch (error) {
+    console.error('Error force logout:', error);
     res.status(500).json({
       success: false,
       message: 'Terjadi kesalahan server'

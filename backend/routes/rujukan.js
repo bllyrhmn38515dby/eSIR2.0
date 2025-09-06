@@ -15,12 +15,25 @@ const STATUSES = {
 
 // Generate nomor rujukan otomatis
 const generateNomorRujukan = async () => {
-  const [rows] = await db.execute(
-    'SELECT COUNT(*) as count FROM rujukan WHERE DATE(tanggal_rujukan) = CURDATE()'
-  );
-  const count = rows[0].count + 1;
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  return `RJ${today}${count.toString().padStart(3, '0')}`;
+  let count = 1;
+  let nomorRujukan;
+  
+  // Keep trying until we find a unique nomor
+  do {
+    nomorRujukan = `RJ${today}${count.toString().padStart(3, '0')}`;
+    const [existing] = await db.execute(
+      'SELECT id FROM rujukan WHERE nomor_rujukan = ?',
+      [nomorRujukan]
+    );
+    
+    if (existing.length === 0) {
+      break; // Found unique nomor
+    }
+    count++;
+  } while (count < 1000); // Safety limit
+  
+  return nomorRujukan;
 };
 
 // Get all rujukan (with role-based filtering)
@@ -28,7 +41,7 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     let query = `
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as user_nama
@@ -69,7 +82,7 @@ router.get('/:id', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as user_nama
@@ -104,6 +117,10 @@ router.get('/:id', verifyToken, async (req, res) => {
 // Create new rujukan with pasien data
 router.post('/with-pasien', verifyToken, async (req, res) => {
   try {
+    console.log('🔍 Creating rujukan with pasien data...');
+    console.log('📋 Request body:', req.body);
+    console.log('👤 User:', req.user);
+    
     const {
       nik,
       nama_pasien,
@@ -115,7 +132,8 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       faskes_tujuan_id,
       diagnosa,
       alasan_rujukan,
-      catatan_asal
+      catatan_asal,
+      transport_type
     } = req.body;
 
     // Validate input - faskes_asal_id akan diambil dari user yang login
@@ -130,6 +148,16 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Semua field wajib diisi'
+      });
+    }
+
+    // Validate transport_type
+    const validTransportTypes = ['pickup', 'delivery'];
+    const selectedTransportType = transport_type || 'pickup';
+    if (!validTransportTypes.includes(selectedTransportType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Jenis transportasi tidak valid. Pilih: pickup atau delivery'
       });
     }
 
@@ -173,16 +201,19 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       pasienId = existingPasien[0].id;
       await db.execute(`
         UPDATE pasien 
-        SET nama_lengkap = ?, tanggal_lahir = ?, jenis_kelamin = ?, 
+        SET nama_pasien = ?, tanggal_lahir = ?, jenis_kelamin = ?, 
             alamat = ?, telepon = ?, updated_at = NOW()
         WHERE id = ?
       `, [nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon, pasienId]);
     } else {
+      // Generate no_rm (nomor rekam medis)
+      const no_rm = `RM${Date.now().toString().slice(-8)}`;
+      
       // Create new pasien
       const [pasienResult] = await db.execute(`
-        INSERT INTO pasien (nik, nama_lengkap, tanggal_lahir, jenis_kelamin, alamat, telepon)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `, [nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon]);
+        INSERT INTO pasien (no_rm, nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [no_rm, nik, nama_pasien, tanggal_lahir, jenis_kelamin, alamat, telepon]);
       
       pasienId = pasienResult.insertId;
     }
@@ -190,21 +221,42 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
     // Generate nomor rujukan
     const nomorRujukan = await generateNomorRujukan();
 
+    console.log('🔍 Inserting rujukan with data:', {
+      nomorRujukan,
+      pasienId,
+      userFaskesId,
+      faskes_tujuan_id,
+      diagnosa,
+      alasan_rujukan,
+      catatan_asal: catatan_asal || '',
+      status: STATUSES.PENDING,
+      transport_type: selectedTransportType,
+      user_id: req.user.id
+    });
+
     // Insert rujukan
-    const [result] = await db.execute(`
-      INSERT INTO rujukan (
-        nomor_rujukan, pasien_id, faskes_asal_id, faskes_tujuan_id,
-        diagnosa, alasan_rujukan, catatan_asal, status, tanggal_rujukan, user_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)
-    `, [
-      nomorRujukan, pasienId, userFaskesId, faskes_tujuan_id,
-      diagnosa, alasan_rujukan, catatan_asal || '', STATUSES.PENDING, req.user.id
-    ]);
+    let result;
+    try {
+      [result] = await db.execute(`
+        INSERT INTO rujukan (
+          nomor_rujukan, pasien_id, faskes_asal_id, faskes_tujuan_id,
+          diagnosa, alasan_rujukan, catatan_asal, status, transport_type, user_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        nomorRujukan, pasienId, userFaskesId, faskes_tujuan_id,
+        diagnosa, alasan_rujukan, catatan_asal || '', STATUSES.PENDING, selectedTransportType, req.user.id
+      ]);
+      
+      console.log('✅ Rujukan inserted successfully:', result.insertId);
+    } catch (insertError) {
+      console.error('❌ Error inserting rujukan:', insertError);
+      throw insertError;
+    }
 
     // Get the created rujukan with details
     const [rujukanData] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -224,7 +276,10 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
       data: rujukanData[0]
     });
   } catch (error) {
-    console.error('Error creating rujukan with pasien:', error);
+    console.error('❌ Error creating rujukan with pasien:', error);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error sqlState:', error.sqlState);
     res.status(500).json({
       success: false,
       message: 'Gagal membuat rujukan'
@@ -268,7 +323,7 @@ router.post('/', verifyToken, async (req, res) => {
     // Get the created rujukan with details
     const [rujukanData] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -318,7 +373,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get rujukan
     const [rujukanRows] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -358,7 +413,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -400,7 +455,7 @@ router.put('/:id/cancel', verifyToken, async (req, res) => {
     // Get rujukan
     const [rujukanRows] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -456,7 +511,7 @@ router.put('/:id/cancel', verifyToken, async (req, res) => {
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_lengkap as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r

@@ -313,6 +313,24 @@
   font-size: 14px;
 }
 
+.form-help {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.transport-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -470,5 +488,147 @@
   .modal {
     margin: 10px;
     max-width: none;
+  }
+}
+
+/* Detail Modal Styles */
+.detail-modal {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.detail-content {
+  padding: 20px;
+}
+
+.detail-section {
+  margin-bottom: 25px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+}
+
+.detail-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.detail-section h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
+  border-left: 4px solid #667eea;
+  padding-left: 10px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #555;
+  font-size: 14px;
+  margin: 0;
+}
+
+.detail-value {
+  color: #333;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.detail-text {
+  color: #333;
+  font-size: 14px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.detail-modal .modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+}
+
+.detail-modal .modal-footer button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.detail-modal .modal-footer button:first-child {
+  background: #6c757d;
+  color: white;
+}
+
+.detail-modal .modal-footer button:first-child:hover {
+  background: #5a6268;
+}
+
+.detail-modal .modal-footer .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.detail-modal .modal-footer .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.detail-modal .modal-footer .btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
+.detail-modal .modal-footer .btn-danger:hover {
+  background: #c82333;
+}
+
+/* Responsive Design for Detail Modal */
+@media (max-width: 768px) {
+  .detail-modal {
+    margin: 10px;
+    max-width: none;
+  }
+  
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-modal .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .detail-modal .modal-footer button {
+    width: 100%;
   }
 }

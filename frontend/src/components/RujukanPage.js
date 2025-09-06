@@ -15,6 +15,7 @@ const RujukanPage = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDokumenModal, setShowDokumenModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRujukan, setSelectedRujukan] = useState(null);
   const [formData, setFormData] = useState({
     // Data Pasien
@@ -29,7 +30,8 @@ const RujukanPage = () => {
     faskes_tujuan_id: '',
     diagnosa: '',
     alasan_rujukan: '',
-    catatan_asal: ''
+    catatan_asal: '',
+    transport_type: 'pickup'
   });
   const [searchNik, setSearchNik] = useState('');
   const [foundPasien, setFoundPasien] = useState(null);
@@ -376,6 +378,7 @@ const RujukanPage = () => {
                 <th>Pasien</th>
                 <th>Faskes Asal</th>
                 <th>Faskes Tujuan</th>
+                <th>Transportasi</th>
                 <th>Diagnosa</th>
                 <th>Status</th>
                 <th>Tanggal</th>
@@ -395,6 +398,11 @@ const RujukanPage = () => {
                   </td>
                   <td>{r.faskes_asal_nama}</td>
                   <td>{r.faskes_tujuan_nama}</td>
+                  <td>
+                    <span className="transport-badge">
+                      {r.transport_type === 'pickup' ? '🚑 RS Tujuan Menjemput' : '🚑 Faskes Perujuk Mengantarkan'}
+                    </span>
+                  </td>
                   <td className="diagnosa-cell">{r.diagnosa}</td>
                   <td>
                     <span className={`badge ${getStatusBadge(r.status)}`}>
@@ -432,7 +440,7 @@ const RujukanPage = () => {
                         className="btn-view"
                         onClick={() => {
                           setSelectedRujukan(r);
-                          // Show detail modal
+                          setShowDetailModal(true);
                         }}
                       >
                         Detail
@@ -627,6 +635,23 @@ const RujukanPage = () => {
                     </div>
                     
                     <div className="form-group">
+                      <label>Jenis Transportasi *</label>
+                      <select
+                        name="transport_type"
+                        value={formData.transport_type}
+                        onChange={handleInputChange}
+                        required
+                      >
+                        <option value="pickup">🚑 RS Tujuan Menjemput</option>
+                        <option value="delivery">🚑 Faskes Perujuk Mengantarkan</option>
+                      </select>
+                      <small className="form-help">
+                        <strong>RS Tujuan Menjemput:</strong> Ambulans dari RS tujuan akan menjemput pasien di faskes perujuk<br/>
+                        <strong>Faskes Perujuk Mengantarkan:</strong> Ambulans dari faskes perujuk akan mengantarkan pasien ke RS tujuan
+                      </small>
+                    </div>
+                    
+                    <div className="form-group">
                       <label>Diagnosa *</label>
                       <textarea
                         name="diagnosa"
@@ -778,6 +803,158 @@ const RujukanPage = () => {
               rujukanId={selectedRujukan.id}
               onClose={() => setShowDokumenModal(false)}
             />
+          </div>
+        )}
+
+        {/* Detail Rujukan Modal */}
+        {showDetailModal && selectedRujukan && (
+          <div className="modal-overlay">
+            <div className="modal detail-modal">
+              <div className="modal-header">
+                <h2>Detail Rujukan</h2>
+                <button className="modal-close" onClick={() => setShowDetailModal(false)}>×</button>
+              </div>
+              
+              <div className="detail-content">
+                <div className="detail-section">
+                  <h3>Informasi Rujukan</h3>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label>Nomor Rujukan:</label>
+                      <span className="detail-value">{selectedRujukan.nomor_rujukan}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label>Status:</label>
+                      <span className={`badge ${getStatusBadge(selectedRujukan.status)}`}>
+                        {getStatusText(selectedRujukan.status)}
+                      </span>
+                    </div>
+                    <div className="detail-item">
+                      <label>Tanggal Rujukan:</label>
+                      <span className="detail-value">
+                        {new Date(selectedRujukan.tanggal_rujukan).toLocaleDateString('id-ID', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                    {selectedRujukan.tanggal_respon && (
+                      <div className="detail-item">
+                        <label>Tanggal Respon:</label>
+                        <span className="detail-value">
+                          {new Date(selectedRujukan.tanggal_respon).toLocaleDateString('id-ID', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h3>Data Pasien</h3>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label>Nama Pasien:</label>
+                      <span className="detail-value">{selectedRujukan.nama_pasien}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label>NIK:</label>
+                      <span className="detail-value">{selectedRujukan.nik_pasien}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h3>Informasi Faskes</h3>
+                  <div className="detail-grid">
+                    <div className="detail-item">
+                      <label>Faskes Asal:</label>
+                      <span className="detail-value">{selectedRujukan.faskes_asal_nama}</span>
+                    </div>
+                    <div className="detail-item">
+                      <label>Faskes Tujuan:</label>
+                      <span className="detail-value">{selectedRujukan.faskes_tujuan_nama}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h3>Informasi Medis</h3>
+                  <div className="detail-grid">
+                    <div className="detail-item full-width">
+                      <label>Diagnosa:</label>
+                      <div className="detail-text">{selectedRujukan.diagnosa}</div>
+                    </div>
+                    <div className="detail-item full-width">
+                      <label>Alasan Rujukan:</label>
+                      <div className="detail-text">{selectedRujukan.alasan_rujukan}</div>
+                    </div>
+                    {selectedRujukan.catatan_asal && (
+                      <div className="detail-item full-width">
+                        <label>Catatan Asal:</label>
+                        <div className="detail-text">{selectedRujukan.catatan_asal}</div>
+                      </div>
+                    )}
+                    {selectedRujukan.catatan_tujuan && (
+                      <div className="detail-item full-width">
+                        <label>Catatan Tujuan:</label>
+                        <div className="detail-text">{selectedRujukan.catatan_tujuan}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedRujukan.user_nama && (
+                  <div className="detail-section">
+                    <h3>Informasi User</h3>
+                    <div className="detail-grid">
+                      <div className="detail-item">
+                        <label>Dibuat Oleh:</label>
+                        <span className="detail-value">{selectedRujukan.user_nama}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="modal-footer">
+                <button type="button" onClick={() => setShowDetailModal(false)}>
+                  Tutup
+                </button>
+                {canUpdateStatus(selectedRujukan) && (
+                  <button 
+                    type="button" 
+                    className="btn-primary"
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setShowStatusModal(true);
+                    }}
+                  >
+                    Update Status
+                  </button>
+                )}
+                {canCancel(selectedRujukan) && (
+                  <button 
+                    type="button" 
+                    className="btn-danger"
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setShowCancelModal(true);
+                    }}
+                  >
+                    Batalkan Rujukan
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

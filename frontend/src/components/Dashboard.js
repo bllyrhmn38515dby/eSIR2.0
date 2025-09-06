@@ -38,16 +38,22 @@ const Dashboard = () => {
     } catch (error) {
       console.error('❌ Error fetching stats:', error);
       
-      // Jika error 401 dan masih ada retry attempt, coba lagi
-      if (error.response?.status === 401 && retryAttempt < 2) {
+      // Handle different types of errors
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        setError('Server tidak tersedia. Pastikan backend berjalan di port 3001.');
+      } else if (error.response?.status === 401 && retryAttempt < 2) {
         console.log(`🔄 Retrying stats fetch (attempt ${retryAttempt + 1})...`);
         setTimeout(() => {
           fetchStats(retryAttempt + 1);
         }, 1000);
         return;
+      } else if (error.response?.status === 404) {
+        setError('Endpoint tidak ditemukan. Pastikan server berjalan.');
+      } else if (error.response?.status === 500) {
+        setError('Terjadi kesalahan server. Silakan coba lagi.');
+      } else {
+        setError('Gagal memuat statistik dashboard. Silakan refresh halaman.');
       }
-      
-      setError('Gagal memuat statistik dashboard. Silakan refresh halaman.');
     } finally {
       setLoading(false);
     }

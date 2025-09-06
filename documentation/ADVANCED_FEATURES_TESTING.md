@@ -169,7 +169,7 @@ import { Switch, Slider } from 'react-native-elements';
 ### **Phase 1: Core Setup**
 1. **React Native Project Setup**
    ```bash
-   npx react-native init eSIRMobile --template react-native-template-typescript
+   npx react-native init eSIRMobileApp --template react-native-template-typescript
    ```
 
 2. **Dependencies Installation**

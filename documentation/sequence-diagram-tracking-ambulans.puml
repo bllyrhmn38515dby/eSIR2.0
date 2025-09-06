@@ -1,0 +1,135 @@
+@startuml Sequence Diagram - Tracking Ambulans eSIR
+
+title Sequence Diagram: Real-time Tracking Ambulans
+
+actor "Pasien" as pasien
+actor "Ambulans Driver" as driver
+participant "Mobile App" as mobile
+participant "Backend API" as api
+participant "WebSocket Server" as ws
+participant "GPS Service" as gps
+participant "Database" as db
+participant "Frontend Web" as web
+actor "Dokter" as dokter
+
+== Inisialisasi Tracking ==
+driver -> mobile: Login ke aplikasi
+mobile -> api: POST /auth/login
+api -> db: Validate driver credentials
+db --> api: Return driver data
+api --> mobile: Return JWT token
+
+driver -> mobile: Aktifkan GPS tracking
+mobile -> gps: Request GPS permission
+gps --> mobile: GPS coordinates
+mobile -> api: POST /tracking/start
+note right: Data: driver_id, rujukan_id, initial_location
+
+api -> db: INSERT INTO tracking_session (...)
+db --> api: Return session_id
+
+api -> ws: Broadcast tracking started
+ws -> web: WebSocket message
+web --> pasien: Tampilkan tracking started
+web --> dokter: Tampilkan tracking started
+
+== Real-time GPS Updates ==
+loop Setiap 10 detik
+    gps -> mobile: GPS coordinates update
+    mobile -> api: PUT /tracking/{session_id}/location
+    note right: Data: latitude, longitude, speed, timestamp
+    
+    api -> db: UPDATE tracking_session SET current_location = ?, updated_at = NOW()
+    db --> api: Success
+    
+    api -> ws: Broadcast location update
+    ws -> web: WebSocket location update
+    web --> pasien: Update lokasi ambulans
+    web --> dokter: Update lokasi ambulans
+    
+    api -> db: INSERT INTO tracking_history (session_id, location, timestamp)
+    db --> api: Success
+end
+
+== Update Status Transportasi ==
+driver -> mobile: Update status transportasi
+note right: Status: pickup, en_route, arrived, completed
+
+mobile -> api: PUT /tracking/{session_id}/status
+api -> db: UPDATE tracking_session SET status = ?, status_updated_at = NOW()
+db --> api: Success
+
+api -> ws: Broadcast status update
+ws -> web: WebSocket status update
+web --> pasien: Update status transportasi
+web --> dokter: Update status transportasi
+
+== Pasien Melihat Tracking ==
+pasien -> web: Buka halaman tracking
+web -> api: GET /tracking/{rujukan_id}
+api -> db: SELECT * FROM tracking_session WHERE rujukan_id = ?
+db --> api: Return tracking data
+api --> web: Return JSON tracking
+
+web -> api: GET /tracking/{rujukan_id}/history
+api -> db: SELECT * FROM tracking_history WHERE session_id = ? ORDER BY timestamp DESC
+db --> api: Return location history
+api --> web: Return JSON history
+
+web --> pasien: Tampilkan peta tracking + history
+
+== Dokter Monitor Tracking ==
+dokter -> web: Buka dashboard tracking
+web -> api: GET /tracking/active
+api -> db: SELECT * FROM tracking_session WHERE status IN ('active', 'pickup', 'en_route')
+db --> api: Return active tracking sessions
+api --> web: Return JSON active sessions
+
+web --> dokter: Tampilkan semua tracking aktif
+
+== Estimasi Waktu Tiba ==
+api -> api: Calculate ETA
+note right: Berdasarkan: current_location, destination, traffic_data
+
+api -> db: UPDATE tracking_session SET estimated_arrival = ?
+db --> api: Success
+
+api -> ws: Broadcast ETA update
+ws -> web: WebSocket ETA update
+web --> pasien: Update ETA
+web --> dokter: Update ETA
+
+== Komunikasi Real-time ==
+pasien -> web: Kirim pesan ke driver
+web -> api: POST /tracking/{session_id}/message
+api -> db: INSERT INTO tracking_messages (...)
+db --> api: Success
+
+api -> ws: Broadcast message
+ws -> mobile: WebSocket message
+mobile --> driver: Tampilkan pesan dari pasien
+
+driver -> mobile: Balas pesan
+mobile -> api: POST /tracking/{session_id}/message
+api -> db: INSERT INTO tracking_messages (...)
+db --> api: Success
+
+api -> ws: Broadcast reply
+ws -> web: WebSocket reply
+web --> pasien: Tampilkan balasan driver
+
+== Selesai Tracking ==
+driver -> mobile: Mark tracking selesai
+mobile -> api: PUT /tracking/{session_id}/complete
+api -> db: UPDATE tracking_session SET status = 'completed', completed_at = NOW()
+db --> api: Success
+
+api -> ws: Broadcast tracking completed
+ws -> web: WebSocket completion
+web --> pasien: Tampilkan tracking selesai
+web --> dokter: Tampilkan tracking selesai
+
+api -> db: UPDATE rujukan SET status = 'arrived_at_destination'
+db --> api: Success
+
+@enduml

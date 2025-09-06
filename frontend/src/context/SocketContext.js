@@ -132,16 +132,17 @@ export const SocketProvider = ({ children }) => {
     }
 
     // Create socket connection with better error handling
-    const newSocket = io('http://localhost:3001', {
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001', {
       auth: {
         token: localStorage.getItem('token')
       },
       transports: ['websocket', 'polling'],
-      timeout: 20000,
-      reconnection: true,
-      reconnectionAttempts: 5,
+      timeout: 10000,
+      reconnection: false, // Disable auto-reconnection to prevent spam
+      reconnectionAttempts: 0,
       reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000
+      reconnectionDelayMax: 5000,
+      forceNew: true
     });
 
     // Connection events
@@ -165,8 +166,9 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error);
+      console.warn('⚠️ Socket connection error (backend may not be running):', error.message);
       setIsConnected(false);
+      // Don't show error to user, just log it
     });
 
     newSocket.on('reconnect', (attemptNumber) => {

@@ -1,8 +1,8 @@
 -- Database schema untuk eSIR 2.0
 
--- Buat dan gunakan database esirv2
-CREATE DATABASE IF NOT EXISTS esirv2;
-USE esirv2;
+-- Buat dan gunakan database prodsysesirv02
+CREATE DATABASE IF NOT EXISTS prodsysesirv02;
+USE prodsysesirv02;
 
 -- Tabel faskes (fasilitas kesehatan)
 CREATE TABLE IF NOT EXISTS faskes (

@@ -10,20 +10,20 @@ async function checkEsirv2DB() {
       host: process.env.DB_HOST || 'localhost',
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || '',
-      database: 'esirv2'
+      database: 'prodsysesirv02'
     });
 
-    console.log('🔗 Connected to esirv2 database');
+    console.log('🔗 Connected to prodsysesirv02 database');
 
     // Check tables
     const [tables] = await connection.query(`
       SELECT table_name 
       FROM information_schema.tables 
-      WHERE table_schema = 'esirv2'
+      WHERE table_schema = 'prodsysesirv02'
       ORDER BY table_name
     `);
 
-    console.log('\n📊 Tables in esirv2:');
+    console.log('\n📊 Tables in prodsysesirv02:');
     if (tables.length === 0) {
       console.log('  No tables found');
     } else {

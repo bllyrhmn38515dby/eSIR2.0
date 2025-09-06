@@ -134,7 +134,10 @@ io.on('connection', (socket) => {
 
   // Handle disconnect
   socket.on('disconnect', (reason) => {
-    console.log(`❌ User disconnected: ${socket.id} - ${socket.user?.nama_lengkap} (${reason})`);
+    // Only log disconnects in development or for specific reasons
+    if (process.env.NODE_ENV === 'development' || reason !== 'transport close') {
+      console.log(`❌ User disconnected: ${socket.id} - ${socket.user?.nama_lengkap} (${reason})`);
+    }
   });
 
   // Handle errors
@@ -178,14 +181,15 @@ const PORT = process.env.PORT || 3001;
 async function startServer() {
   const dbConnected = await testDatabaseConnection();
   
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server berjalan di port ${PORT}`);
     console.log(`✅ Test endpoint: http://localhost:${PORT}/test`);
     console.log(`✅ Login endpoint: http://localhost:${PORT}/api/auth/login`);
     console.log(`✅ Stats endpoint: http://localhost:${PORT}/api/rujukan/stats/overview`);
+    console.log(`✅ Network access: http://192.168.18.6:${PORT}`);
     
     if (dbConnected) {
-      console.log(`✅ Database terhubung: ${process.env.DB_DATABASE || 'esirv2'}`);
+      console.log(`✅ Database terhubung: ${process.env.DB_DATABASE || 'prodsysesirv02'}`);
     } else {
       console.log(`⚠️  Database tidak tersedia, menggunakan mock data`);
     }

@@ -154,10 +154,14 @@ const TrackingPage = () => {
     try {
       setLoading(true);
       setSelectedSession(session);
+      setTrackingData(null); // Clear previous data
+
+      console.log('🔍 Loading tracking data for session:', session);
 
       // Join tracking room
       if (socket) {
         socket.emit('join-tracking', session.rujukan_id);
+        console.log('🔌 Joined tracking room:', session.rujukan_id);
       }
 
       // Load tracking data
@@ -169,11 +173,16 @@ const TrackingPage = () => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('✅ Tracking data loaded:', result.data);
         setTrackingData(result.data);
         renderMapWithTrackingData(result.data);
+      } else {
+        console.error('❌ Failed to load tracking data:', response.status, response.statusText);
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
       }
     } catch (error) {
-      console.error('Error loading tracking data:', error);
+      console.error('❌ Error loading tracking data:', error);
     } finally {
       setLoading(false);
     }
@@ -182,13 +191,26 @@ const TrackingPage = () => {
   const renderMapWithTrackingData = (data) => {
     const { tracking, route } = data;
 
-    // Set map center to current position
-    if (tracking.latitude && tracking.longitude) {
+    console.log('🗺️ Rendering map with data:', { tracking, route });
+
+    // Set map center to current position or destination
+    if (tracking.latitude && tracking.longitude && 
+        !isNaN(parseFloat(tracking.latitude)) && 
+        !isNaN(parseFloat(tracking.longitude))) {
       setMapCenter([parseFloat(tracking.latitude), parseFloat(tracking.longitude)]);
+      console.log('📍 Map center set to current position:', [tracking.latitude, tracking.longitude]);
+    } else if (route.destination.lat && route.destination.lng && 
+               !isNaN(parseFloat(route.destination.lat)) && 
+               !isNaN(parseFloat(route.destination.lng))) {
+      setMapCenter([parseFloat(route.destination.lat), parseFloat(route.destination.lng)]);
+      console.log('📍 Map center set to destination:', [route.destination.lat, route.destination.lng]);
     }
 
-    // Create route polyline
-    if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng) {
+    // Create route polyline with better validation
+    if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng &&
+        !isNaN(parseFloat(route.origin.lat)) && !isNaN(parseFloat(route.origin.lng)) &&
+        !isNaN(parseFloat(route.destination.lat)) && !isNaN(parseFloat(route.destination.lng))) {
+      
       const polyline = [
         [parseFloat(route.origin.lat), parseFloat(route.origin.lng)],
         [parseFloat(route.destination.lat), parseFloat(route.destination.lng)]
@@ -196,9 +218,10 @@ const TrackingPage = () => {
       setRoutePolyline(polyline);
       console.log('🛣️ Route polyline created:', polyline);
     } else {
-      console.log('⚠️ Cannot create route polyline - missing coordinates');
-      console.log('Origin:', route.origin);
-      console.log('Destination:', route.destination);
+      console.log('⚠️ Cannot create route polyline - missing or invalid coordinates');
+      console.log('Origin:', { lat: route.origin.lat, lng: route.origin.lng });
+      console.log('Destination:', { lat: route.destination.lat, lng: route.destination.lng });
+      setRoutePolyline([]);
     }
   };
 
@@ -299,6 +322,13 @@ const TrackingPage = () => {
           </div>
 
           <div className="tracking-map-container">
+            {loading && (
+              <div className="map-loading">
+                <div className="loading-spinner"></div>
+                <p>Memuat data tracking...</p>
+              </div>
+            )}
+            
             <MapContainer 
               ref={mapRef}
               center={mapCenter}
@@ -323,38 +353,53 @@ const TrackingPage = () => {
               )}
 
               {/* Origin Marker */}
-              {trackingData?.route?.origin?.lat && (
+              {trackingData?.route?.origin?.lat && 
+               trackingData?.route?.origin?.lng && 
+               !isNaN(parseFloat(trackingData.route.origin.lat)) && 
+               !isNaN(parseFloat(trackingData.route.origin.lng)) && (
                 <Marker
                   position={[parseFloat(trackingData.route.origin.lat), parseFloat(trackingData.route.origin.lng)]}
                   icon={originIcon}
                 >
                   <Popup>
-                    <strong>Asal:</strong> {trackingData.route.origin.name}
+                    <strong>🏥 Asal:</strong> {trackingData.route.origin.name}<br />
+                    Lat: {parseFloat(trackingData.route.origin.lat).toFixed(6)}<br />
+                    Lng: {parseFloat(trackingData.route.origin.lng).toFixed(6)}
                   </Popup>
                 </Marker>
               )}
 
               {/* Destination Marker */}
-              {trackingData?.route?.destination?.lat && (
+              {trackingData?.route?.destination?.lat && 
+               trackingData?.route?.destination?.lng && 
+               !isNaN(parseFloat(trackingData.route.destination.lat)) && 
+               !isNaN(parseFloat(trackingData.route.destination.lng)) && (
                 <Marker
                   position={[parseFloat(trackingData.route.destination.lat), parseFloat(trackingData.route.destination.lng)]}
                   icon={destinationIcon}
                 >
                   <Popup>
-                    <strong>Tujuan:</strong> {trackingData.route.destination.name}
+                    <strong>🏥 Tujuan:</strong> {trackingData.route.destination.name}<br />
+                    Lat: {parseFloat(trackingData.route.destination.lat).toFixed(6)}<br />
+                    Lng: {parseFloat(trackingData.route.destination.lng).toFixed(6)}
                   </Popup>
                 </Marker>
               )}
 
               {/* Current Position Marker */}
-              {trackingData?.tracking?.latitude && (
+              {trackingData?.tracking?.latitude && 
+               trackingData?.tracking?.longitude && 
+               !isNaN(parseFloat(trackingData.tracking.latitude)) && 
+               !isNaN(parseFloat(trackingData.tracking.longitude)) && (
                 <Marker
                   position={[parseFloat(trackingData.tracking.latitude), parseFloat(trackingData.tracking.longitude)]}
                   icon={ambulanceIcon}
                 >
                   <Popup>
-                    <strong>Posisi Ambulans</strong><br />
-                    Status: {getStatusText(trackingData.tracking.status)}
+                    <strong>🚑 Posisi Ambulans</strong><br />
+                    Status: {getStatusText(trackingData.tracking.status)}<br />
+                    Lat: {parseFloat(trackingData.tracking.latitude).toFixed(6)}<br />
+                    Lng: {parseFloat(trackingData.tracking.longitude).toFixed(6)}
                   </Popup>
                 </Marker>
               )}

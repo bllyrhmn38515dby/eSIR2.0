@@ -17,6 +17,112 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    console.log('👋 User logged out');
+  }, []);
+
+  const refreshToken = useCallback(async () => {
+    if (isRefreshing) {
+      return { success: false };
+    }
+
+    setIsRefreshing(true);
+    try {
+      const currentToken = localStorage.getItem('token');
+      if (!currentToken) {
+        return { success: false };
+      }
+
+      console.log('🔄 Attempting to refresh token...');
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/refresh`, {
+        token: currentToken
+      });
+
+      if (response.data.success) {
+        const newToken = response.data.data.token;
+        const userData = response.data.data.user;
+        
+        setToken(newToken);
+        setUser(userData);
+        localStorage.setItem('token', newToken);
+        
+        // Update axios default header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        
+        console.log('✅ Token refreshed successfully');
+        return { success: true, token: newToken };
+      } else {
+        console.log('❌ Token refresh failed: Invalid response');
+        return { success: false };
+      }
+    } catch (error) {
+      console.error('❌ Refresh token error:', error.response?.data || error.message);
+      return { success: false };
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing]);
+
+  const checkAuth = useCallback(async () => {
+    const currentToken = localStorage.getItem('token');
+    console.log('🔍 Checking authentication...', { hasToken: !!currentToken });
+    
+    // Set timeout untuk mencegah loading terlalu lama
+    const timeoutId = setTimeout(() => {
+      console.log('⏰ Auth check timeout, setting loading to false');
+      setLoading(false);
+    }, 5000); // 5 detik timeout
+    
+    if (currentToken) {
+      try {
+        console.log('🔍 Checking authentication with token...');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/profile`, {
+          headers: { Authorization: `Bearer ${currentToken}` },
+          timeout: 3000 // 3 detik timeout untuk request
+        });
+        console.log('✅ Profile response:', response.data);
+        
+        if (response.data.success && response.data.data) {
+          setUser(response.data.data);
+          setToken(currentToken);
+          // Set axios default header
+          axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
+          console.log('👤 User authenticated:', response.data.data.nama_lengkap);
+        } else {
+          console.log('❌ Invalid profile response format, logging out...');
+          logout();
+        }
+      } catch (error) {
+        console.error('❌ Token invalid:', error.response?.data || error.message);
+        
+        // Handle different error types
+        if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error') || error.code === 'ECONNABORTED') {
+          console.log('⚠️ Server not available or timeout, clearing token and allowing login');
+          logout(); // Clear token jika server tidak tersedia
+        } else if (error.response?.status === 401) {
+          console.log('❌ Token expired or invalid, logging out...');
+          logout();
+        } else {
+          console.log('❌ Other error, logging out...');
+          logout();
+        }
+      }
+    } else {
+      console.log('🔍 No token found, user not authenticated');
+    }
+    
+    clearTimeout(timeoutId);
+    setLoading(false);
+  }, [logout]);
+
+  // Check if user is authenticated on app load
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
   // Setup axios default config dengan interceptor
   useEffect(() => {
     // Request interceptor untuk menambahkan token
@@ -72,116 +178,26 @@ export const AuthProvider = ({ children }) => {
       axios.interceptors.request.eject(requestInterceptor);
       axios.interceptors.response.eject(responseInterceptor);
     };
-  }, []);
+  }, [logout, refreshToken]);
 
-  const logout = useCallback(() => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
-    console.log('👋 User logged out');
-  }, []);
-
-  const refreshToken = useCallback(async () => {
-    if (isRefreshing) {
-      return { success: false };
-    }
-
-    setIsRefreshing(true);
+  const login = async (emailOrUsername, password) => {
     try {
-      const currentToken = localStorage.getItem('token');
-      if (!currentToken) {
-        return { success: false };
-      }
-
-      console.log('🔄 Attempting to refresh token...');
-      const response = await axios.post('http://localhost:3001/api/auth/refresh', {
-        token: currentToken
-      });
-
-      if (response.data.success) {
-        const newToken = response.data.data.token;
-        const userData = response.data.data.user;
-        
-        setToken(newToken);
-        setUser(userData);
-        localStorage.setItem('token', newToken);
-        
-        // Update axios default header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-        
-        console.log('✅ Token refreshed successfully');
-        return { success: true, token: newToken };
-      } else {
-        console.log('❌ Token refresh failed: Invalid response');
-        return { success: false };
-      }
-    } catch (error) {
-      console.error('❌ Refresh token error:', error.response?.data || error.message);
-      return { success: false };
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [isRefreshing]);
-
-  const checkAuth = useCallback(async () => {
-    const currentToken = localStorage.getItem('token');
-    console.log('🔍 Checking authentication...', { hasToken: !!currentToken });
-    
-    if (currentToken) {
-      try {
-        console.log('🔍 Checking authentication with token...');
-        const response = await axios.get('http://localhost:3001/api/auth/profile', {
-          headers: { Authorization: `Bearer ${currentToken}` }
-        });
-        console.log('✅ Profile response:', response.data);
-        
-        if (response.data.success && response.data.data) {
-          setUser(response.data.data);
-          setToken(currentToken);
-          // Set axios default header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${currentToken}`;
-          console.log('👤 User authenticated:', response.data.data.nama_lengkap);
-        } else {
-          console.log('❌ Invalid profile response format, trying refresh...');
-          // Coba refresh token dulu
-          const refreshResult = await refreshToken();
-          if (!refreshResult.success) {
-            console.log('❌ Refresh failed, logging out...');
-            logout();
-          }
-        }
-      } catch (error) {
-        console.error('❌ Token invalid, trying refresh:', error.response?.data || error.message);
-        // Coba refresh token sebelum logout
-        const refreshResult = await refreshToken();
-        if (!refreshResult.success) {
-          console.log('❌ Refresh failed, logging out...');
-          logout();
-        }
-      }
-    } else {
-      console.log('🔍 No token found, user not authenticated');
-    }
-    setLoading(false);
-  }, [refreshToken, logout]);
-
-  // Check if user is authenticated on app load
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  const login = async (email, password) => {
-    try {
-      console.log('🔐 Attempting login with:', { email });
+      console.log('🔐 Attempting login with:', { emailOrUsername });
+      console.log('📤 Sending to API:', { emailOrUsername, password: password ? '***' : 'empty' });
       
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
-        email,
+      // Clear any existing token first
+      localStorage.removeItem('token');
+      setToken(null);
+      setUser(null);
+      
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/login`, {
+        emailOrUsername,
         password
       });
 
       console.log('✅ Login response:', response.data);
 
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         const { user: userData, token: userToken } = response.data.data || response.data;
         
         console.log('👤 User data:', userData);
@@ -199,21 +215,40 @@ export const AuthProvider = ({ children }) => {
       } else {
         return {
           success: false,
-          message: 'Response format tidak valid'
+          message: response.data?.message || 'Response format tidak valid'
         };
       }
     } catch (error) {
       console.error('❌ Login error:', error.response?.data || error.message);
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Login gagal'
-      };
+      
+      // Handle different types of errors
+      if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
+        return {
+          success: false,
+          message: 'Server tidak tersedia. Pastikan backend berjalan di port 3001.'
+        };
+      } else if (error.response?.status === 401) {
+        return {
+          success: false,
+          message: 'Email atau password salah'
+        };
+      } else if (error.response?.status === 500) {
+        return {
+          success: false,
+          message: 'Terjadi kesalahan server. Silakan coba lagi.'
+        };
+      } else {
+        return {
+          success: false,
+          message: error.response?.data?.message || 'Login gagal. Silakan coba lagi.'
+        };
+      }
     }
   };
 
   const register = async (userData) => {
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/register', userData);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/register`, userData);
       return { success: true, data: response.data.data };
     } catch (error) {
       return {
@@ -223,6 +258,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const forceLogout = useCallback(async () => {
+    try {
+      const currentToken = localStorage.getItem('token');
+      if (currentToken) {
+        await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/force-logout`, {}, {
+          headers: { Authorization: `Bearer ${currentToken}` }
+        });
+        console.log('🔄 Force logout successful');
+      }
+    } catch (error) {
+      console.error('❌ Force logout error:', error);
+    } finally {
+      logout();
+    }
+  }, [logout]);
+
   const value = {
     user,
     token,
@@ -231,6 +282,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    forceLogout,
     refreshToken,
     isAuthenticated: !!user
   };

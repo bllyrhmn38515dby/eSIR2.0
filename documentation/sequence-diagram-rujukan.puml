@@ -1,0 +1,91 @@
+@startuml Sequence Diagram - Proses Rujukan eSIR
+
+title Sequence Diagram: Proses Rujukan Pasien
+
+actor "Dokter" as dokter
+participant "Frontend Web" as web
+participant "Backend API" as api
+participant "Database" as db
+participant "Faskes" as faskes
+participant "Sistem Notifikasi" as notif
+participant "Mobile App" as mobile
+
+== Proses Login ==
+dokter -> web: Login dengan username/password
+web -> api: POST /auth/login
+api -> db: Query user credentials
+db --> api: Return user data
+api -> api: Generate JWT token
+api --> web: Return JWT + user info
+web --> dokter: Tampilkan dashboard
+
+== Proses Pencarian Pasien ==
+dokter -> web: Cari pasien berdasarkan nama/NIK
+web -> api: GET /pasien/search?q={query}
+api -> db: SELECT * FROM pasien WHERE...
+db --> api: Return pasien data
+api --> web: Return JSON pasien
+web --> dokter: Tampilkan hasil pencarian
+
+== Proses Cek Ketersediaan Bed ==
+dokter -> web: Pilih faskes tujuan
+web -> api: GET /faskes/{id}/bed/available
+api -> db: SELECT * FROM tempat_tidur WHERE faskes_id = ? AND status = 'available'
+db --> api: Return available beds
+api --> web: Return JSON available beds
+web --> dokter: Tampilkan ketersediaan bed
+
+== Proses Buat Rujukan ==
+dokter -> web: Isi form rujukan + pilih bed
+web -> api: POST /rujukan/create
+note right: Data: pasien_id, faskes_id, bed_id, diagnosis, urgency
+
+api -> db: INSERT INTO rujukan (...)
+db --> api: Return rujukan_id
+
+api -> db: UPDATE tempat_tidur SET status = 'occupied'
+db --> api: Success
+
+api -> notif: Kirim notifikasi ke faskes
+notif -> faskes: Push notification + email
+faskes --> notif: Acknowledgment
+
+api -> db: UPDATE rujukan SET status = 'pending_confirmation'
+db --> api: Success
+
+api --> web: Return success + rujukan_id
+web --> dokter: Tampilkan konfirmasi rujukan
+
+== Proses Konfirmasi Faskes ==
+faskes -> mobile: Buka notifikasi rujukan
+mobile -> api: GET /rujukan/{id}
+api -> db: SELECT * FROM rujukan WHERE id = ?
+db --> api: Return rujukan data
+api --> mobile: Return JSON rujukan
+
+faskes -> mobile: Konfirmasi terima rujukan
+mobile -> api: PUT /rujukan/{id}/confirm
+api -> db: UPDATE rujukan SET status = 'confirmed', confirmed_at = NOW()
+db --> api: Success
+
+api -> notif: Kirim notifikasi ke dokter
+notif -> web: WebSocket notification
+web --> dokter: Tampilkan notifikasi konfirmasi
+
+== Proses Update Status ==
+dokter -> web: Lihat status rujukan
+web -> api: GET /rujukan/{id}/status
+api -> db: SELECT status, updated_at FROM rujukan WHERE id = ?
+db --> api: Return status
+api --> web: Return JSON status
+web --> dokter: Tampilkan status terbaru
+
+== Proses Tracking ==
+dokter -> web: Aktifkan tracking
+web -> api: GET /rujukan/{id}/tracking
+api -> db: SELECT * FROM tracking WHERE rujukan_id = ?
+db --> api: Return tracking data
+api --> web: Return JSON tracking
+web --> dokter: Tampilkan tracking real-time
+
+@enduml

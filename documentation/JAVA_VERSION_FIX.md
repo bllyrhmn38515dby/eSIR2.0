@@ -116,12 +116,12 @@ node setup-react-native.js
 
 ### ✅ **Step 1: Create React Native Project**
 ```bash
-npx react-native@latest init eSIRMobile --template react-native-template-typescript
+npx react-native@latest init eSIRMobileApp --template react-native-template-typescript
 ```
 
 ### ✅ **Step 2: Install Advanced Features Dependencies**
 ```bash
-cd eSIRMobile
+cd eSIRMobileApp
 
 # Firebase for push notifications
 npm install @react-native-firebase/app @react-native-firebase/messaging react-native-push-notification

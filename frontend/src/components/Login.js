@@ -6,7 +6,7 @@ import './Login.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    emailOrUsername: '',
     password: ''
   });
   const [error, setError] = useState('');
@@ -44,7 +44,14 @@ const Login = () => {
 
     try {
       console.log('🚀 Submitting login form...');
-      const result = await login(formData.email, formData.password);
+      console.log('📝 Form data:', formData);
+      console.log('📝 EmailOrUsername:', formData.emailOrUsername);
+      console.log('📝 Password:', formData.password ? '***' : 'empty');
+      
+      // Clear any existing session data first
+      localStorage.removeItem('token');
+      
+      const result = await login(formData.emailOrUsername, formData.password);
       
       if (result.success) {
         const lastPage = getLastPage();
@@ -70,6 +77,24 @@ const Login = () => {
       <div className="login-container">
         <div className="login-card">
           <div className="loading">Memeriksa autentikasi...</div>
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button 
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.reload();
+              }}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#e74c3c',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Force Logout & Reload
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -81,6 +106,17 @@ const Login = () => {
         <div className="login-header">
           <h1>eSIR 2.0</h1>
           <p>Sistem Informasi Rujukan Online</p>
+          {/* Debug info - DISABLED */}
+          {/* <div style={{ 
+            fontSize: '12px', 
+            color: '#666', 
+            marginTop: '10px',
+            padding: '5px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '3px'
+          }}>
+            Debug: Auth={isAuthenticated ? 'Yes' : 'No'}, Loading={authLoading ? 'Yes' : 'No'}, Token={localStorage.getItem('token') ? 'Exists' : 'None'}
+          </div> */}
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">
@@ -91,15 +127,15 @@ const Login = () => {
           )}
           
           <div className="form-group">
-            <label htmlFor="email">Email</label>
+            <label htmlFor="emailOrUsername">Email atau Username</label>
             <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              id="emailOrUsername"
+              name="emailOrUsername"
+              value={formData.emailOrUsername}
               onChange={handleChange}
               required
-              placeholder="Masukkan email"
+              placeholder="Masukkan email atau username"
             />
           </div>
           
