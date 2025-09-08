@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambulans Tracking - eSIR 2.0 UCD Prototype</title>
+    <link rel="stylesheet" href="../css/prototype.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/tracking.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="prototype-container">
+        <!-- Header -->
+        <header class="prototype-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🚑</span>
+                    <span class="logo-text">eSIR 2.0 - Ambulans Tracking</span>
+                </div>
+                <div class="prototype-info">
+                    <span class="version">v1.0</span>
+                    <span class="status">Prototype Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="prototype-nav">
+            <div class="nav-content">
+                <div class="nav-item" onclick="window.location.href='../index.html'">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Login</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='../index.html#dashboard'">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="window.open('rujukan-form.html', '_blank')">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Rujukan Form</span>
+                </div>
+                <div class="nav-item" onclick="window.open('mobile-dashboard.html', '_blank')">
+                    <span class="nav-icon">📱</span>
+                    <span class="nav-text">Mobile</span>
+                </div>
+                <div class="nav-item active">
+                    <span class="nav-icon">🚑</span>
+                    <span class="nav-text">Tracking</span>
+                </div>
+                <div class="nav-item" onclick="window.open('emergency.html', '_blank')">
+                    <span class="nav-icon">🚨</span>
+                    <span class="nav-text">Emergency</span>
+                </div>
+                <div class="nav-item" onclick="window.open('reports.html', '_blank')">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reports</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="prototype-main">
+            <div class="screen-container">
+                <div class="screen active">
+                    <div class="screen-header">
+                        <h1>🚑 Ambulans Tracking</h1>
+                        <p>Real-time GPS tracking dan status monitoring</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="tracking-container">
+                            <!-- Tracking Header -->
+                            <div class="tracking-header">
+                                <div class="ambulans-info">
+                                    <div class="ambulans-id">🚑 Ambulans 001</div>
+                                    <div class="driver-info">Dr. Ahmad Suryadi</div>
+                                    <div class="status-indicator">
+                                        <span class="status-dot online"></span>
+                                        <span class="status-text">Online</span>
+                                    </div>
+                                </div>
+                                <div class="tracking-controls">
+                                    <button class="btn btn-secondary" id="refresh-btn">🔄 Refresh</button>
+                                    <button class="btn btn-primary" id="center-map-btn">📍 Center Map</button>
+                                </div>
+                            </div>
+
+                            <!-- Map Container -->
+                            <div class="map-container">
+                                <div class="map-header">
+                                    <h3>🗺️ Live GPS Tracking</h3>
+                                    <div class="map-info">
+                                        <span class="gps-status">📍 GPS Active</span>
+                                        <span class="last-update">Last Update: <span id="last-update">14:30:25</span></span>
+                                    </div>
+                                </div>
+                                <div class="map-view" id="map-view">
+                                    <div class="map-placeholder">
+                                        <div class="map-icon">🗺️</div>
+                                        <div class="map-title">Interactive Map</div>
+                                        <div class="map-subtitle">GPS tracking dengan real-time location</div>
+                                        
+                                        <!-- Simulated Map Elements -->
+                                        <div class="map-elements">
+                                            <div class="ambulans-marker" id="ambulans-marker">
+                                                <div class="marker-icon">🚑</div>
+                                                <div class="marker-pulse"></div>
+                                            </div>
+                                            
+                                            <div class="destination-marker">
+                                                <div class="marker-icon">🏥</div>
+                                                <div class="marker-label">RS A - Jakarta</div>
+                                            </div>
+                                            
+                                            <div class="route-line"></div>
+                                            
+                                            <div class="waypoint-marker">
+                                                <div class="marker-icon">📍</div>
+                                                <div class="marker-label">Waypoint 1</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Information -->
+                            <div class="status-info">
+                                <div class="status-card">
+                                    <div class="status-header">
+                                        <h3>📊 Status Information</h3>
+                                    </div>
+                                    <div class="status-grid">
+                                        <div class="status-item">
+                                            <div class="status-label">Current Status</div>
+                                            <div class="status-value urgent">🟡 Dalam Perjalanan</div>
+                                        </div>
+                                        <div class="status-item">
+                                            <div class="status-label">ETA</div>
+                                            <div class="status-value">15 menit</div>
+                                        </div>
+                                        <div class="status-item">
+                                            <div class="status-label">Speed</div>
+                                            <div class="status-value">45 km/h</div>
+                                        </div>
+                                        <div class="status-item">
+                                            <div class="status-label">Distance</div>
+                                            <div class="status-value">2.3 km</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Location Details -->
+                            <div class="location-details">
+                                <div class="location-card">
+                                    <div class="location-header">
+                                        <h3>📍 Current Location</h3>
+                                    </div>
+                                    <div class="location-info">
+                                        <div class="location-address">
+                                            Jl. Merdeka No. 123, Kelurahan Sejahtera, Kecamatan Bahagia, Kota Jakarta Selatan 12345
+                                        </div>
+                                        <div class="location-coords">
+                                            <span class="coord-item">Lat: -6.2088°</span>
+                                            <span class="coord-item">Lng: 106.8456°</span>
+                                        </div>
+                                        <div class="location-accuracy">
+                                            📊 Accuracy: ±5 meters
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="quick-actions">
+                                <div class="actions-header">
+                                    <h3>🎛️ Quick Actions</h3>
+                                </div>
+                                <div class="actions-grid">
+                                    <button class="action-btn available" data-status="available">
+                                        <div class="action-icon">🟢</div>
+                                        <div class="action-label">Available</div>
+                                    </button>
+                                    <button class="action-btn on-route active" data-status="on-route">
+                                        <div class="action-icon">🟡</div>
+                                        <div class="action-label">On Route</div>
+                                    </button>
+                                    <button class="action-btn emergency" data-status="emergency">
+                                        <div class="action-icon">🔴</div>
+                                        <div class="action-label">Emergency</div>
+                                    </button>
+                                    <button class="action-btn break" data-status="break">
+                                        <div class="action-icon">⏸️</div>
+                                        <div class="action-label">Break</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Controls (for Driver) -->
+                            <div class="mobile-controls">
+                                <div class="controls-header">
+                                    <h3>📱 Mobile Controls (for Driver)</h3>
+                                </div>
+                                <div class="controls-grid">
+                                    <button class="control-btn primary">
+                                        <div class="control-icon">📍</div>
+                                        <div class="control-label">Update Location</div>
+                                    </button>
+                                    <button class="control-btn secondary">
+                                        <div class="control-icon">📞</div>
+                                        <div class="control-label">Call Patient</div>
+                                    </button>
+                                    <button class="control-btn danger">
+                                        <div class="control-icon">🚨</div>
+                                        <div class="control-label">Emergency</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Route Information -->
+                            <div class="route-info">
+                                <div class="route-header">
+                                    <h3>🛣️ Route Information</h3>
+                                </div>
+                                <div class="route-details">
+                                    <div class="route-item">
+                                        <div class="route-label">From:</div>
+                                        <div class="route-value">Puskesmas A - Jakarta</div>
+                                    </div>
+                                    <div class="route-item">
+                                        <div class="route-label">To:</div>
+                                        <div class="route-value">RS A - Jakarta</div>
+                                    </div>
+                                    <div class="route-item">
+                                        <div class="route-label">Route:</div>
+                                        <div class="route-value">Jl. Merdeka → Jl. Sudirman → Jl. Thamrin</div>
+                                    </div>
+                                    <div class="route-item">
+                                        <div class="route-label">Traffic:</div>
+                                        <div class="route-value">🟡 Moderate Traffic</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="prototype-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span>eSIR 2.0 UCD Prototype</span>
+                    <span class="separator">|</span>
+                    <span>Version 1.0</span>
+                    <span class="separator">|</span>
+                    <span>Prototype Mode</span>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-small btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
+                    <button class="btn btn-small btn-secondary" onclick="resetPrototype()">Reset</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="../js/prototype.js"></script>
+    <script src="../js/tracking.js"></script>
+</body>
+</html>

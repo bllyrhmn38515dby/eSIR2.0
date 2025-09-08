@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eSIR 2.0 - UCD Prototype</title>
+    <link rel="stylesheet" href="css/prototype.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="prototype-container">
+        <!-- Header -->
+        <header class="prototype-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🏥</span>
+                    <span class="logo-text">eSIR 2.0 - UCD Prototype</span>
+                </div>
+                <div class="prototype-info">
+                    <span class="version">v1.0</span>
+                    <span class="status">Prototype Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="prototype-nav">
+            <div class="nav-content">
+                <div class="nav-item active" data-screen="login">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Login</span>
+                </div>
+                <div class="nav-item" data-screen="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="window.open('screens/rujukan-form.html', '_blank')">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Rujukan Form</span>
+                </div>
+                <div class="nav-item" onclick="window.open('screens/mobile-dashboard.html', '_blank')">
+                    <span class="nav-icon">📱</span>
+                    <span class="nav-text">Mobile</span>
+                </div>
+                <div class="nav-item" onclick="window.open('screens/tracking.html', '_blank')">
+                    <span class="nav-icon">🚑</span>
+                    <span class="nav-text">Tracking</span>
+                </div>
+                <div class="nav-item" onclick="window.open('screens/emergency.html', '_blank')">
+                    <span class="nav-icon">🚨</span>
+                    <span class="nav-text">Emergency</span>
+                </div>
+                <div class="nav-item" data-screen="reports">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reports</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="prototype-main">
+            <div class="screen-container">
+                <!-- Login Screen -->
+                <div class="screen active" id="login-screen">
+                    <div class="screen-header">
+                        <h1>🔐 Login Screen</h1>
+                        <p>Medical-themed login dengan enhanced UX</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="login-container">
+                            <div class="login-header">
+                                <div class="login-logo">
+                                    <span class="logo-icon">🏥</span>
+                                    <h2>eSIR 2.0</h2>
+                                    <p>Sistem Informasi Rujukan</p>
+                                </div>
+                            </div>
+                            
+                            <form class="login-form">
+                                <div class="form-group">
+                                    <label for="username">👤 Username</label>
+                                    <input type="text" id="username" placeholder="admin@faskes.com" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="password">🔒 Password</label>
+                                    <input type="password" id="password" placeholder="••••••••••••••••••••••••••••••••••••••" required>
+                                </div>
+                                
+                                <div class="form-options">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="remember">
+                                        <span class="checkmark"></span>
+                                        Remember Me
+                                    </label>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-large">
+                                    🔐 LOGIN
+                                </button>
+                                
+                                <div class="login-links">
+                                    <a href="#" class="link">Forgot Password?</a>
+                                    <span class="separator">|</span>
+                                    <a href="#" class="link">Need Help?</a>
+                                </div>
+                            </form>
+                            
+                            <div class="login-footer">
+                                <p>© 2024 eSIR 2.0 - All Rights Reserved</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Screen -->
+                <div class="screen" id="dashboard-screen">
+                    <div class="screen-header">
+                        <h1>📊 Dashboard</h1>
+                        <p>Enhanced dashboard dengan real-time metrics</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="dashboard-container">
+                            <!-- Top Bar -->
+                            <div class="dashboard-topbar">
+                                <div class="topbar-left">
+                                    <h2>🏥 eSIR 2.0</h2>
+                                </div>
+                                <div class="topbar-right">
+                                    <div class="notification-badge">
+                                        🔔 <span class="badge">3</span>
+                                    </div>
+                                    <div class="user-info">
+                                        👤 Admin Pusat
+                                    </div>
+                                    <button class="btn btn-secondary">⚙️ Logout</button>
+                                </div>
+                            </div>
+
+                            <!-- Metrics Cards -->
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-icon">📋</div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Total Rujukan</div>
+                                        <div class="metric-value">150</div>
+                                        <div class="metric-change positive">↗️ +12%</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <div class="metric-icon">🚑</div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Today Rujukan</div>
+                                        <div class="metric-value">25</div>
+                                        <div class="metric-change positive">↗️ +5%</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <div class="metric-icon">⏳</div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Pending Rujukan</div>
+                                        <div class="metric-value">8</div>
+                                        <div class="metric-change negative">↘️ -3%</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="metric-card">
+                                    <div class="metric-icon">✅</div>
+                                    <div class="metric-content">
+                                        <div class="metric-label">Complete Rujukan</div>
+                                        <div class="metric-value">117</div>
+                                        <div class="metric-change positive">↗️ +8%</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Grid -->
+                            <div class="content-grid">
+                                <div class="content-card">
+                                    <div class="card-header">
+                                        <h3>📈 Recent Activity</h3>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="activity-item">
+                                            <div class="activity-icon">🚑</div>
+                                            <div class="activity-content">
+                                                <div class="activity-title">Rujukan #1234 - RS A</div>
+                                                <div class="activity-subtitle">Status: Dalam Perjalanan</div>
+                                                <div class="activity-time">Time: 14:30</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="activity-item">
+                                            <div class="activity-icon">🏥</div>
+                                            <div class="activity-content">
+                                                <div class="activity-title">Rujukan #1233 - Puskesmas B</div>
+                                                <div class="activity-subtitle">Status: Selesai</div>
+                                                <div class="activity-time">Time: 14:15</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="activity-item">
+                                            <div class="activity-icon">🏥</div>
+                                            <div class="activity-content">
+                                                <div class="activity-title">Rujukan #1232 - Klinik C</div>
+                                                <div class="activity-subtitle">Status: Menunggu</div>
+                                                <div class="activity-time">Time: 14:00</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="content-card urgent-alerts">
+                                    <div class="card-header">
+                                        <h3>🚨 Urgent Alerts</h3>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="alert-item critical">
+                                            <div class="alert-icon">⚠️</div>
+                                            <div class="alert-content">
+                                                <div class="alert-title">2 Emergency Cases</div>
+                                                <div class="alert-action">
+                                                    <button class="btn btn-small">View All Alerts</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert-item warning">
+                                            <div class="alert-icon">🚑</div>
+                                            <div class="alert-content">
+                                                <div class="alert-title">1 Ambulans Delay</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert-item info">
+                                            <div class="alert-icon">📋</div>
+                                            <div class="alert-content">
+                                                <div class="alert-title">3 Pending Approval</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Grid -->
+                            <div class="bottom-grid">
+                                <div class="content-card">
+                                    <div class="card-header">
+                                        <h3>🚑 Ambulans Status</h3>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="ambulans-item available">
+                                            <div class="ambulans-icon">🟢</div>
+                                            <div class="ambulans-info">
+                                                <div class="ambulans-name">Ambulans 001 - Available</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="ambulans-item on-route">
+                                            <div class="ambulans-icon">🟡</div>
+                                            <div class="ambulans-info">
+                                                <div class="ambulans-name">Ambulans 002 - On Route</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="ambulans-item maintenance">
+                                            <div class="ambulans-icon">🔴</div>
+                                            <div class="ambulans-info">
+                                                <div class="ambulans-name">Ambulans 003 - Maintenance</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="ambulans-item available">
+                                            <div class="ambulans-icon">🟢</div>
+                                            <div class="ambulans-info">
+                                                <div class="ambulans-name">Ambulans 004 - Available</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="content-card">
+                                    <div class="card-header">
+                                        <h3>📊 Quick Actions</h3>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="quick-actions">
+                                            <button class="btn btn-primary" onclick="window.open('screens/rujukan-form.html', '_blank')">📋 New Rujukan</button>
+                                            <button class="btn btn-secondary">🔍 Search Pasien</button>
+                                            <button class="btn btn-secondary">📊 Generate Report</button>
+                                            <button class="btn btn-secondary">⚙️ System Settings</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other screens will be added here -->
+                <div class="screen" id="rujukan-form-screen">
+                    <div class="screen-header">
+                        <h1>📋 Rujukan Form</h1>
+                        <p>Step-by-step form dengan enhanced UX</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="coming-soon">
+                            <div class="coming-soon-icon">🚧</div>
+                            <h3>Coming Soon</h3>
+                            <p>Rujukan Form screen sedang dalam pengembangan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="mobile-dashboard-screen">
+                    <div class="screen-header">
+                        <h1>📱 Mobile Dashboard</h1>
+                        <p>Mobile-optimized dashboard</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="coming-soon">
+                            <div class="coming-soon-icon">🚧</div>
+                            <h3>Coming Soon</h3>
+                            <p>Mobile Dashboard screen sedang dalam pengembangan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="tracking-screen">
+                    <div class="screen-header">
+                        <h1>🚑 Ambulans Tracking</h1>
+                        <p>Real-time GPS tracking</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="coming-soon">
+                            <div class="coming-soon-icon">🚧</div>
+                            <h3>Coming Soon</h3>
+                            <p>Tracking screen sedang dalam pengembangan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="emergency-screen">
+                    <div class="screen-header">
+                        <h1>🚨 Emergency Alert</h1>
+                        <p>Emergency alert system</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="coming-soon">
+                            <div class="coming-soon-icon">🚧</div>
+                            <h3>Coming Soon</h3>
+                            <p>Emergency screen sedang dalam pengembangan</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="screen" id="reports-screen">
+                    <div class="screen-header">
+                        <h1>📈 Report Dashboard</h1>
+                        <p>Interactive reports dan analytics</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="coming-soon">
+                            <div class="coming-soon-icon">🚧</div>
+                            <h3>Coming Soon</h3>
+                            <p>Reports screen sedang dalam pengembangan</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="prototype-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span>eSIR 2.0 UCD Prototype</span>
+                    <span class="separator">|</span>
+                    <span>Version 1.0</span>
+                    <span class="separator">|</span>
+                    <span>Prototype Mode</span>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-small btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
+                    <button class="btn btn-small btn-secondary" onclick="resetPrototype()">Reset</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/prototype.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/interactions.js"></script>
+</body>
+</html>

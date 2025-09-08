@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rujukan Form - eSIR 2.0 UCD Prototype</title>
+    <link rel="stylesheet" href="../css/prototype.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/forms.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="prototype-container">
+        <!-- Header -->
+        <header class="prototype-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🏥</span>
+                    <span class="logo-text">eSIR 2.0 - Rujukan Form</span>
+                </div>
+                <div class="prototype-info">
+                    <span class="version">v1.0</span>
+                    <span class="status">Prototype Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="prototype-nav">
+            <div class="nav-content">
+                <div class="nav-item" onclick="window.location.href='../index.html'">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Login</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='../index.html#dashboard'">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item active">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Rujukan Form</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='mobile-dashboard.html'">
+                    <span class="nav-icon">📱</span>
+                    <span class="nav-text">Mobile</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='tracking.html'">
+                    <span class="nav-icon">🚑</span>
+                    <span class="nav-text">Tracking</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='emergency.html'">
+                    <span class="nav-icon">🚨</span>
+                    <span class="nav-text">Emergency</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='reports.html'">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reports</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="prototype-main">
+            <div class="screen-container">
+                <div class="screen active">
+                    <div class="screen-header">
+                        <h1>📋 Rujukan Form</h1>
+                        <p>Step-by-step form dengan enhanced UX</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="rujukan-form-container">
+                            <!-- Progress Indicator -->
+                            <div class="form-progress">
+                                <div class="progress-steps">
+                                    <div class="step active" data-step="1">
+                                        <div class="step-number">1</div>
+                                        <div class="step-label">Patient Info</div>
+                                    </div>
+                                    <div class="step" data-step="2">
+                                        <div class="step-number">2</div>
+                                        <div class="step-label">Medical Info</div>
+                                    </div>
+                                    <div class="step" data-step="3">
+                                        <div class="step-number">3</div>
+                                        <div class="step-label">Review</div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 33%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Step 1: Patient Information -->
+                            <div class="form-step active" id="step-1">
+                                <div class="step-header">
+                                    <h2>👤 Patient Information</h2>
+                                    <p>Please provide complete patient information</p>
+                                </div>
+                                
+                                <form class="rujukan-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="patient-name">Nama Lengkap Pasien *</label>
+                                            <input type="text" id="patient-name" placeholder="Ahmad Suryadi" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="patient-age">Umur *</label>
+                                            <input type="number" id="patient-age" placeholder="45" min="0" max="120" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="patient-gender">Jenis Kelamin *</label>
+                                            <select id="patient-gender" required>
+                                                <option value="">Pilih Jenis Kelamin</option>
+                                                <option value="laki-laki">Laki-laki</option>
+                                                <option value="perempuan">Perempuan</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="patient-id">No. KTP/Identitas *</label>
+                                            <input type="text" id="patient-id" placeholder="3201234567890123" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="patient-address">Alamat Lengkap *</label>
+                                            <textarea id="patient-address" rows="3" placeholder="Jl. Merdeka No. 123, Kelurahan Sejahtera, Kecamatan Bahagia, Kota Jakarta Selatan 12345" required></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="patient-phone">No. Telepon *</label>
+                                            <input type="tel" id="patient-phone" placeholder="+62 812 3456 7890" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-tips">
+                                        <div class="tip-icon">💡</div>
+                                        <div class="tip-content">
+                                            <strong>Tips:</strong> Pastikan data pasien lengkap dan akurat untuk memudahkan proses rujukan
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Step 2: Medical Information -->
+                            <div class="form-step" id="step-2">
+                                <div class="step-header">
+                                    <h2>🏥 Medical Information</h2>
+                                    <p>Provide medical details and referral information</p>
+                                </div>
+                                
+                                <form class="rujukan-form">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="diagnosis">Diagnosa Utama *</label>
+                                            <input type="text" id="diagnosis" placeholder="Cardiac Arrest" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="symptoms">Gejala yang Dialami *</label>
+                                            <textarea id="symptoms" rows="3" placeholder="Nyeri dada, sesak napas, pusing" required></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="priority">Prioritas Rujukan *</label>
+                                            <select id="priority" required>
+                                                <option value="">Pilih Prioritas</option>
+                                                <option value="normal">Normal</option>
+                                                <option value="urgent">Urgent</option>
+                                                <option value="critical">Critical</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="destination">Faskes Tujuan *</label>
+                                            <select id="destination" required>
+                                                <option value="">Pilih Faskes Tujuan</option>
+                                                <option value="rs-a">RS A - Jakarta</option>
+                                                <option value="rs-b">RS B - Bandung</option>
+                                                <option value="rs-c">RS C - Surabaya</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="allergies">Alergi (jika ada)</label>
+                                            <input type="text" id="allergies" placeholder="Penicillin, Latex">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="medications">Obat yang Sedang Dikonsumsi</label>
+                                            <textarea id="medications" rows="2" placeholder="Aspirin 100mg, Metformin 500mg"></textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-tips">
+                                        <div class="tip-icon">⚠️</div>
+                                        <div class="tip-content">
+                                            <strong>Important:</strong> Informasi medis yang akurat sangat penting untuk keselamatan pasien
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Step 3: Review -->
+                            <div class="form-step" id="step-3">
+                                <div class="step-header">
+                                    <h2>📋 Review & Submit</h2>
+                                    <p>Please review all information before submitting</p>
+                                </div>
+                                
+                                <div class="review-container">
+                                    <div class="review-section">
+                                        <h3>👤 Patient Information</h3>
+                                        <div class="review-item">
+                                            <span class="review-label">Nama:</span>
+                                            <span class="review-value" id="review-name">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Umur:</span>
+                                            <span class="review-value" id="review-age">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Jenis Kelamin:</span>
+                                            <span class="review-value" id="review-gender">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">No. Identitas:</span>
+                                            <span class="review-value" id="review-id">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Alamat:</span>
+                                            <span class="review-value" id="review-address">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Telepon:</span>
+                                            <span class="review-value" id="review-phone">-</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="review-section">
+                                        <h3>🏥 Medical Information</h3>
+                                        <div class="review-item">
+                                            <span class="review-label">Diagnosa:</span>
+                                            <span class="review-value" id="review-diagnosis">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Gejala:</span>
+                                            <span class="review-value" id="review-symptoms">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Prioritas:</span>
+                                            <span class="review-value" id="review-priority">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Faskes Tujuan:</span>
+                                            <span class="review-value" id="review-destination">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Alergi:</span>
+                                            <span class="review-value" id="review-allergies">-</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Obat:</span>
+                                            <span class="review-value" id="review-medications">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-tips">
+                                    <div class="tip-icon">✅</div>
+                                    <div class="tip-content">
+                                        <strong>Ready to Submit:</strong> Pastikan semua informasi sudah benar sebelum mengirim rujukan
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Form Navigation -->
+                            <div class="form-navigation">
+                                <button type="button" class="btn btn-secondary" id="prev-btn" style="display: none;">
+                                    ← Back
+                                </button>
+                                <div class="nav-spacer"></div>
+                                <button type="button" class="btn btn-primary" id="next-btn">
+                                    Next Step →
+                                </button>
+                                <button type="button" class="btn btn-success" id="submit-btn" style="display: none;">
+                                    📋 Submit Rujukan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="prototype-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span>eSIR 2.0 UCD Prototype</span>
+                    <span class="separator">|</span>
+                    <span>Version 1.0</span>
+                    <span class="separator">|</span>
+                    <span>Prototype Mode</span>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-small btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
+                    <button class="btn btn-small btn-secondary" onclick="resetPrototype()">Reset</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="../js/prototype.js"></script>
+    <script src="../js/forms.js"></script>
+</body>
+</html>

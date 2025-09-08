@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Alert - eSIR 2.0 UCD Prototype</title>
+    <link rel="stylesheet" href="../css/prototype.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/emergency.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="prototype-container">
+        <!-- Header -->
+        <header class="prototype-header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🚨</span>
+                    <span class="logo-text">eSIR 2.0 - Emergency Alert</span>
+                </div>
+                <div class="prototype-info">
+                    <span class="version">v1.0</span>
+                    <span class="status">Prototype Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="prototype-nav">
+            <div class="nav-content">
+                <div class="nav-item" onclick="window.location.href='../index.html'">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-text">Login</span>
+                </div>
+                <div class="nav-item" onclick="window.location.href='../index.html#dashboard'">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </div>
+                <div class="nav-item" onclick="window.open('rujukan-form.html', '_blank')">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Rujukan Form</span>
+                </div>
+                <div class="nav-item" onclick="window.open('mobile-dashboard.html', '_blank')">
+                    <span class="nav-icon">📱</span>
+                    <span class="nav-text">Mobile</span>
+                </div>
+                <div class="nav-item" onclick="window.open('tracking.html', '_blank')">
+                    <span class="nav-icon">🚑</span>
+                    <span class="nav-text">Tracking</span>
+                </div>
+                <div class="nav-item active">
+                    <span class="nav-icon">🚨</span>
+                    <span class="nav-text">Emergency</span>
+                </div>
+                <div class="nav-item" onclick="window.open('reports.html', '_blank')">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Reports</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="prototype-main">
+            <div class="screen-container">
+                <div class="screen active">
+                    <div class="screen-header">
+                        <h1>🚨 Emergency Alert System</h1>
+                        <p>Critical alerts dan emergency response management</p>
+                    </div>
+                    <div class="screen-content">
+                        <div class="emergency-container">
+                            <!-- Emergency Status Banner -->
+                            <div class="emergency-banner" id="emergency-banner">
+                                <div class="banner-content">
+                                    <div class="banner-icon">🚨</div>
+                                    <div class="banner-text">
+                                        <div class="banner-title">EMERGENCY ALERT ACTIVE</div>
+                                        <div class="banner-subtitle">Critical situation detected - Immediate response required</div>
+                                    </div>
+                                    <div class="banner-actions">
+                                        <button class="btn btn-danger" id="acknowledge-btn">Acknowledge</button>
+                                        <button class="btn btn-secondary" id="dismiss-btn">Dismiss</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Emergency Overview -->
+                            <div class="emergency-overview">
+                                <div class="overview-header">
+                                    <h2>📊 Emergency Overview</h2>
+                                    <div class="overview-controls">
+                                        <button class="btn btn-primary" id="new-emergency-btn">🚨 New Emergency</button>
+                                        <button class="btn btn-secondary" id="refresh-alerts-btn">🔄 Refresh</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="overview-grid">
+                                    <div class="overview-card critical">
+                                        <div class="card-header">
+                                            <div class="card-icon">🔴</div>
+                                            <div class="card-title">Critical Alerts</div>
+                                        </div>
+                                        <div class="card-value">3</div>
+                                        <div class="card-trend">+2 from last hour</div>
+                                    </div>
+                                    
+                                    <div class="overview-card warning">
+                                        <div class="card-header">
+                                            <div class="card-icon">🟡</div>
+                                            <div class="card-title">Warning Alerts</div>
+                                        </div>
+                                        <div class="card-value">7</div>
+                                        <div class="card-trend">+1 from last hour</div>
+                                    </div>
+                                    
+                                    <div class="overview-card info">
+                                        <div class="card-header">
+                                            <div class="card-icon">🔵</div>
+                                            <div class="card-title">Info Alerts</div>
+                                        </div>
+                                        <div class="card-value">12</div>
+                                        <div class="card-trend">-3 from last hour</div>
+                                    </div>
+                                    
+                                    <div class="overview-card success">
+                                        <div class="card-header">
+                                            <div class="card-icon">🟢</div>
+                                            <div class="card-title">Resolved</div>
+                                        </div>
+                                        <div class="card-value">25</div>
+                                        <div class="card-trend">+5 from last hour</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Active Alerts -->
+                            <div class="active-alerts">
+                                <div class="alerts-header">
+                                    <h2>🚨 Active Alerts</h2>
+                                    <div class="alerts-filter">
+                                        <select id="alert-filter">
+                                            <option value="all">All Alerts</option>
+                                            <option value="critical">Critical Only</option>
+                                            <option value="warning">Warning Only</option>
+                                            <option value="info">Info Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="alerts-list" id="alerts-list">
+                                    <!-- Critical Alert 1 -->
+                                    <div class="alert-item critical" data-type="critical">
+                                        <div class="alert-indicator">
+                                            <div class="alert-pulse"></div>
+                                        </div>
+                                        <div class="alert-content">
+                                            <div class="alert-header">
+                                                <div class="alert-title">🚑 Ambulans Emergency</div>
+                                                <div class="alert-time">2 minutes ago</div>
+                                            </div>
+                                            <div class="alert-description">
+                                                Ambulans 001 mengalami kecelakaan di Jl. Sudirman. Driver terluka, pasien dalam kondisi kritis.
+                                            </div>
+                                            <div class="alert-details">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Location:</span>
+                                                    <span class="detail-value">Jl. Sudirman No. 45, Jakarta</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Driver:</span>
+                                                    <span class="detail-value">Ahmad Suryadi</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Patient:</span>
+                                                    <span class="detail-value">Maria Sari (Critical)</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert-actions">
+                                            <button class="btn btn-danger btn-sm" onclick="handleEmergency('ambulans-001')">🚨 Emergency</button>
+                                            <button class="btn btn-primary btn-sm" onclick="viewDetails('ambulans-001')">👁️ View</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Critical Alert 2 -->
+                                    <div class="alert-item critical" data-type="critical">
+                                        <div class="alert-indicator">
+                                            <div class="alert-pulse"></div>
+                                        </div>
+                                        <div class="alert-content">
+                                            <div class="alert-header">
+                                                <div class="alert-title">🏥 Hospital Overcapacity</div>
+                                                <div class="alert-time">5 minutes ago</div>
+                                            </div>
+                                            <div class="alert-description">
+                                                RS A Jakarta melaporkan overcapacity. Tidak ada tempat tidur kosong untuk pasien baru.
+                                            </div>
+                                            <div class="alert-details">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Hospital:</span>
+                                                    <span class="detail-value">RS A - Jakarta</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Capacity:</span>
+                                                    <span class="detail-value">100% (0/150 beds)</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Wait Time:</span>
+                                                    <span class="detail-value">4+ hours</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert-actions">
+                                            <button class="btn btn-warning btn-sm" onclick="handleOvercapacity('rs-a')">⚠️ Overcapacity</button>
+                                            <button class="btn btn-primary btn-sm" onclick="viewDetails('rs-a')">👁️ View</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Warning Alert 1 -->
+                                    <div class="alert-item warning" data-type="warning">
+                                        <div class="alert-indicator">
+                                            <div class="alert-pulse"></div>
+                                        </div>
+                                        <div class="alert-content">
+                                            <div class="alert-header">
+                                                <div class="alert-title">⏰ Response Time Delay</div>
+                                                <div class="alert-time">8 minutes ago</div>
+                                            </div>
+                                            <div class="alert-description">
+                                                Ambulans 003 terlambat 15 menit dari ETA. Traffic congestion di Jl. Thamrin.
+                                            </div>
+                                            <div class="alert-details">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Ambulans:</span>
+                                                    <span class="detail-value">Ambulans 003</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Delay:</span>
+                                                    <span class="detail-value">15 minutes</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Reason:</span>
+                                                    <span class="detail-value">Traffic congestion</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert-actions">
+                                            <button class="btn btn-warning btn-sm" onclick="handleDelay('ambulans-003')">⏰ Delay</button>
+                                            <button class="btn btn-primary btn-sm" onclick="viewDetails('ambulans-003')">👁️ View</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Info Alert 1 -->
+                                    <div class="alert-item info" data-type="info">
+                                        <div class="alert-indicator">
+                                            <div class="alert-pulse"></div>
+                                        </div>
+                                        <div class="alert-content">
+                                            <div class="alert-header">
+                                                <div class="alert-title">📋 New Rujukan</div>
+                                                <div class="alert-time">12 minutes ago</div>
+                                            </div>
+                                            <div class="alert-description">
+                                                Rujukan baru dari Puskesmas B untuk pasien dengan kondisi darurat.
+                                            </div>
+                                            <div class="alert-details">
+                                                <div class="detail-item">
+                                                    <span class="detail-label">From:</span>
+                                                    <span class="detail-value">Puskesmas B - Jakarta</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Patient:</span>
+                                                    <span class="detail-value">Budi Santoso</span>
+                                                </div>
+                                                <div class="detail-item">
+                                                    <span class="detail-label">Priority:</span>
+                                                    <span class="detail-value">High</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="alert-actions">
+                                            <button class="btn btn-info btn-sm" onclick="handleRujukan('rujukan-001')">📋 Rujukan</button>
+                                            <button class="btn btn-primary btn-sm" onclick="viewDetails('rujukan-001')">👁️ View</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Emergency Response -->
+                            <div class="emergency-response">
+                                <div class="response-header">
+                                    <h2>🚑 Emergency Response</h2>
+                                </div>
+                                
+                                <div class="response-grid">
+                                    <div class="response-card">
+                                        <div class="response-icon">🚑</div>
+                                        <div class="response-title">Dispatch Ambulans</div>
+                                        <div class="response-description">Kirim ambulans terdekat ke lokasi emergency</div>
+                                        <button class="btn btn-primary" onclick="dispatchAmbulans()">Dispatch</button>
+                                    </div>
+                                    
+                                    <div class="response-card">
+                                        <div class="response-icon">🏥</div>
+                                        <div class="response-title">Find Hospital</div>
+                                        <div class="response-description">Cari rumah sakit terdekat dengan kapasitas tersedia</div>
+                                        <button class="btn btn-primary" onclick="findHospital()">Find</button>
+                                    </div>
+                                    
+                                    <div class="response-card">
+                                        <div class="response-icon">📞</div>
+                                        <div class="response-title">Contact Team</div>
+                                        <div class="response-description">Hubungi tim emergency dan koordinator</div>
+                                        <button class="btn btn-primary" onclick="contactTeam()">Contact</button>
+                                    </div>
+                                    
+                                    <div class="response-card">
+                                        <div class="response-icon">📋</div>
+                                        <div class="response-title">Create Report</div>
+                                        <div class="response-description">Buat laporan emergency untuk dokumentasi</div>
+                                        <button class="btn btn-primary" onclick="createReport()">Create</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Emergency Contacts -->
+                            <div class="emergency-contacts">
+                                <div class="contacts-header">
+                                    <h2>📞 Emergency Contacts</h2>
+                                </div>
+                                
+                                <div class="contacts-grid">
+                                    <div class="contact-item">
+                                        <div class="contact-icon">🚑</div>
+                                        <div class="contact-info">
+                                            <div class="contact-name">Emergency Medical</div>
+                                            <div class="contact-number">119</div>
+                                        </div>
+                                        <button class="btn btn-danger btn-sm" onclick="callEmergency('119')">📞 Call</button>
+                                    </div>
+                                    
+                                    <div class="contact-item">
+                                        <div class="contact-icon">🚨</div>
+                                        <div class="contact-info">
+                                            <div class="contact-name">Police</div>
+                                            <div class="contact-number">110</div>
+                                        </div>
+                                        <button class="btn btn-danger btn-sm" onclick="callEmergency('110')">📞 Call</button>
+                                    </div>
+                                    
+                                    <div class="contact-item">
+                                        <div class="contact-icon">🔥</div>
+                                        <div class="contact-info">
+                                            <div class="contact-name">Fire Department</div>
+                                            <div class="contact-number">113</div>
+                                        </div>
+                                        <button class="btn btn-danger btn-sm" onclick="callEmergency('113')">📞 Call</button>
+                                    </div>
+                                    
+                                    <div class="contact-item">
+                                        <div class="contact-icon">👨‍⚕️</div>
+                                        <div class="contact-info">
+                                            <div class="contact-name">Dr. Emergency</div>
+                                            <div class="contact-number">+62 812-3456-7890</div>
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" onclick="callEmergency('+6281234567890')">📞 Call</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="prototype-footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <span>eSIR 2.0 UCD Prototype</span>
+                    <span class="separator">|</span>
+                    <span>Version 1.0</span>
+                    <span class="separator">|</span>
+                    <span>Prototype Mode</span>
+                </div>
+                <div class="footer-actions">
+                    <button class="btn btn-small btn-secondary" onclick="toggleFullscreen()">Fullscreen</button>
+                    <button class="btn btn-small btn-secondary" onclick="resetPrototype()">Reset</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="../js/prototype.js"></script>
+    <script src="../js/emergency.js"></script>
+</body>
+</html>

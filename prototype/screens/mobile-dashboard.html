@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Dashboard - eSIR 2.0 UCD Prototype</title>
+    <link rel="stylesheet" href="../css/prototype.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/mobile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="mobile-view">
+    <div class="mobile-container">
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <div class="header-top">
+                <div class="header-left">
+                    <span class="logo-icon">🏥</span>
+                    <span class="logo-text">eSIR 2.0</span>
+                </div>
+                <div class="header-right">
+                    <div class="notification-badge">
+                        🔔 <span class="badge">3</span>
+                    </div>
+                    <div class="user-avatar">👤</div>
+                </div>
+            </div>
+            <div class="header-bottom">
+                <h1>Dashboard</h1>
+                <p>Welcome back, Admin Faskes</p>
+            </div>
+        </header>
+
+        <!-- Mobile Content -->
+        <main class="mobile-main">
+            <!-- Quick Stats -->
+            <div class="mobile-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-content">
+                        <div class="stat-value">150</div>
+                        <div class="stat-label">Total Rujukan</div>
+                        <div class="stat-change positive">↗️ +12%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🚑</div>
+                    <div class="stat-content">
+                        <div class="stat-value">25</div>
+                        <div class="stat-label">Today</div>
+                        <div class="stat-change positive">↗️ +5%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-content">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Pending</div>
+                        <div class="stat-change negative">↘️ -3%</div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-value">117</div>
+                        <div class="stat-label">Complete</div>
+                        <div class="stat-change positive">↗️ +8%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Alert -->
+            <div class="emergency-alert">
+                <div class="alert-icon">🚨</div>
+                <div class="alert-content">
+                    <div class="alert-title">Emergency Alert</div>
+                    <div class="alert-message">2 Critical cases need immediate attention</div>
+                </div>
+                <button class="alert-action">View</button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions-mobile">
+                <h3>Quick Actions</h3>
+                <div class="action-grid">
+                    <button class="action-btn primary" onclick="window.open('rujukan-form.html', '_blank')">
+                        <div class="action-icon">📋</div>
+                        <div class="action-label">New Rujukan</div>
+                    </button>
+                    
+                    <button class="action-btn secondary">
+                        <div class="action-icon">🔍</div>
+                        <div class="action-label">Search</div>
+                    </button>
+                    
+                    <button class="action-btn secondary">
+                        <div class="action-icon">📊</div>
+                        <div class="action-label">Reports</div>
+                    </button>
+                    
+                    <button class="action-btn secondary">
+                        <div class="action-icon">⚙️</div>
+                        <div class="action-label">Settings</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <div class="section-header">
+                    <h3>Recent Activity</h3>
+                    <button class="view-all-btn">View All</button>
+                </div>
+                
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon urgent">🚑</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Rujukan #1234 - RS A</div>
+                            <div class="activity-subtitle">Status: Dalam Perjalanan</div>
+                            <div class="activity-time">14:30</div>
+                        </div>
+                        <div class="activity-status urgent">Urgent</div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon success">✅</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Rujukan #1233 - Puskesmas B</div>
+                            <div class="activity-subtitle">Status: Selesai</div>
+                            <div class="activity-time">14:15</div>
+                        </div>
+                        <div class="activity-status success">Complete</div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon pending">⏳</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Rujukan #1232 - Klinik C</div>
+                            <div class="activity-subtitle">Status: Menunggu</div>
+                            <div class="activity-time">14:00</div>
+                        </div>
+                        <div class="activity-status pending">Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ambulans Status -->
+            <div class="ambulans-status">
+                <div class="section-header">
+                    <h3>Ambulans Status</h3>
+                    <button class="view-all-btn">View All</button>
+                </div>
+                
+                <div class="ambulans-list">
+                    <div class="ambulans-item available">
+                        <div class="ambulans-icon">🟢</div>
+                        <div class="ambulans-info">
+                            <div class="ambulans-name">Ambulans 001</div>
+                            <div class="ambulans-status-text">Available</div>
+                            <div class="ambulans-location">Jl. Merdeka No. 123</div>
+                        </div>
+                        <div class="ambulans-eta">5 min</div>
+                    </div>
+                    
+                    <div class="ambulans-item on-route">
+                        <div class="ambulans-icon">🟡</div>
+                        <div class="ambulans-info">
+                            <div class="ambulans-name">Ambulans 002</div>
+                            <div class="ambulans-status-text">On Route</div>
+                            <div class="ambulans-location">Jl. Sudirman No. 456</div>
+                        </div>
+                        <div class="ambulans-eta">15 min</div>
+                    </div>
+                    
+                    <div class="ambulans-item maintenance">
+                        <div class="ambulans-icon">🔴</div>
+                        <div class="ambulans-info">
+                            <div class="ambulans-name">Ambulans 003</div>
+                            <div class="ambulans-status-text">Maintenance</div>
+                            <div class="ambulans-location">Workshop</div>
+                        </div>
+                        <div class="ambulans-eta">N/A</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-bottom-nav">
+            <div class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label">Rujukan</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">🚑</div>
+                <div class="nav-label">Tracking</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">📊</div>
+                <div class="nav-label">Reports</div>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon">⚙️</div>
+                <div class="nav-label">Settings</div>
+            </div>
+        </nav>
+
+        <!-- Pull to Refresh Indicator -->
+        <div class="pull-refresh" id="pull-refresh">
+            <div class="refresh-icon">⬇️</div>
+            <div class="refresh-text">Pull to refresh</div>
+        </div>
+    </div>
+
+    <!-- Mobile-specific Scripts -->
+    <script src="../js/prototype.js"></script>
+    <script src="../js/mobile.js"></script>
+</body>
+</html>
