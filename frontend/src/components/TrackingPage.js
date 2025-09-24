@@ -14,35 +14,83 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 });
 
-// Custom icons dengan fallback yang lebih baik
-const createCustomIcon = (iconUrl, size = [32, 32], className = '') => {
-  return L.icon({
-    iconUrl,
-    iconSize: size,
-    iconAnchor: [size[0] / 2, size[1] / 2],
-    popupAnchor: [0, -size[1] / 2],
-    className: className
-  });
-};
+// Icon ambulans menggunakan divIcon yang lebih stabil
+const ambulanceIcon = L.divIcon({
+  html: `
+    <div style="
+      width: 40px; 
+      height: 40px; 
+      background: #E66666; 
+      border: 3px solid white; 
+      border-radius: 50%; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    ">
+      🚑
+    </div>
+  `,
+  className: 'custom-ambulance-icon',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20]
+});
 
-// Icons dengan fallback yang lebih reliable
-const ambulanceIcon = createCustomIcon(
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiByeD0iMjAiIGZpbGw9IiNFNjY2NjYiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHg9IjgiIHk9IjgiPgo8cGF0aCBkPSJNMTIgMkMxMy4xIDIgMTQgMi45IDE0IDRWMTRIMThWNEgxNkMxNiAyLjkgMTUuMSAyIDE0IDJIMTJaIi8+CjxwYXRoIGQ9Ik0xOCAxNkgyMFYxOEgyMlYyMEgyMlYyMkgyMFYyNEgxOFYyMkgxNlYyMEgxNlYxOEgxOFYxNloiLz4KPHN2Zz4KPC9zdmc+', 
-  [40, 40], 
-  'custom-ambulance-icon'
-);
+// Icon origin menggunakan divIcon yang lebih stabil
+const originIcon = L.divIcon({
+  html: `
+    <div style="
+      width: 32px; 
+      height: 32px; 
+      background: #34A853; 
+      border: 3px solid white; 
+      border-radius: 50%; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    ">
+      🏥
+    </div>
+  `,
+  className: 'custom-origin-icon',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
+});
 
-const originIcon = createCustomIcon(
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTIiIGZpbGw9IiMzNEE4NTMiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+', 
-  [32, 32], 
-  'custom-origin-icon'
-);
-
-const destinationIcon = createCustomIcon(
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTIiIGZpbGw9IiNGRjM0MzQiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+', 
-  [32, 32], 
-  'custom-destination-icon'
-);
+// Icon destination menggunakan divIcon yang lebih stabil
+const destinationIcon = L.divIcon({
+  html: `
+    <div style="
+      width: 32px; 
+      height: 32px; 
+      background: #FF3434; 
+      border: 3px solid white; 
+      border-radius: 50%; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    ">
+      🎯
+    </div>
+  `,
+  className: 'custom-destination-icon',
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+  popupAnchor: [0, -16]
+});
 
 // Component untuk update map center
 const MapUpdater = ({ center }) => {
@@ -65,7 +113,115 @@ const TrackingPage = () => {
   const [loading, setLoading] = useState(false);
   const [mapCenter, setMapCenter] = useState([-6.5971, 106.8060]); // Kota Bogor center
   const [routePolyline, setRoutePolyline] = useState([]);
+  const [currentPhase, setCurrentPhase] = useState('unknown'); // 'going_to_pickup', 'transporting_patient', 'unknown'
+  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const mapRef = useRef(null);
+
+  // Fungsi untuk menghitung jarak antara dua koordinat (dalam meter)
+  const calculateDistance = (lat1, lng1, lat2, lng2) => {
+    const R = 6371000; // Radius bumi dalam meter
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Jarak dalam meter
+  };
+
+  // Fungsi untuk menentukan fase perjalanan berdasarkan posisi ambulans
+  const determineJourneyPhase = (tracking, route) => {
+    if (!tracking.latitude || !tracking.longitude || !route.origin.lat || !route.origin.lng) {
+      return 'unknown';
+    }
+
+    const ambulancePos = [parseFloat(tracking.latitude), parseFloat(tracking.longitude)];
+    const originPos = [parseFloat(route.origin.lat), parseFloat(route.origin.lng)];
+    
+    // Hitung jarak ke RS perujuk (dalam meter)
+    const distanceToOrigin = calculateDistance(
+      ambulancePos[0], ambulancePos[1],
+      originPos[0], originPos[1]
+    );
+
+    // Jika jarak ke RS perujuk lebih dari 200 meter, ambulans masih menuju RS perujuk
+    if (distanceToOrigin > 200) {
+      return 'going_to_pickup';
+    } else {
+      return 'transporting_patient';
+    }
+  };
+
+  // Fungsi untuk mendapatkan routing presisi melalui backend API
+  const getPreciseRoute = async (startLat, startLng, endLat, endLng) => {
+    try {
+      const response = await fetch('http://localhost:3001/api/routing/precise-route', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          startLat: parseFloat(startLat),
+          startLng: parseFloat(startLng),
+          endLat: parseFloat(endLat),
+          endLng: parseFloat(endLng)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend routing API error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data.coordinates) {
+        console.log('✅ Precise route received from backend:', result.data.pointCount, 'points');
+        return result.data.coordinates;
+      } else {
+        console.log('⚠️ Backend returned fallback route');
+        return result.data.coordinates || [[startLat, startLng], [endLat, endLng]];
+      }
+    } catch (error) {
+      console.error('Error getting precise route from backend:', error);
+      // Final fallback ke garis lurus
+      return [[startLat, startLng], [endLat, endLng]];
+    }
+  };
+
+  // Fungsi untuk membuat polyline berdasarkan fase perjalanan dengan routing presisi
+  const createSmartPolyline = async (tracking, route, phase) => {
+    if (!tracking.latitude || !tracking.longitude) {
+      return [];
+    }
+
+    const ambulancePos = [parseFloat(tracking.latitude), parseFloat(tracking.longitude)];
+    
+    if (phase === 'going_to_pickup') {
+      // Rute presisi dari posisi ambulans ke RS perujuk
+      if (route.origin.lat && route.origin.lng) {
+        const preciseRoute = await getPreciseRoute(
+          ambulancePos[0], ambulancePos[1],
+          parseFloat(route.origin.lat), parseFloat(route.origin.lng)
+        );
+        return preciseRoute || [ambulancePos, [parseFloat(route.origin.lat), parseFloat(route.origin.lng)]];
+      }
+    } else if (phase === 'transporting_patient') {
+      // Rute presisi dari RS perujuk ke RS tujuan
+      if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng) {
+        const preciseRoute = await getPreciseRoute(
+          parseFloat(route.origin.lat), parseFloat(route.origin.lng),
+          parseFloat(route.destination.lat), parseFloat(route.destination.lng)
+        );
+        return preciseRoute || [
+          [parseFloat(route.origin.lat), parseFloat(route.origin.lng)],
+          [parseFloat(route.destination.lat), parseFloat(route.destination.lng)]
+        ];
+      }
+    }
+    
+    return [];
+  };
 
   const loadActiveSessions = useCallback(async () => {
     try {
@@ -175,7 +331,7 @@ const TrackingPage = () => {
         const result = await response.json();
         console.log('✅ Tracking data loaded:', result.data);
         setTrackingData(result.data);
-        renderMapWithTrackingData(result.data);
+        await renderMapWithTrackingData(result.data);
       } else {
         console.error('❌ Failed to load tracking data:', response.status, response.statusText);
         const errorData = await response.json();
@@ -188,7 +344,7 @@ const TrackingPage = () => {
     }
   };
 
-  const renderMapWithTrackingData = (data) => {
+  const renderMapWithTrackingData = async (data) => {
     const { tracking, route } = data;
 
     console.log('🗺️ Rendering map with data:', { tracking, route });
@@ -206,23 +362,56 @@ const TrackingPage = () => {
       console.log('📍 Map center set to destination:', [route.destination.lat, route.destination.lng]);
     }
 
-    // Create route polyline with better validation
-    if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng &&
-        !isNaN(parseFloat(route.origin.lat)) && !isNaN(parseFloat(route.origin.lng)) &&
-        !isNaN(parseFloat(route.destination.lat)) && !isNaN(parseFloat(route.destination.lng))) {
+    // Tentukan fase perjalanan berdasarkan posisi ambulans
+    const journeyPhase = determineJourneyPhase(tracking, route);
+    setCurrentPhase(journeyPhase);
+    console.log('🚗 Journey phase determined:', journeyPhase);
+
+    // Buat polyline berdasarkan fase perjalanan dengan routing presisi
+    setIsLoadingRoute(true);
+    try {
+      const smartPolyline = await createSmartPolyline(tracking, route, journeyPhase);
+      setRoutePolyline(smartPolyline);
       
-      const polyline = [
-        [parseFloat(route.origin.lat), parseFloat(route.origin.lng)],
-        [parseFloat(route.destination.lat), parseFloat(route.destination.lng)]
-      ];
-      setRoutePolyline(polyline);
-      console.log('🛣️ Route polyline created:', polyline);
-    } else {
-      console.log('⚠️ Cannot create route polyline - missing or invalid coordinates');
-      console.log('Origin:', { lat: route.origin.lat, lng: route.origin.lng });
-      console.log('Destination:', { lat: route.destination.lat, lng: route.destination.lng });
-      setRoutePolyline([]);
+      if (smartPolyline.length > 0) {
+        console.log('🛣️ Precise route polyline created for phase:', journeyPhase, smartPolyline.length, 'points');
+      } else {
+        console.log('⚠️ Cannot create smart polyline - missing or invalid coordinates');
+        console.log('Origin:', { lat: route.origin.lat, lng: route.origin.lng });
+        console.log('Destination:', { lat: route.destination.lat, lng: route.destination.lng });
+      }
+    } catch (error) {
+      console.error('Error creating precise route:', error);
+      // Fallback ke garis lurus
+      const fallbackPolyline = createFallbackPolyline(tracking, route, journeyPhase);
+      setRoutePolyline(fallbackPolyline);
+    } finally {
+      setIsLoadingRoute(false);
     }
+  };
+
+  // Fungsi fallback untuk membuat polyline sederhana jika API gagal
+  const createFallbackPolyline = (tracking, route, phase) => {
+    if (!tracking.latitude || !tracking.longitude) {
+      return [];
+    }
+
+    const ambulancePos = [parseFloat(tracking.latitude), parseFloat(tracking.longitude)];
+    
+    if (phase === 'going_to_pickup') {
+      if (route.origin.lat && route.origin.lng) {
+        return [ambulancePos, [parseFloat(route.origin.lat), parseFloat(route.origin.lng)]];
+      }
+    } else if (phase === 'transporting_patient') {
+      if (route.origin.lat && route.origin.lng && route.destination.lat && route.destination.lng) {
+        return [
+          [parseFloat(route.origin.lat), parseFloat(route.origin.lng)],
+          [parseFloat(route.destination.lat), parseFloat(route.destination.lng)]
+        ];
+      }
+    }
+    
+    return [];
   };
 
   const getStatusColor = (status) => {
@@ -242,6 +431,24 @@ const TrackingPage = () => {
       case 'dalam_perjalanan': return 'Dalam Perjalanan';
       case 'tiba': return 'Tiba';
       default: return status;
+    }
+  };
+
+  const getPhaseText = (phase) => {
+    switch (phase) {
+      case 'going_to_pickup': return 'Menuju RS Perujuk';
+      case 'transporting_patient': return 'Mengantar Pasien';
+      case 'unknown': return 'Status Tidak Diketahui';
+      default: return 'Status Tidak Diketahui';
+    }
+  };
+
+  const getPhaseColor = (phase) => {
+    switch (phase) {
+      case 'going_to_pickup': return '#FF6B35'; // Orange untuk menuju pickup
+      case 'transporting_patient': return '#4285F4'; // Blue untuk transportasi
+      case 'unknown': return '#666666'; // Gray untuk unknown
+      default: return '#666666';
     }
   };
 
@@ -342,14 +549,26 @@ const TrackingPage = () => {
               
               <MapUpdater center={mapCenter} />
 
-              {/* Route Polyline */}
+              {/* Smart Route Polyline */}
               {routePolyline.length > 0 && (
                 <Polyline
                   positions={routePolyline}
-                  color="#4285F4"
-                  weight={5}
+                  color={getPhaseColor(currentPhase)}
+                  weight={routePolyline.length > 2 ? 6 : 3}
                   opacity={0.8}
                 />
+              )}
+              
+              {/* Route Info Overlay */}
+              {routePolyline.length > 2 && (
+                <div className="route-info-overlay">
+                  <div className="route-info-card">
+                    <span className="route-icon">🛣️</span>
+                    <span className="route-text">
+                      Rute Presisi ({routePolyline.length} titik)
+                    </span>
+                  </div>
+                </div>
               )}
 
               {/* Origin Marker */}
@@ -409,12 +628,20 @@ const TrackingPage = () => {
               <div className="tracking-info-panel">
                 <div className="info-header">
                   <h3>📍 Info Tracking</h3>
-                  <span 
-                    className="status-badge"
-                    style={{ backgroundColor: getStatusColor(trackingData.tracking.status) }}
-                  >
-                    {getStatusText(trackingData.tracking.status)}
-                  </span>
+                  <div className="status-badges">
+                    <span 
+                      className="status-badge"
+                      style={{ backgroundColor: getStatusColor(trackingData.tracking.status) }}
+                    >
+                      {getStatusText(trackingData.tracking.status)}
+                    </span>
+                    <span 
+                      className="phase-badge"
+                      style={{ backgroundColor: getPhaseColor(currentPhase) }}
+                    >
+                      {isLoadingRoute ? '🔄 Memproses Rute...' : getPhaseText(currentPhase)}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="info-content">
@@ -447,6 +674,19 @@ const TrackingPage = () => {
                       }
                     </span>
                   </div>
+                  {currentPhase === 'going_to_pickup' && trackingData?.tracking?.latitude && trackingData?.route?.origin?.lat && (
+                    <div className="info-row">
+                      <span>Jarak ke RS Perujuk:</span>
+                      <span>
+                        {(calculateDistance(
+                          parseFloat(trackingData.tracking.latitude),
+                          parseFloat(trackingData.tracking.longitude),
+                          parseFloat(trackingData.route.origin.lat),
+                          parseFloat(trackingData.route.origin.lng)
+                        ) / 1000).toFixed(1)} km
+                      </span>
+                    </div>
+                  )}
                   {trackingData.tracking.speed && typeof trackingData.tracking.speed === 'number' && (
                     <div className="info-row">
                       <span>Kecepatan:</span>
@@ -457,6 +697,18 @@ const TrackingPage = () => {
                     <span>Update Terakhir:</span>
                     <span>{new Date(trackingData.tracking.updated_at).toLocaleTimeString()}</span>
                   </div>
+                  {routePolyline.length > 2 && (
+                    <div className="info-row">
+                      <span>Detail Rute:</span>
+                      <span>{routePolyline.length} titik koordinat presisi</span>
+                    </div>
+                  )}
+                  {routePolyline.length > 2 && (
+                    <div className="info-row">
+                      <span>Jenis Rute:</span>
+                      <span>🛣️ Mengikuti jalan yang sebenarnya</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

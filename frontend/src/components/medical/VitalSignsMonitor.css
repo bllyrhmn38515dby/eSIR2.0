@@ -1,0 +1,481 @@
+/* Vital Signs Monitor Component Styles - eSIR 2.0 Medical Design System */
+
+.vital-signs-monitor {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.monitor-icon {
+  font-size: var(--font-size-xl);
+  margin-right: var(--spacing-2);
+}
+
+.realtime-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  background-color: var(--accent-500);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  margin-left: var(--spacing-2);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.monitor-actions {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+.edit-actions {
+  display: flex;
+  gap: var(--spacing-2);
+}
+
+/* Vital Alerts */
+.vital-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-6);
+}
+
+.alert {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.alert-danger {
+  background-color: var(--surface-emergency);
+  color: var(--accent-600);
+  border: 1px solid var(--accent-200);
+}
+
+.alert-warning {
+  background-color: #FEF3C7;
+  color: var(--warning-600);
+  border: 1px solid var(--warning-200);
+}
+
+.alert-icon {
+  font-size: 16px;
+}
+
+.alert-message {
+  flex: 1;
+}
+
+.alert-value {
+  font-weight: var(--font-weight-bold);
+  background-color: rgba(255, 255, 255, 0.3);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+}
+
+/* Vital Signs Grid */
+.vital-signs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-6);
+}
+
+.vital-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background-color: var(--surface-white);
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.vital-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.vital-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-color: var(--neutral-200);
+  transition: background-color var(--transition-fast);
+}
+
+.vital-item.vital-normal::before {
+  background-color: var(--success-500);
+}
+
+.vital-item.vital-warning::before {
+  background-color: var(--warning-500);
+}
+
+.vital-item.vital-danger::before {
+  background-color: var(--danger-500);
+}
+
+.vital-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.vital-icon {
+  font-size: var(--font-size-lg);
+  width: 24px;
+  text-align: center;
+}
+
+.vital-label {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+}
+
+.vital-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vital-display {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-1);
+}
+
+.vital-value {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--neutral-800);
+}
+
+.vital-unit {
+  font-size: var(--font-size-sm);
+  color: var(--neutral-500);
+  font-weight: var(--font-weight-medium);
+}
+
+.vital-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+}
+
+.vital-input {
+  flex: 1;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  border: 2px solid var(--primary-300);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-white);
+  color: var(--neutral-800);
+  min-width: 0;
+}
+
+.vital-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.vital-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.vital-item.vital-warning .vital-status {
+  background-color: var(--warning-50);
+  color: var(--warning-600);
+}
+
+.vital-item.vital-danger .vital-status {
+  background-color: var(--danger-50);
+  color: var(--danger-600);
+}
+
+/* Last Updated */
+.last-updated {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  background-color: var(--surface-light);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--neutral-600);
+}
+
+.update-label {
+  font-weight: var(--font-weight-medium);
+}
+
+.update-time {
+  font-family: var(--font-family-mono);
+  color: var(--neutral-700);
+}
+
+.realtime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  background-color: var(--primary-500);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  margin-left: auto;
+}
+
+/* Status-specific styling */
+.vital-item.vital-normal {
+  background: linear-gradient(135deg, var(--success-50) 0%, var(--surface-white) 100%);
+}
+
+.vital-item.vital-warning {
+  background: linear-gradient(135deg, #FEF3C7 0%, var(--surface-white) 100%);
+  border-color: var(--warning-300);
+}
+
+.vital-item.vital-danger {
+  background: linear-gradient(135deg, var(--surface-emergency) 0%, var(--surface-white) 100%);
+  border-color: var(--danger-300);
+  animation: criticalPulse 3s infinite;
+}
+
+@keyframes criticalPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .vital-signs-monitor {
+    margin: var(--spacing-4);
+  }
+  
+  .monitor-header {
+    flex-direction: column;
+    gap: var(--spacing-3);
+    align-items: stretch;
+  }
+  
+  .monitor-actions {
+    justify-content: center;
+  }
+  
+  .vital-signs-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+  }
+  
+  .vital-item {
+    padding: var(--spacing-3);
+  }
+  
+  .vital-value {
+    font-size: var(--font-size-lg);
+  }
+  
+  .vital-input {
+    font-size: var(--font-size-base);
+  }
+  
+  .last-updated {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+  
+  .realtime-badge {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .vital-signs-monitor {
+    margin: var(--spacing-2);
+  }
+  
+  .vital-item {
+    padding: var(--spacing-2);
+  }
+  
+  .vital-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-1);
+  }
+  
+  .vital-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-2);
+  }
+  
+  .vital-display {
+    justify-content: center;
+  }
+  
+  .vital-edit {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .vital-input {
+    text-align: center;
+  }
+}
+
+/* Dark Mode Support */
+.dark-mode .vital-item {
+  background-color: var(--neutral-800);
+  border-color: var(--neutral-600);
+}
+
+.dark-mode .vital-item.vital-normal {
+  background: linear-gradient(135deg, var(--success-900) 0%, var(--neutral-800) 100%);
+}
+
+.dark-mode .vital-item.vital-warning {
+  background: linear-gradient(135deg, var(--warning-900) 0%, var(--neutral-800) 100%);
+}
+
+.dark-mode .vital-item.vital-danger {
+  background: linear-gradient(135deg, var(--danger-900) 0%, var(--neutral-800) 100%);
+}
+
+.dark-mode .vital-value {
+  color: var(--neutral-100);
+}
+
+.dark-mode .vital-label {
+  color: var(--neutral-200);
+}
+
+.dark-mode .vital-input {
+  background-color: var(--neutral-700);
+  border-color: var(--neutral-500);
+  color: var(--neutral-100);
+}
+
+.dark-mode .last-updated {
+  background-color: var(--neutral-800);
+  color: var(--neutral-200);
+}
+
+.dark-mode .update-time {
+  color: var(--neutral-100);
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .vital-item {
+    border-width: 3px;
+  }
+  
+  .vital-item::before {
+    height: 6px;
+  }
+  
+  .vital-input {
+    border-width: 3px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .vital-item,
+  .realtime-indicator,
+  .vital-item.vital-danger {
+    animation: none;
+  }
+  
+  .vital-item:hover {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .vital-signs-monitor {
+    max-width: none;
+    margin: 0;
+  }
+  
+  .monitor-actions {
+    display: none;
+  }
+  
+  .vital-signs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .vital-item {
+    break-inside: avoid;
+    background: white;
+    border: 1px solid #000;
+  }
+  
+  .realtime-indicator,
+  .realtime-badge {
+    display: none;
+  }
+  
+  .last-updated {
+    background: white;
+    border: 1px solid #000;
+  }
+}

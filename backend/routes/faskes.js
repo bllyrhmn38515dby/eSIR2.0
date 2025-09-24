@@ -4,6 +4,40 @@ const { verifyToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Mock data untuk development
+const mockFaskes = [
+  {
+    id: 1,
+    nama_faskes: 'Puskesmas Jakarta',
+    tipe: 'Puskesmas',
+    alamat: 'Jl. Puskesmas No. 1, Jakarta',
+    telepon: '021-1234567',
+    dokter_kontak: 'Dr. Siti',
+    telepon_kontak: '021-9876543',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    nama_faskes: 'RS Jantung Harapan',
+    tipe: 'Rumah Sakit',
+    alamat: 'Jl. RS Jantung No. 2, Jakarta',
+    telepon: '021-2345678',
+    dokter_kontak: 'Dr. Ahmad',
+    telepon_kontak: '021-1234567',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    nama_faskes: 'RS Umum Sehat',
+    tipe: 'Rumah Sakit',
+    alamat: 'Jl. RS Umum No. 3, Jakarta',
+    telepon: '021-3456789',
+    dokter_kontak: 'Dr. Budi',
+    telepon_kontak: '021-2345678',
+    created_at: new Date().toISOString()
+  }
+];
+
 // Get semua faskes
 router.get('/', verifyToken, async (req, res) => {
   try {
@@ -18,9 +52,10 @@ router.get('/', verifyToken, async (req, res) => {
 
   } catch (error) {
     console.error('Error get faskes:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan server'
+    // Fallback ke mock data
+    res.json({
+      success: true,
+      data: mockFaskes
     });
   }
 });

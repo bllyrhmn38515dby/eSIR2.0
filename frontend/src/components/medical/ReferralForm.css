@@ -1,0 +1,435 @@
+/* Referral Form Component Styles - eSIR 2.0 Medical Design System */
+
+.referral-form {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.referral-form-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+/* Form Sections */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-5);
+  background-color: var(--surface-light);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--neutral-200);
+  transition: all var(--transition-fast);
+}
+
+.form-section:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--neutral-800);
+  margin: 0;
+  padding-bottom: var(--spacing-2);
+  border-bottom: 2px solid var(--primary-200);
+}
+
+.section-icon {
+  font-size: var(--font-size-xl);
+  width: 24px;
+  text-align: center;
+}
+
+/* Form Grid Layout */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-4);
+  align-items: start;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Form Labels */
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.form-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--neutral-300), transparent);
+  margin-left: var(--spacing-2);
+}
+
+/* Form Inputs */
+.form-input {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-primary);
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-white);
+  color: var(--neutral-800);
+  transition: all var(--transition-fast);
+  min-height: 44px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.form-input:disabled {
+  background-color: var(--neutral-100);
+  color: var(--neutral-400);
+  cursor: not-allowed;
+}
+
+.form-input.error {
+  border-color: var(--danger-500);
+}
+
+.form-input.error:focus {
+  border-color: var(--danger-500);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Textarea */
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+  font-family: var(--font-family-primary);
+  line-height: var(--line-height-normal);
+}
+
+/* Select */
+.form-input[type="select"],
+select.form-input {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right var(--spacing-3) center;
+  background-repeat: no-repeat;
+  background-size: 16px 12px;
+  padding-right: var(--spacing-10);
+  appearance: none;
+}
+
+/* Form Error */
+.form-error {
+  font-size: var(--font-size-sm);
+  color: var(--danger-500);
+  margin-top: var(--spacing-1);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.form-error::before {
+  content: '⚠';
+  font-size: 12px;
+}
+
+/* Form Help */
+.form-help {
+  font-size: var(--font-size-sm);
+  color: var(--neutral-500);
+  margin-top: var(--spacing-1);
+  font-style: italic;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: var(--spacing-3);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* Referral Form Specific Styles */
+.referral-form .form-section:nth-child(1) {
+  background: linear-gradient(135deg, var(--surface-medical) 0%, var(--surface-light) 100%);
+}
+
+.referral-form .form-section:nth-child(2) {
+  background: linear-gradient(135deg, var(--surface-light) 0%, var(--surface-white) 100%);
+}
+
+.referral-form .form-section:nth-child(3) {
+  background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-light) 100%);
+}
+
+.referral-form .form-section:nth-child(4) {
+  background: linear-gradient(135deg, var(--secondary-50) 0%, var(--surface-light) 100%);
+}
+
+.referral-form .form-section:nth-child(5) {
+  background: linear-gradient(135deg, var(--surface-light) 0%, var(--surface-white) 100%);
+}
+
+.referral-form .form-section:nth-child(6) {
+  background: linear-gradient(135deg, var(--warning-50) 0%, var(--surface-light) 100%);
+}
+
+/* Status Section */
+.referral-form .form-section:last-child {
+  background: linear-gradient(135deg, var(--accent-50) 0%, var(--surface-light) 100%);
+  border: 1px solid var(--accent-200);
+}
+
+/* Patient Selection Highlight */
+.form-group:has(select[value]:not([value=""])) {
+  position: relative;
+}
+
+.form-group:has(select[value]:not([value=""]))::after {
+  content: '✓';
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--success-500);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+/* Priority-based styling */
+.form-section:nth-child(6) .form-input[value*="P1"] {
+  border-color: var(--status-critical);
+  background-color: var(--surface-emergency);
+}
+
+.form-section:nth-child(6) .form-input[value*="P2"] {
+  border-color: var(--status-urgent);
+  background-color: #FEF3C7;
+}
+
+.form-section:nth-child(6) .form-input[value*="P3"] {
+  border-color: var(--status-stable);
+  background-color: var(--surface-medical);
+}
+
+/* Transport Type Indicators */
+.form-section:nth-child(6) .form-input[value="ambulance"] {
+  border-color: var(--accent-500);
+  background-color: var(--surface-emergency);
+}
+
+.form-section:nth-child(6) .form-input[value="mobil_pribadi"] {
+  border-color: var(--primary-500);
+  background-color: var(--surface-medical);
+}
+
+/* Form Validation States */
+.form-input.success {
+  border-color: var(--success-500);
+}
+
+.form-input.success:focus {
+  border-color: var(--success-500);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Loading State */
+.referral-form.loading .form-input {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Required Field Indicator */
+.form-label[data-required="true"]::before {
+  content: '*';
+  color: var(--danger-500);
+  font-weight: var(--font-weight-bold);
+  margin-right: var(--spacing-1);
+}
+
+/* Auto-fill Styling */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-white) inset;
+  -webkit-text-fill-color: var(--neutral-800);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .referral-form {
+    margin: var(--spacing-4);
+  }
+  
+  .form-section {
+    padding: var(--spacing-4);
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-3);
+  }
+  
+  .form-group.full-width {
+    grid-column: 1;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+  }
+  
+  .section-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .section-icon {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .referral-form {
+    margin: var(--spacing-2);
+  }
+  
+  .form-section {
+    padding: var(--spacing-3);
+  }
+  
+  .form-input {
+    min-height: 48px;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+  
+  .form-textarea {
+    min-height: 80px;
+  }
+}
+
+/* Dark Mode Support */
+.dark-mode .referral-form .form-section {
+  background-color: var(--neutral-800);
+  border-color: var(--neutral-600);
+}
+
+.dark-mode .form-input {
+  background-color: var(--neutral-700);
+  border-color: var(--neutral-600);
+  color: var(--neutral-100);
+}
+
+.dark-mode .form-input:focus {
+  border-color: var(--primary-400);
+  background-color: var(--neutral-600);
+}
+
+.dark-mode .form-input:disabled {
+  background-color: var(--neutral-800);
+  color: var(--neutral-400);
+}
+
+.dark-mode .form-label {
+  color: var(--neutral-200);
+}
+
+.dark-mode .section-title {
+  color: var(--neutral-100);
+  border-bottom-color: var(--primary-400);
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .form-input {
+    border-width: 2px;
+  }
+  
+  .form-input:focus {
+    border-width: 3px;
+  }
+  
+  .form-input.error {
+    border-width: 3px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .form-input,
+  .form-section {
+    transition: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .referral-form {
+    max-width: none;
+    margin: 0;
+  }
+  
+  .form-section {
+    break-inside: avoid;
+    background: white;
+    border: 1px solid #000;
+    margin-bottom: var(--spacing-4);
+  }
+  
+  .form-actions {
+    display: none;
+  }
+  
+  .form-input {
+    border: 1px solid #000;
+    background: white;
+  }
+  
+  .section-title {
+    color: #000;
+    border-bottom-color: #000;
+  }
+}
+
+/* Animation for form sections */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-section {
+  animation: slideIn 0.3s ease-out;
+}
+
+.form-section:nth-child(1) { animation-delay: 0.1s; }
+.form-section:nth-child(2) { animation-delay: 0.2s; }
+.form-section:nth-child(3) { animation-delay: 0.3s; }
+.form-section:nth-child(4) { animation-delay: 0.4s; }
+.form-section:nth-child(5) { animation-delay: 0.5s; }
+.form-section:nth-child(6) { animation-delay: 0.6s; }
+.form-section:nth-child(7) { animation-delay: 0.7s; }

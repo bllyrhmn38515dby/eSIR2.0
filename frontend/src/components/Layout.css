@@ -1,17 +1,41 @@
 .layout {
   min-height: 100vh;
   background: #f5f7fa;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content {
+  display: flex;
+  flex: 1;
+  position: relative;
 }
 
 .main-content {
+  flex: 1;
   padding: 30px;
   max-width: 1200px;
   margin: 0 auto;
+  transition: margin-left 0.3s ease;
+  min-height: calc(100vh - 70px); /* Adjust based on navigation height */
+}
+
+.main-content.sidebar-expanded {
+  margin-left: 280px;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 80px;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
   .main-content {
     padding: 20px 15px;
+    margin-left: 0 !important; /* Override sidebar margin on mobile */
+  }
+  
+  .layout-content {
+    flex-direction: column;
   }
 }

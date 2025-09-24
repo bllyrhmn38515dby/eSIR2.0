@@ -428,6 +428,88 @@
   background-color: #34A853 !important;
 }
 
+/* Status badges container */
+.status-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Phase badge styling */
+.phase-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+/* Loading animation for phase badge */
+.phase-badge:contains("🔄") {
+  animation: pulse 1.5s infinite;
+}
+
+/* Route Info Overlay */
+.route-info-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.route-info-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #4285F4;
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4285F4;
+  animation: slideInFromLeft 0.5s ease-out;
+}
+
+.route-icon {
+  font-size: 1rem;
+}
+
+.route-text {
+  white-space: nowrap;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Leaflet Marker Icon Fixes */
 .leaflet-marker-icon {
   background: none !important;
@@ -439,6 +521,7 @@
   max-height: none !important;
 }
 
+/* Custom divIcon styling */
 .custom-ambulance-icon {
   background: none !important;
   border: none !important;
@@ -465,4 +548,17 @@
   max-height: none !important;
   width: auto !important;
   height: auto !important;
+}
+
+/* DivIcon specific fixes */
+.leaflet-div-icon {
+  background: none !important;
+  border: none !important;
+}
+
+.custom-ambulance-icon .leaflet-div-icon,
+.custom-origin-icon .leaflet-div-icon,
+.custom-destination-icon .leaflet-div-icon {
+  background: none !important;
+  border: none !important;
 }

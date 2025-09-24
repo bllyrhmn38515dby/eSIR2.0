@@ -75,7 +75,7 @@ const MapPage = () => {
   const [selectedFaskes, setSelectedFaskes] = useState(null);
   const [showRujukanLines, setShowRujukanLines] = useState(true);
   const [error, setError] = useState('');
-  const { socket, isConnected } = useSocket();
+  const { socket, isConnected, reconnectSocket } = useSocket();
   const mapRef = useRef();
 
   const fetchRujukan = useCallback(async () => {
@@ -242,6 +242,15 @@ const MapPage = () => {
                 {isConnected ? '🟢' : '🔴'}
               </span>
               <span>{isConnected ? 'Realtime Aktif' : 'Realtime Terputus'}</span>
+              {!isConnected && (
+                <button 
+                  onClick={() => reconnectSocket()}
+                  className="reconnect-btn"
+                  title="Klik untuk reconnect"
+                >
+                  🔄
+                </button>
+              )}
             </div>
             <label className="toggle-lines">
               <input
@@ -338,10 +347,9 @@ const MapPage = () => {
 
             <MapBoundsUpdater faskes={validFaskes} />
           </MapContainer>
-        </div>
-
-        {/* Legend */}
-        <div className="map-legend">
+          
+          {/* Legend */}
+          <div className="map-legend">
           <h3>Legenda</h3>
           <div className="legend-items">
             <div className="legend-item">
@@ -380,6 +388,7 @@ const MapPage = () => {
               <div className="legend-line selesai"></div>
               <span>Selesai</span>
             </div>
+          </div>
           </div>
         </div>
 

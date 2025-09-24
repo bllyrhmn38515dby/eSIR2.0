@@ -328,20 +328,19 @@
 }
 
 .stat-card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  transition: all 0.3s ease;
-  border: 1px solid #e2e8f0;
+  flex: 1;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  color: white;
+  font-family: "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
 }
 
 .stat-icon {
@@ -354,6 +353,23 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border-radius: 12px;
+}
+
+/* Warna smooth dengan gradien untuk stat cards */
+.stat-total {
+  background: linear-gradient(135deg, #60a5fa, #2563eb) !important; /* biru lembut */
+}
+
+.stat-menunggu {
+  background: linear-gradient(135deg, #fcd34d, #f59e0b) !important; /* kuning-orange smooth */
+}
+
+.stat-selesai {
+  background: linear-gradient(135deg, #34d399, #059669) !important; /* hijau toska segar */
+}
+
+.stat-ambulans {
+  background: linear-gradient(135deg, #f87171, #dc2626) !important; /* merah smooth */
 }
 
 .stat-content h3 {

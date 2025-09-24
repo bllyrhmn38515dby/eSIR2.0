@@ -168,6 +168,22 @@
   color: #666;
 }
 
+.reconnect-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.3s;
+  margin-left: 8px;
+}
+
+.reconnect-btn:hover {
+  background: #c0392b;
+}
+
 @keyframes pulse {
   0% {
     opacity: 1;
@@ -182,32 +198,56 @@
 
 /* Stats Grid */
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
   margin-bottom: 30px;
+  flex-wrap: nowrap;
 }
 
 .stat-card {
-  background: white;
-  border: 1px solid #e1e5e9;
+  flex: 1;
   border-radius: 12px;
-  padding: 20px;
+  padding: 12px;
+  text-align: center;
+  color: white;
+  font-family: "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 15px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 6px;
+  min-width: 0;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
+
+.stat-card .icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.stat-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.stat-card p {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 .stat-icon {
-  font-size: 32px;
-  width: 60px;
-  height: 60px;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -239,16 +279,33 @@
   color: #333;
 }
 
+/* Warna smooth dengan gradien untuk stat cards */
+.stat-total {
+  background: linear-gradient(135deg, #60a5fa, #2563eb) !important; /* biru lembut */
+}
+
+.stat-menunggu {
+  background: linear-gradient(135deg, #fcd34d, #f59e0b) !important; /* kuning-orange smooth */
+}
+
+.stat-selesai {
+  background: linear-gradient(135deg, #34d399, #059669) !important; /* hijau toska segar */
+}
+
+.stat-ambulans {
+  background: linear-gradient(135deg, #f87171, #dc2626) !important; /* merah smooth */
+}
+
 .stat-content h3 {
-  margin: 0 0 5px 0;
-  font-size: 14px;
+  margin: 0 0 3px 0;
+  font-size: 11px;
   color: #666;
   font-weight: 500;
 }
 
 .stat-number {
   margin: 0;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
   color: #333;
 }
@@ -348,6 +405,28 @@
 }
 
 /* Responsive design */
+@media (max-width: 1200px) {
+  .stats-grid {
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 10px;
+  }
+  
+  .stat-card .icon {
+    font-size: 18px;
+  }
+  
+  .stat-card h2 {
+    font-size: 18px;
+  }
+  
+  .stat-card p {
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-page {
     padding: 20px;
@@ -369,22 +448,25 @@
   }
   
   .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   
   .stat-card {
-    padding: 15px;
+    flex: 1 1 calc(50% - 4px);
+    padding: 8px;
   }
   
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
+  .stat-card .icon {
+    font-size: 16px;
   }
   
-  .stat-number {
-    font-size: 20px;
+  .stat-card h2 {
+    font-size: 16px;
+  }
+  
+  .stat-card p {
+    font-size: 10px;
   }
   
   .welcome-card {

@@ -1,0 +1,366 @@
+/* Design System Demo Styles */
+
+.design-system-demo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-6);
+  background-color: var(--surface-gray);
+  min-height: 100vh;
+}
+
+.demo-header {
+  text-align: center;
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-6);
+  background-color: var(--surface-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.demo-header h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary-500);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.demo-header p {
+  font-size: var(--font-size-lg);
+  color: var(--neutral-600);
+  margin: 0;
+}
+
+.demo-section {
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-6);
+  background-color: var(--surface-white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.demo-section h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--neutral-800);
+  margin: 0 0 var(--spacing-6) 0;
+  padding-bottom: var(--spacing-3);
+  border-bottom: 2px solid var(--neutral-200);
+}
+
+/* Button Examples */
+.button-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.button-group h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.button-group > div:not(:first-child) {
+  display: flex;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+/* Status Examples */
+.status-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.status-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.status-group h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.status-group > div:not(:first-child) {
+  display: flex;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Input Examples */
+.input-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.input-group h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.input-group .form-group {
+  max-width: 400px;
+}
+
+/* Card Examples */
+.card-examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.card-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.card-group h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-4);
+}
+
+.patients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-4);
+}
+
+/* Color Palette Demo */
+.color-palette-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.color-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.color-group h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin: 0 0 var(--spacing-3) 0;
+}
+
+.color-swatches {
+  display: flex;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
+}
+
+.color-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--neutral-200);
+  min-width: 120px;
+}
+
+.color-swatch.primary-500 {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.color-swatch.secondary-500 {
+  background-color: var(--secondary-500);
+  color: white;
+}
+
+.color-swatch.accent-500 {
+  background-color: var(--accent-500);
+  color: white;
+}
+
+.color-swatch.status-critical {
+  background-color: var(--status-critical);
+  color: white;
+}
+
+.color-swatch.status-urgent {
+  background-color: var(--status-urgent);
+  color: white;
+}
+
+.color-swatch.status-stable {
+  background-color: var(--status-stable);
+  color: white;
+}
+
+.color-name {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
+
+.color-code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}
+
+/* Medical Components Demo */
+.medical-components-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.medical-component-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.medical-component-group h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+  margin: 0 0 var(--spacing-3) 0;
+  padding-bottom: var(--spacing-2);
+  border-bottom: 2px solid var(--primary-200);
+}
+
+/* Typography Demo */
+.typography-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.font-h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-bold);
+  color: var(--neutral-800);
+  margin: 0;
+}
+
+.font-h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--neutral-800);
+  margin: 0;
+}
+
+.font-h3 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-semibold);
+  color: var(--neutral-800);
+  margin: 0;
+}
+
+.font-body {
+  font-size: var(--font-size-body);
+  color: var(--neutral-700);
+  line-height: var(--line-height-normal);
+  margin: 0;
+}
+
+.font-caption {
+  font-size: var(--font-size-caption);
+  color: var(--neutral-600);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .design-system-demo {
+    padding: var(--spacing-4);
+  }
+  
+  .demo-header {
+    padding: var(--spacing-4);
+  }
+  
+  .demo-section {
+    padding: var(--spacing-4);
+  }
+  
+  .demo-header h1 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .demo-header p {
+    font-size: var(--font-size-base);
+  }
+  
+  .button-group > div:not(:first-child) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-group > div:not(:first-child) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .patients-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .color-swatches {
+    flex-direction: column;
+  }
+  
+  .color-swatch {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .design-system-demo {
+    padding: var(--spacing-3);
+  }
+  
+  .demo-header,
+  .demo-section {
+    padding: var(--spacing-3);
+  }
+  
+  .demo-header h1 {
+    font-size: var(--font-size-xl);
+  }
+  
+  .demo-section h2 {
+    font-size: var(--font-size-lg);
+  }
+}

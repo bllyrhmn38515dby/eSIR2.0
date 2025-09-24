@@ -103,6 +103,11 @@ const Navigation = () => {
                   <span>Rujukan</span>
                 </Link>
                 
+                <Link to="/rujukan-enhanced" className={`dropdown-item ${isActive('/rujukan-enhanced')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🚀</i>
+                  <span>Rujukan Enhanced</span>
+                </Link>
+                
                 <Link to="/peta" className={`dropdown-item ${isActive('/peta')}`} onClick={closeDropdown}>
                   <i className="nav-icon">🗺️</i>
                   <span>Peta</span>
@@ -124,6 +129,11 @@ const Navigation = () => {
                     <span>Faskes</span>
                   </Link>
                 )}
+                
+                <Link to="/design-system-demo" className={`dropdown-item ${isActive('/design-system-demo')}`} onClick={closeDropdown}>
+                  <i className="nav-icon">🎨</i>
+                  <span>Design System Demo</span>
+                </Link>
               </div>
             </>
           )}

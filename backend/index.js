@@ -39,9 +39,11 @@ async function testDatabaseConnection() {
     const connection = await pool.getConnection();
     await connection.ping();
     connection.release();
+    console.log('✅ Database connection successful');
     return true;
   } catch (error) {
-    console.error('Database connection failed:', error.message);
+    console.error('❌ Database connection failed:', error.message);
+    console.log('⚠️  Using mock data mode');
     return false;
   }
 }

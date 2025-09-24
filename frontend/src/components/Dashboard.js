@@ -10,7 +10,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [, setRetryCount] = useState(0);
-  const { isConnected } = useSocket();
+  const { isConnected, reconnectSocket } = useSocket();
   const { isRefreshing } = useAuth();
 
   const fetchStats = useCallback(async (retryAttempt = 0) => {
@@ -70,6 +70,10 @@ const Dashboard = () => {
     fetchStats();
   };
 
+  const handleReconnect = () => {
+    reconnectSocket();
+  };
+
   // Loading state dengan refresh indicator
   if (loading || isRefreshing) {
     return (
@@ -94,6 +98,15 @@ const Dashboard = () => {
             <span className="status-text">
               {isConnected ? 'Realtime Aktif' : 'Realtime Terputus'}
             </span>
+            {!isConnected && (
+              <button 
+                onClick={handleReconnect}
+                className="reconnect-btn"
+                title="Klik untuk reconnect"
+              >
+                🔄
+              </button>
+            )}
           </div>
         </div>
 
@@ -110,44 +123,34 @@ const Dashboard = () => {
         )}
 
         <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon total">📊</div>
-            <div className="stat-content">
-              <h3>Total Rujukan</h3>
-              <p className="stat-number">{stats?.total || 0}</p>
-            </div>
+          <div className="stat-card stat-total">
+            <div className="icon">📊</div>
+            <h2>{stats?.total || 0}</h2>
+            <p>Total Rujukan</p>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon pending">⏳</div>
-            <div className="stat-content">
-              <h3>Menunggu</h3>
-              <p className="stat-number">{stats?.pending || 0}</p>
-            </div>
+          <div className="stat-card stat-menunggu">
+            <div className="icon">⏳</div>
+            <h2>{stats?.pending || 0}</h2>
+            <p>Menunggu</p>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon accepted">✅</div>
-            <div className="stat-content">
-              <h3>Diterima</h3>
-              <p className="stat-number">{stats?.diterima || 0}</p>
-            </div>
+          <div className="stat-card stat-selesai">
+            <div className="icon">✅</div>
+            <h2>{stats?.diterima || 0}</h2>
+            <p>Diterima</p>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon rejected">❌</div>
-            <div className="stat-content">
-              <h3>Ditolak</h3>
-              <p className="stat-number">{stats?.ditolak || 0}</p>
-            </div>
+          <div className="stat-card stat-ambulans">
+            <div className="icon">❌</div>
+            <h2>{stats?.ditolak || 0}</h2>
+            <p>Ditolak</p>
           </div>
 
-          <div className="stat-card">
-            <div className="stat-icon completed">🏁</div>
-            <div className="stat-content">
-              <h3>Selesai</h3>
-              <p className="stat-number">{stats?.selesai || 0}</p>
-            </div>
+          <div className="stat-card stat-selesai">
+            <div className="icon">🏁</div>
+            <h2>{stats?.selesai || 0}</h2>
+            <p>Selesai</p>
           </div>
         </div>
 

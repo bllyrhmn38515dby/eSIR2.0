@@ -11,6 +11,46 @@ const router = express.Router();
 // DEVELOPMENT MODE: Nonaktifkan hash password untuk testing
 const DEV_MODE = true; // Set ke false untuk production
 
+// Mock data untuk development
+const mockUsers = [
+  {
+    id: 1,
+    nama_lengkap: 'Admin Pusat',
+    username: 'admin',
+    email: 'admin@esir.com',
+    password: 'admin123',
+    role_id: 1,
+    role: 'admin_pusat',
+    faskes_id: null,
+    telepon: '081234567890',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    nama_lengkap: 'Admin Faskes',
+    username: 'admin_faskes',
+    email: 'admin_faskes@esir.com',
+    password: 'admin123',
+    role_id: 2,
+    role: 'admin_faskes',
+    faskes_id: 1,
+    telepon: '081234567891',
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    nama_lengkap: 'Operator',
+    username: 'operator',
+    email: 'operator@esir.com',
+    password: 'operator123',
+    role_id: 3,
+    role: 'operator',
+    faskes_id: 1,
+    telepon: '081234567892',
+    created_at: new Date().toISOString()
+  }
+];
+
 // Get all users (hanya untuk admin)
 router.get('/users', verifyToken, async (req, res) => {
   try {
@@ -548,7 +588,7 @@ router.post('/login', async (req, res) => {
         role: user.role
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
     // Get updated user data with last_login
@@ -579,10 +619,46 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error('Error login:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Terjadi kesalahan server'
-    });
+    // Fallback ke mock data untuk development
+    const { emailOrUsername, password } = req.body;
+    const user = mockUsers.find(u => 
+      (u.email === emailOrUsername || u.username === emailOrUsername) && 
+      u.password === password
+    );
+    
+    if (user) {
+      const token = jwt.sign(
+        { 
+          id: user.id, 
+          username: user.username, 
+          email: user.email, 
+          role: user.role,
+          faskes_id: user.faskes_id
+        },
+        process.env.JWT_SECRET || 'esir_secret_key_2024_development',
+        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+      );
+      
+      res.json({
+        success: true,
+        message: 'Login berhasil',
+        token,
+        user: {
+          id: user.id,
+          nama_lengkap: user.nama_lengkap,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          faskes_id: user.faskes_id,
+          telepon: user.telepon
+        }
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        message: 'Email/Username atau password salah'
+      });
+    }
   }
 });
 
@@ -815,7 +891,7 @@ router.post('/refresh', async (req, res) => {
         role: users[0].role 
       },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
     res.json({

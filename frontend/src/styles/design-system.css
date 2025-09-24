@@ -1,0 +1,693 @@
+/* eSIR 2.0 Design System - Berdasarkan Hasil Penelitian User */
+/* 22 responden dari 3 rumah sakit - Medical Theme */
+
+/* ========================================
+   CSS VARIABLES - MEDICAL DESIGN SYSTEM
+   ======================================== */
+
+:root {
+  /* === MEDICAL COLOR PALETTE === */
+  /* Berdasarkan preferensi 22 responden */
+  
+  /* Primary Colors - Medical Professional */
+  --primary-50: #EFF6FF;
+  --primary-100: #DBEAFE;
+  --primary-200: #BFDBFE;
+  --primary-300: #93C5FD;
+  --primary-400: #60A5FA;
+  --primary-500: #1E40AF;  /* Main Primary - 68.2% responden memilih biru */
+  --primary-600: #1D4ED8;
+  --primary-700: #1E3A8A;
+  --primary-800: #1E40AF;
+  --primary-900: #1E3A8A;
+
+  /* Secondary Colors - Medical Green */
+  --secondary-50: #ECFDF5;
+  --secondary-100: #D1FAE5;
+  --secondary-200: #A7F3D0;
+  --secondary-300: #6EE7B7;
+  --secondary-400: #34D399;
+  --secondary-500: #059669;  /* Medical Green - 45.5% responden */
+  --secondary-600: #047857;
+  --secondary-700: #065F46;
+  --secondary-800: #064E3B;
+  --secondary-900: #064E3B;
+
+  /* Accent Colors - Emergency Red */
+  --accent-50: #FEF2F2;
+  --accent-100: #FEE2E2;
+  --accent-200: #FECACA;
+  --accent-300: #FCA5A5;
+  --accent-400: #F87171;
+  --accent-500: #DC2626;  /* Emergency Red - 27.3% responden */
+  --accent-600: #DC2626;
+  --accent-700: #B91C1C;
+  --accent-800: #991B1B;
+  --accent-900: #7F1D1D;
+
+  /* Neutral Colors - Professional Gray */
+  --neutral-50: #F8FAFC;
+  --neutral-100: #F1F5F9;
+  --neutral-200: #E2E8F0;
+  --neutral-300: #CBD5E1;
+  --neutral-400: #94A3B8;
+  --neutral-500: #64748B;  /* Professional Gray - 36.4% responden */
+  --neutral-600: #475569;
+  --neutral-700: #334155;
+  --neutral-800: #1E293B;
+  --neutral-900: #0F172A;
+
+  /* Surface Colors - Clean Medical */
+  --surface-white: #FFFFFF;  /* 54.5% responden memilih putih */
+  --surface-gray: #F8FAFC;
+  --surface-light: #F1F5F9;
+  --surface-medical: #F0F9FF;  /* Light Medical Blue Background */
+  --surface-emergency: #FEF2F2;  /* Light Emergency Red Background */
+
+  /* Status Colors - Medical Priority System */
+  --status-critical: #DC2626;   /* P1 - Resusitasi */
+  --status-urgent: #F59E0B;     /* P2 - Darurat */
+  --status-stable: #059669;     /* P3 - Urgent */
+  --status-discharged: #64748B; /* P4 - Standar */
+
+  /* Success/Warning/Danger Colors */
+  --success-50: #ECFDF5;
+  --success-500: #10B981;
+  --success-600: #059669;
+  
+  --warning-50: #FFFBEB;
+  --warning-500: #F59E0B;
+  --warning-600: #D97706;
+  
+  --danger-50: #FEF2F2;
+  --danger-500: #EF4444;
+  --danger-600: #DC2626;
+
+  /* === TYPOGRAPHY SYSTEM === */
+  /* Berdasarkan preferensi 22 responden */
+  
+  /* Font Family - Sans-serif (81.8% responden memilih) */
+  --font-family-primary: 'Inter', 'Arial', 'Helvetica', sans-serif;
+  --font-family-mono: 'Courier New', 'Monaco', monospace;
+
+  /* Font Sizes - Berdasarkan preferensi responden */
+  --font-size-xs: 12px;    /* Caption */
+  --font-size-sm: 14px;    /* Small text */
+  --font-size-base: 16px;  /* Body text - 45.5% responden memilih */
+  --font-size-lg: 18px;    /* H3 */
+  --font-size-xl: 20px;   /* H2 */
+  --font-size-2xl: 24px;  /* H1 */
+  --font-size-3xl: 30px;  /* Display */
+
+  /* Font Weights */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.6;
+
+  /* === SPACING SYSTEM === */
+  --spacing-0: 0;
+  --spacing-1: 0.25rem;  /* 4px */
+  --spacing-2: 0.5rem;   /* 8px */
+  --spacing-3: 0.75rem;  /* 12px */
+  --spacing-4: 1rem;     /* 16px */
+  --spacing-5: 1.25rem;  /* 20px */
+  --spacing-6: 1.5rem;   /* 24px */
+  --spacing-8: 2rem;     /* 32px */
+  --spacing-10: 2.5rem;  /* 40px */
+  --spacing-12: 3rem;    /* 48px */
+  --spacing-16: 4rem;    /* 64px */
+  --spacing-20: 5rem;    /* 80px */
+
+  /* === BORDER RADIUS === */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.5rem;    /* 8px */
+  --radius-lg: 0.75rem;   /* 12px */
+  --radius-xl: 1rem;      /* 16px */
+  --radius-full: 9999px;
+
+  /* === SHADOWS === */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* === TRANSITIONS === */
+  --transition-fast: 0.15s ease-in-out;
+  --transition-normal: 0.3s ease-in-out;
+  --transition-slow: 0.5s ease-in-out;
+
+  /* === Z-INDEX SCALE === */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ========================================
+   DARK MODE VARIABLES
+   ======================================== */
+.dark-mode {
+  /* Background Colors */
+  --surface-white: #0F172A;
+  --surface-gray: #1E293B;
+  --surface-light: #334155;
+  --surface-medical: #1E3A8A;
+  --surface-emergency: #7F1D1D;
+
+  /* Text Colors */
+  --text-primary: #F8FAFC;
+  --text-secondary: #E2E8F0;
+  --text-muted: #CBD5E1;
+
+  /* Border Colors */
+  --border-color: #334155;
+  --border-light: #475569;
+
+  /* Adjust primary colors for dark mode */
+  --primary-500: #60A5FA;
+  --secondary-500: #34D399;
+  --accent-500: #F87171;
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--neutral-800);
+  background-color: var(--surface-gray);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   TYPOGRAPHY COMPONENTS
+   ======================================== */
+
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }
+
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.text-primary { color: var(--primary-500); }
+.text-secondary { color: var(--secondary-500); }
+.text-accent { color: var(--accent-500); }
+.text-neutral { color: var(--neutral-500); }
+.text-success { color: var(--success-500); }
+.text-warning { color: var(--warning-500); }
+.text-danger { color: var(--danger-500); }
+
+/* ========================================
+   BUTTON COMPONENTS
+   ======================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+  min-height: 44px; /* Touch target minimum */
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Button Variants */
+.btn-primary {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background-color: var(--neutral-500);
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--neutral-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+  background-color: var(--success-500);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) {
+  background-color: var(--success-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-danger {
+  background-color: var(--danger-500);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--danger-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-warning {
+  background-color: var(--warning-500);
+  color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: var(--warning-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Button Sizes */
+.btn-sm {
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  min-height: 36px;
+}
+
+.btn-lg {
+  padding: var(--spacing-4) var(--spacing-6);
+  font-size: var(--font-size-lg);
+  min-height: 52px;
+}
+
+/* ========================================
+   FORM COMPONENTS
+   ======================================== */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
+}
+
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-700);
+}
+
+.form-input {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-primary);
+  border: 2px solid var(--neutral-200);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-white);
+  color: var(--neutral-800);
+  transition: border-color var(--transition-fast);
+  min-height: 44px;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+}
+
+.form-input:disabled {
+  background-color: var(--neutral-100);
+  color: var(--neutral-400);
+  cursor: not-allowed;
+}
+
+.form-input.error {
+  border-color: var(--danger-500);
+}
+
+.form-input.success {
+  border-color: var(--success-500);
+}
+
+.form-error {
+  font-size: var(--font-size-sm);
+  color: var(--danger-500);
+  margin-top: var(--spacing-1);
+}
+
+.form-help {
+  font-size: var(--font-size-sm);
+  color: var(--neutral-500);
+  margin-top: var(--spacing-1);
+}
+
+/* ========================================
+   CARD COMPONENTS
+   ======================================== */
+
+.card {
+  background-color: var(--surface-white);
+  border: 1px solid var(--neutral-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition-fast);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-header {
+  padding: var(--spacing-5) var(--spacing-6);
+  border-bottom: 1px solid var(--neutral-200);
+  background-color: var(--surface-light);
+}
+
+.card-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--neutral-800);
+  margin: 0;
+}
+
+.card-body {
+  padding: var(--spacing-6);
+}
+
+.card-footer {
+  padding: var(--spacing-5) var(--spacing-6);
+  border-top: 1px solid var(--neutral-200);
+  background-color: var(--surface-light);
+}
+
+/* Medical Card Variants */
+.card-medical {
+  background: linear-gradient(135deg, var(--surface-medical) 0%, var(--surface-white) 100%);
+  border-left: 4px solid var(--secondary-500);
+}
+
+.card-emergency {
+  background: linear-gradient(135deg, var(--surface-emergency) 0%, var(--surface-white) 100%);
+  border-left: 4px solid var(--accent-500);
+}
+
+/* ========================================
+   STATUS INDICATORS
+   ======================================== */
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-critical {
+  background-color: var(--danger-50);
+  color: var(--danger-600);
+}
+
+.status-urgent {
+  background-color: var(--warning-50);
+  color: var(--warning-600);
+}
+
+.status-stable {
+  background-color: var(--success-50);
+  color: var(--success-600);
+}
+
+.status-discharged {
+  background-color: var(--neutral-100);
+  color: var(--neutral-600);
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  color: white;
+}
+
+.priority-p1 {
+  background-color: var(--status-critical);
+}
+
+.priority-p2 {
+  background-color: var(--status-urgent);
+}
+
+.priority-p3 {
+  background-color: var(--status-stable);
+}
+
+.priority-p4 {
+  background-color: var(--status-discharged);
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Spacing */
+.p-0 { padding: var(--spacing-0); }
+.p-1 { padding: var(--spacing-1); }
+.p-2 { padding: var(--spacing-2); }
+.p-3 { padding: var(--spacing-3); }
+.p-4 { padding: var(--spacing-4); }
+.p-5 { padding: var(--spacing-5); }
+.p-6 { padding: var(--spacing-6); }
+.p-8 { padding: var(--spacing-8); }
+
+.m-0 { margin: var(--spacing-0); }
+.m-1 { margin: var(--spacing-1); }
+.m-2 { margin: var(--spacing-2); }
+.m-3 { margin: var(--spacing-3); }
+.m-4 { margin: var(--spacing-4); }
+.m-5 { margin: var(--spacing-5); }
+.m-6 { margin: var(--spacing-6); }
+.m-8 { margin: var(--spacing-8); }
+
+/* Flexbox */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: var(--spacing-1); }
+.gap-2 { gap: var(--spacing-2); }
+.gap-3 { gap: var(--spacing-3); }
+.gap-4 { gap: var(--spacing-4); }
+
+/* Text Alignment */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* Display */
+.hidden { display: none; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Mobile First Approach */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 48px; /* Larger touch target for mobile */
+  }
+  
+  .form-input {
+    min-height: 48px;
+  }
+  
+  .card-header,
+  .card-body,
+  .card-footer {
+    padding: var(--spacing-4);
+  }
+}
+
+@media (min-width: 769px) {
+  .md\:flex { display: flex; }
+  .md\:hidden { display: none; }
+  .md\:block { display: block; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:flex { display: flex; }
+  .lg\:hidden { display: none; }
+  .lg\:block { display: block; }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Focus states */
+.btn:focus,
+.form-input:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --neutral-200: #000000;
+    --neutral-500: #000000;
+  }
+  
+  .dark-mode {
+    --neutral-200: #FFFFFF;
+    --neutral-500: #FFFFFF;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   MEDICAL SPECIFIC COMPONENTS
+   ======================================== */
+
+/* Vital Signs Display */
+.vital-signs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background-color: var(--surface-light);
+  border-radius: var(--radius-md);
+}
+
+.vital-item {
+  text-align: center;
+}
+
+.vital-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--neutral-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vital-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--neutral-800);
+  margin-top: var(--spacing-1);
+}
+
+/* Medical Status Indicators */
+.medical-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.medical-status.critical {
+  background-color: var(--surface-emergency);
+  color: var(--accent-600);
+  border: 1px solid var(--accent-200);
+}
+
+.medical-status.stable {
+  background-color: var(--surface-medical);
+  color: var(--secondary-600);
+  border: 1px solid var(--secondary-200);
+}
+
+/* Room Layout Indicators */
+.room-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-sm);
+}
+
+.room-emergency {
+  background-color: var(--surface-emergency);
+  color: var(--accent-600);
+}
+
+.room-trauma {
+  background-color: #FEF3C7;
+  color: var(--warning-600);
+}
+
+.room-general {
+  background-color: var(--surface-medical);
+  color: var(--primary-600);
+}

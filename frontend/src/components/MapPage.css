@@ -156,47 +156,63 @@
 
 /* Legend */
 .map-legend {
-  background: white;
-  border: 1px solid #e1e5e9;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 200px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(225, 229, 233, 0.8);
   border-radius: 8px;
-  padding: 20px;
-  margin-top: 20px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
 }
 
 .map-legend h3 {
-  margin: 0 0 15px 0;
+  margin: 0 0 8px 0;
   color: #333;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .map-legend h4 {
-  margin: 20px 0 10px 0;
+  margin: 10px 0 6px 0;
   color: #333;
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .legend-items {
   display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: 12px;
   color: #666;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-1px);
 }
 
 .legend-icon {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
 }
 
 .legend-icon.rsud {
@@ -216,9 +232,10 @@
 }
 
 .legend-line {
-  width: 20px;
+  width: 16px;
   height: 3px;
-  border-radius: 2px;
+  border-radius: 1px;
+  flex-shrink: 0;
 }
 
 .legend-line.pending {
@@ -403,13 +420,35 @@
     max-height: 60vh;
   }
   
+  .map-legend {
+    position: fixed;
+    top: auto;
+    bottom: 20px;
+    right: 20px;
+    left: 20px;
+    width: auto;
+    padding: 10px;
+  }
+  
   .legend-items {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   
   .legend-item {
-    justify-content: flex-start;
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  
+  .legend-icon {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .legend-line {
+    width: 14px;
+    height: 2px;
   }
 }
 

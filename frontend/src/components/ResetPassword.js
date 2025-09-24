@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import './ResetPassword.css';
@@ -19,17 +19,7 @@ const ResetPassword = () => {
 
   const token = searchParams.get('token');
 
-  useEffect(() => {
-    if (!token) {
-      setError('Token reset password tidak ditemukan');
-      setVerifying(false);
-      return;
-    }
-
-    verifyToken();
-  }, [token, verifyToken]);
-
-  const verifyToken = async () => {
+  const verifyToken = useCallback(async () => {
     try {
       const response = await axios.get(`http://localhost:3001/api/auth/verify-reset-token/${token}`);
       
@@ -45,7 +35,17 @@ const ResetPassword = () => {
     } finally {
       setVerifying(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setError('Token reset password tidak ditemukan');
+      setVerifying(false);
+      return;
+    }
+
+    verifyToken();
+  }, [token, verifyToken]);
 
   const handleInputChange = (e) => {
     setFormData({

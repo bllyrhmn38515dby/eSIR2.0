@@ -1,0 +1,397 @@
+/* Status Indicator Component Styles - eSIR 2.0 Design System */
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.status-dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: relative;
+}
+
+.status-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.status-text {
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Size Variants */
+.status-sm .status-dot {
+  width: 16px;
+  height: 16px;
+}
+
+.status-sm .status-icon {
+  font-size: 10px;
+}
+
+.status-sm .status-text {
+  font-size: var(--font-size-xs);
+}
+
+.status-md .status-dot {
+  width: 20px;
+  height: 20px;
+}
+
+.status-md .status-icon {
+  font-size: 12px;
+}
+
+.status-md .status-text {
+  font-size: var(--font-size-sm);
+}
+
+.status-lg .status-dot {
+  width: 24px;
+  height: 24px;
+}
+
+.status-lg .status-icon {
+  font-size: 14px;
+}
+
+.status-lg .status-text {
+  font-size: var(--font-size-base);
+}
+
+/* Status Color Variants */
+.status-critical {
+  background-color: var(--surface-emergency);
+  color: var(--accent-600);
+  border: 1px solid var(--accent-200);
+}
+
+.status-critical .status-dot {
+  background-color: var(--accent-500);
+  color: white;
+}
+
+.status-urgent {
+  background-color: #FEF3C7;
+  color: var(--warning-600);
+  border: 1px solid var(--warning-200);
+}
+
+.status-urgent .status-dot {
+  background-color: var(--warning-500);
+  color: white;
+}
+
+.status-stable {
+  background-color: var(--surface-medical);
+  color: var(--secondary-600);
+  border: 1px solid var(--secondary-200);
+}
+
+.status-stable .status-dot {
+  background-color: var(--secondary-500);
+  color: white;
+}
+
+.status-discharged {
+  background-color: var(--neutral-100);
+  color: var(--neutral-600);
+  border: 1px solid var(--neutral-200);
+}
+
+.status-discharged .status-dot {
+  background-color: var(--neutral-500);
+  color: white;
+}
+
+.status-pending {
+  background-color: #FEF3C7;
+  color: var(--warning-600);
+  border: 1px solid var(--warning-200);
+}
+
+.status-pending .status-dot {
+  background-color: var(--warning-500);
+  color: white;
+}
+
+.status-active {
+  background-color: var(--surface-medical);
+  color: var(--primary-600);
+  border: 1px solid var(--primary-200);
+}
+
+.status-active .status-dot {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.status-completed {
+  background-color: var(--success-50);
+  color: var(--success-600);
+  border: 1px solid var(--success-200);
+}
+
+.status-completed .status-dot {
+  background-color: var(--success-500);
+  color: white;
+}
+
+.status-neutral {
+  background-color: var(--neutral-100);
+  color: var(--neutral-600);
+  border: 1px solid var(--neutral-200);
+}
+
+.status-neutral .status-dot {
+  background-color: var(--neutral-500);
+  color: white;
+}
+
+/* Priority Badge */
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  color: white;
+  margin-left: var(--spacing-1);
+}
+
+.priority-p1 {
+  background-color: var(--status-critical);
+}
+
+.priority-p2 {
+  background-color: var(--status-urgent);
+}
+
+.priority-p3 {
+  background-color: var(--status-stable);
+}
+
+.priority-p4 {
+  background-color: var(--status-discharged);
+}
+
+/* Animated Status */
+.status-animated.status-critical {
+  animation: criticalPulse 2s infinite;
+}
+
+.status-animated.status-urgent {
+  animation: urgentGlow 1.5s infinite alternate;
+}
+
+.status-animated.status-active {
+  animation: activePulse 1s infinite;
+}
+
+@keyframes criticalPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+
+@keyframes urgentGlow {
+  from {
+    box-shadow: 0 0 5px rgba(245, 158, 11, 0.3);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  }
+}
+
+@keyframes activePulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Status List */
+.status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.status-list-item {
+  flex-shrink: 0;
+}
+
+/* Medical Specific Status Styles */
+.patient-status {
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.patient-status.status-critical {
+  background: linear-gradient(135deg, var(--surface-emergency) 0%, rgba(220, 38, 38, 0.1) 100%);
+}
+
+.patient-status.status-stable {
+  background: linear-gradient(135deg, var(--surface-medical) 0%, rgba(5, 150, 105, 0.1) 100%);
+}
+
+.referral-status {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-1) var(--spacing-2);
+}
+
+.ambulance-status {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-1) var(--spacing-2);
+}
+
+.system-status {
+  border-radius: var(--radius-md);
+  padding: var(--spacing-1) var(--spacing-2);
+}
+
+/* Status with Tooltip */
+.status-indicator[title] {
+  cursor: help;
+}
+
+.status-indicator[title]:hover {
+  transform: scale(1.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .status-indicator {
+    gap: var(--spacing-1);
+    padding: var(--spacing-1);
+  }
+  
+  .status-sm .status-dot {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .status-md .status-dot {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .status-lg .status-dot {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .status-text {
+    font-size: var(--font-size-xs);
+  }
+  
+  .priority-badge {
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+  
+  .status-list {
+    gap: var(--spacing-1);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .status-indicator {
+    border-width: 2px;
+  }
+  
+  .status-critical {
+    background-color: #000000;
+    color: #FFFFFF;
+    border-color: #FFFFFF;
+  }
+  
+  .status-stable {
+    background-color: #FFFFFF;
+    color: #000000;
+    border-color: #000000;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .status-animated {
+    animation: none;
+  }
+  
+  .status-indicator {
+    transition: none;
+  }
+  
+  .status-indicator[title]:hover {
+    transform: none;
+  }
+}
+
+/* Dark Mode Adjustments */
+.dark-mode .status-critical {
+  background-color: var(--accent-900);
+  color: var(--accent-100);
+}
+
+.dark-mode .status-stable {
+  background-color: var(--secondary-900);
+  color: var(--secondary-100);
+}
+
+.dark-mode .status-urgent {
+  background-color: var(--warning-900);
+  color: var(--warning-100);
+}
+
+.dark-mode .status-discharged {
+  background-color: var(--neutral-800);
+  color: var(--neutral-200);
+}
+
+.dark-mode .status-pending {
+  background-color: var(--warning-900);
+  color: var(--warning-100);
+}
+
+.dark-mode .status-active {
+  background-color: var(--primary-900);
+  color: var(--primary-100);
+}
+
+.dark-mode .status-completed {
+  background-color: var(--success-900);
+  color: var(--success-100);
+}
+
+.dark-mode .status-neutral {
+  background-color: var(--neutral-800);
+  color: var(--neutral-200);
+}

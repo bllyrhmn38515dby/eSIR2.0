@@ -1,0 +1,251 @@
+/* Button Component Styles - eSIR 2.0 Design System */
+
+.btn {
+  /* Base button styles are inherited from design-system.css */
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Button Outline Variant */
+.btn-outline {
+  background-color: transparent;
+  border: 2px solid var(--primary-500);
+  color: var(--primary-500);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--primary-500);
+  color: white;
+}
+
+.btn-outline.btn-secondary {
+  border-color: var(--neutral-500);
+  color: var(--neutral-500);
+}
+
+.btn-outline.btn-secondary:hover:not(:disabled) {
+  background-color: var(--neutral-500);
+  color: white;
+}
+
+.btn-outline.btn-success {
+  border-color: var(--success-500);
+  color: var(--success-500);
+}
+
+.btn-outline.btn-success:hover:not(:disabled) {
+  background-color: var(--success-500);
+  color: white;
+}
+
+.btn-outline.btn-danger {
+  border-color: var(--danger-500);
+  color: var(--danger-500);
+}
+
+.btn-outline.btn-danger:hover:not(:disabled) {
+  background-color: var(--danger-500);
+  color: white;
+}
+
+.btn-outline.btn-warning {
+  border-color: var(--warning-500);
+  color: var(--warning-500);
+}
+
+.btn-outline.btn-warning:hover:not(:disabled) {
+  background-color: var(--warning-500);
+  color: white;
+}
+
+/* Button Ghost Variant */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--primary-500);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--primary-50);
+}
+
+.btn-ghost.btn-secondary {
+  color: var(--neutral-500);
+}
+
+.btn-ghost.btn-secondary:hover:not(:disabled) {
+  background-color: var(--neutral-50);
+}
+
+.btn-ghost.btn-success {
+  color: var(--success-500);
+}
+
+.btn-ghost.btn-success:hover:not(:disabled) {
+  background-color: var(--success-50);
+}
+
+.btn-ghost.btn-danger {
+  color: var(--danger-500);
+}
+
+.btn-ghost.btn-danger:hover:not(:disabled) {
+  background-color: var(--danger-50);
+}
+
+.btn-ghost.btn-warning {
+  color: var(--warning-500);
+}
+
+.btn-ghost.btn-warning:hover:not(:disabled) {
+  background-color: var(--warning-50);
+}
+
+/* Button Size Variants */
+.btn-sm {
+  padding: var(--spacing-2) var(--spacing-3);
+  font-size: var(--font-size-sm);
+  min-height: 36px;
+}
+
+.btn-md {
+  padding: var(--spacing-3) var(--spacing-4);
+  font-size: var(--font-size-base);
+  min-height: 44px;
+}
+
+.btn-lg {
+  padding: var(--spacing-4) var(--spacing-6);
+  font-size: var(--font-size-lg);
+  min-height: 52px;
+}
+
+/* Button States */
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn:focus {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Loading State */
+.btn:disabled .btn-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Icon-only buttons */
+.btn-icon-only {
+  padding: var(--spacing-3);
+  min-width: 44px;
+}
+
+.btn-icon-only .btn-text {
+  display: none;
+}
+
+/* Button Groups */
+.btn-group {
+  display: inline-flex;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.btn-group .btn {
+  border-radius: 0;
+  border-right-width: 0;
+}
+
+.btn-group .btn:first-child {
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
+.btn-group .btn:last-child {
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+  border-right-width: 1px;
+}
+
+.btn-group .btn:only-child {
+  border-radius: var(--radius-md);
+  border-right-width: 1px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .btn {
+    min-height: 48px;
+  }
+  
+  .btn-sm {
+    min-height: 40px;
+  }
+  
+  .btn-lg {
+    min-height: 56px;
+  }
+}
+
+/* Medical specific button variants */
+.btn-medical {
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
+  color: white;
+  border: none;
+}
+
+.btn-medical:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--secondary-600) 100%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lg);
+}
+
+.btn-emergency {
+  background-color: var(--accent-500);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.btn-emergency:hover:not(:disabled) {
+  background-color: var(--accent-600);
+  animation: none;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}

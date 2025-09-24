@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -17,6 +17,7 @@ export const SocketProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const { user } = useAuth();
+  const socketRef = useRef(null);
 
   const addNotification = useCallback((notification) => {
     setNotifications(prev => {
@@ -123,10 +124,11 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (!user) {
       // Disconnect socket if user is not logged in
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
         setSocket(null);
         setIsConnected(false);
+        socketRef.current = null;
       }
       return;
     }
@@ -138,8 +140,8 @@ export const SocketProvider = ({ children }) => {
       },
       transports: ['websocket', 'polling'],
       timeout: 10000,
-      reconnection: false, // Disable auto-reconnection to prevent spam
-      reconnectionAttempts: 0,
+      reconnection: true, // Enable auto-reconnection
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       forceNew: true
@@ -227,12 +229,14 @@ export const SocketProvider = ({ children }) => {
     });
 
     setSocket(newSocket);
+    socketRef.current = newSocket;
 
     // Cleanup on unmount
     return () => {
       newSocket.disconnect();
+      socketRef.current = null;
     };
-  }, [user, addNotification]); // Include addNotification in dependencies
+  }, [user, addNotification]); // Remove socket from dependencies to prevent infinite loop
 
   const markNotificationAsRead = (notificationId) => {
     setNotifications(prev =>
@@ -256,6 +260,13 @@ export const SocketProvider = ({ children }) => {
     return notifications.filter(notif => !notif.read).length;
   };
 
+  const reconnectSocket = useCallback(() => {
+    if (socketRef.current && !isConnected) {
+      console.log('🔄 Attempting manual socket reconnection...');
+      socketRef.current.connect();
+    }
+  }, [isConnected]);
+
   const value = {
     socket,
     isConnected,
@@ -264,7 +275,8 @@ export const SocketProvider = ({ children }) => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     clearNotifications,
-    getUnreadCount
+    getUnreadCount,
+    reconnectSocket
   };
 
   return (
