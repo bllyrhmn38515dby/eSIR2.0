@@ -83,7 +83,7 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     let query = `
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as user_nama
@@ -125,7 +125,7 @@ router.get('/:id', verifyToken, async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama,
              u.nama_lengkap as user_nama
@@ -299,7 +299,7 @@ router.post('/with-pasien', verifyToken, async (req, res) => {
     // Get the created rujukan with details
     const [rujukanData] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -366,7 +366,7 @@ router.post('/', verifyToken, async (req, res) => {
     // Get the created rujukan with details
     const [rujukanData] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -416,7 +416,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get rujukan
     const [rujukanRows] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -456,7 +456,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -498,7 +498,7 @@ router.put('/:id/cancel', verifyToken, async (req, res) => {
     // Get rujukan
     const [rujukanRows] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r
@@ -554,7 +554,7 @@ router.put('/:id/cancel', verifyToken, async (req, res) => {
     // Get updated rujukan
     const [updatedRujukan] = await db.execute(`
       SELECT r.*, 
-             p.nama_pasien as nama_pasien, p.nik as nik_pasien,
+             p.nama_pasien as nama_pasien, p.nik as nik_pasien, p.jenis_kelamin as jenis_kelamin,
              fa.nama_faskes as faskes_asal_nama,
              ft.nama_faskes as faskes_tujuan_nama
       FROM rujukan r

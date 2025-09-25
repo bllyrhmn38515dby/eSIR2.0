@@ -1,0 +1,23 @@
+# SOLUSI UNTUK MASALAH AKSES JARINGAN
+# Copy file ini menjadi .env di folder frontend
+
+# Backend API URL - Ganti dengan IP komputer server Anda
+REACT_APP_API_URL=http://192.168.1.7:3001/api
+
+# Socket.IO URL - Ganti dengan IP komputer server Anda  
+REACT_APP_SOCKET_URL=http://192.168.1.7:3001
+
+# Google Maps API Key (opsional)
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# CARA MENGGUNAKAN:
+# 1. Copy isi file ini
+# 2. Buat file baru bernama .env di folder frontend
+# 3. Paste isi file ini ke dalam .env
+# 4. Restart frontend dengan: npm start
+# 5. Akses dari perangkat lain: http://192.168.1.7:3000
+
+# CATATAN PENTING:
+# - Pastikan IP 192.168.1.7 sesuai dengan IP komputer server Anda
+# - Pastikan backend berjalan di port 3001
+# - Pastikan firewall tidak memblokir port 3001

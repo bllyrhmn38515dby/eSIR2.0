@@ -92,24 +92,35 @@ const MultiStepReferralForm = ({
     }
   }, [referral, mode, patients, faskes]);
 
-  // Auto-generate referral ID
+  // Auto-generate referral ID and set current time
   useEffect(() => {
     if (mode === 'create') {
       setFormData(prev => {
-        if (!prev.id) {
-          const timestamp = Date.now().toString().slice(-6);
-          const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-          return {
-            ...prev,
-            id: `R${timestamp}${randomNum}`,
-            tanggalRujukan: new Date().toISOString().split('T')[0],
-            waktuRujukan: new Date().toTimeString().slice(0, 5)
-          };
-        }
-        return prev;
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().slice(0, 5);
+        
+        return {
+          ...prev,
+          id: prev.id || `R${Date.now().toString().slice(-6)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+          tanggalRujukan: prev.tanggalRujukan || currentDate,
+          waktuRujukan: prev.waktuRujukan || currentTime
+        };
       });
     }
   }, [mode]);
+
+  // Update waktu rujukan to current time when form is opened (only if not manually set)
+  useEffect(() => {
+    if (mode === 'create' && !formData.waktuRujukan) {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+      setFormData(prev => ({
+        ...prev,
+        waktuRujukan: currentTime
+      }));
+    }
+  }, [mode, formData.waktuRujukan]);
 
   // Auto-save functionality
   useEffect(() => {
@@ -199,7 +210,7 @@ const MultiStepReferralForm = ({
         setFormData(prev => ({
           ...prev,
           pasienId: searchNik, // Gunakan NIK sebagai pasienId untuk konsistensi
-          namaPasien: pasien.nama_lengkap,
+          namaPasien: pasien.nama_pasien, // Perbaiki field name dari nama_lengkap ke nama_pasien
           tanggalLahirPasien: pasien.tanggal_lahir,
           jenisKelaminPasien: pasien.jenis_kelamin,
           alamatPasien: pasien.alamat,
@@ -209,7 +220,7 @@ const MultiStepReferralForm = ({
         // Set selected patient untuk UI
         setSelectedPatient({
           id: pasien.id,
-          nama: pasien.nama_lengkap,
+          nama: pasien.nama_pasien, // Perbaiki field name dari nama_lengkap ke nama_pasien
           tanggalLahir: pasien.tanggal_lahir,
           jenisKelamin: pasien.jenis_kelamin,
           alamat: pasien.alamat,
@@ -288,68 +299,29 @@ const MultiStepReferralForm = ({
   const handleFaskesSelect = (faskesId) => {
     console.log('handleFaskesSelect called with:', faskesId);
     
-    if (faskesId === 'demo-faskes-penerima') {
-      // Demo faskes data - gunakan ID yang valid
-      const demoFaskes = {
-        id: 2, // ID valid untuk RS Jantung Harapan
-        nama: 'RS Jantung Harapan',
-        tipe: 'Rumah Sakit',
-        dokterKontak: 'Dr. Ahmad',
-        teleponKontak: '021-1234567'
-      };
-      
-      setSelectedFaskesPenerima(demoFaskes);
+    const faskesData = faskes.find(f => f.id === parseInt(faskesId));
+    if (faskesData) {
+      setSelectedFaskesPenerima(faskesData);
       setFormData(prev => ({
         ...prev,
-        faskesPenerima: demoFaskes.id,
-        dokterPenerima: demoFaskes.dokterKontak || '',
-        teleponPenerima: demoFaskes.teleponKontak || ''
+        faskesPenerima: faskesData.id,
+        dokterPenerima: faskesData.dokterKontak || '',
+        teleponPenerima: faskesData.teleponKontak || ''
       }));
-    } else {
-      const faskesData = faskes.find(f => f.id === faskesId);
-      if (faskesData) {
-        setSelectedFaskesPenerima(faskesData);
-        setFormData(prev => ({
-          ...prev,
-          faskesPenerima: faskesData.id,
-          dokterPenerima: faskesData.dokterKontak || '',
-          teleponPenerima: faskesData.teleponKontak || ''
-        }));
-      }
     }
   };
 
   const handleFaskesPengirimSelect = (faskesId) => {
     console.log('handleFaskesPengirimSelect called with:', faskesId);
     
-    if (faskesId === 'demo-faskes-pengirim') {
-      // Demo faskes pengirim data - gunakan ID yang valid
-      const demoFaskes = {
-        id: 1, // ID valid untuk Puskesmas Jakarta
-        nama: 'Puskesmas Jakarta',
-        tipe: 'Puskesmas',
-        dokterKontak: 'Dr. Siti',
-        teleponKontak: '021-9876543'
-      };
-      
+    const faskesData = faskes.find(f => f.id === parseInt(faskesId));
+    if (faskesData) {
       setFormData(prev => ({
         ...prev,
-        faskesPengirim: demoFaskes.id,
-        dokterPengirim: demoFaskes.dokterKontak || '',
-        teleponPengirim: demoFaskes.teleponKontak || '',
-        // Demo data medis untuk testing (random)
-        ...getRandomMedicalData()
+        faskesPengirim: faskesData.id,
+        dokterPengirim: faskesData.dokterKontak || '',
+        teleponPengirim: faskesData.teleponKontak || ''
       }));
-    } else {
-      const faskesData = faskes.find(f => f.id === faskesId);
-      if (faskesData) {
-        setFormData(prev => ({
-          ...prev,
-          faskesPengirim: faskesData.id,
-          dokterPengirim: faskesData.dokterKontak || '',
-          teleponPengirim: faskesData.teleponKontak || ''
-        }));
-      }
     }
   };
 
@@ -544,25 +516,24 @@ const MultiStepReferralForm = ({
     }
     
     // Step 3: Data Pengirim & Penerima
-    if (!formData.faskesPengirim || formData.faskesPengirim.trim() === '') {
+    if (!formData.faskesPengirim || formData.faskesPengirim === '') {
       newErrors.faskesPengirim = 'Faskes pengirim harus dipilih';
       console.log('❌ faskesPengirim is empty:', formData.faskesPengirim);
     } else {
       console.log('✅ faskesPengirim:', formData.faskesPengirim);
     }
     
-    if (!formData.faskesPenerima || formData.faskesPenerima.trim() === '') {
+    if (!formData.faskesPenerima || formData.faskesPenerima === '') {
       newErrors.faskesPenerima = 'Faskes penerima harus dipilih';
       console.log('❌ faskesPenerima is empty:', formData.faskesPenerima);
     } else {
       console.log('✅ faskesPenerima:', formData.faskesPenerima);
     }
     
-    // Validate faskes pengirim and penerima are different (only for non-demo values)
+    // Validate faskes pengirim and penerima are different
     if (formData.faskesPengirim && formData.faskesPenerima && 
-        formData.faskesPengirim.trim() !== '' && formData.faskesPenerima.trim() !== '' &&
-        formData.faskesPengirim === formData.faskesPenerima &&
-        !formData.faskesPengirim.includes('demo-') && !formData.faskesPenerima.includes('demo-')) {
+        formData.faskesPengirim !== '' && formData.faskesPenerima !== '' &&
+        formData.faskesPengirim === formData.faskesPenerima) {
       newErrors.faskesPenerima = 'Faskes penerima harus berbeda dengan faskes pengirim';
     }
     
@@ -700,20 +671,19 @@ const MultiStepReferralForm = ({
         console.log('Step 3 validation - faskesPengirim:', formData.faskesPengirim, 'faskesPenerima:', formData.faskesPenerima);
         
         // Check if faskes pengirim is selected (not empty string)
-        if (!formData.faskesPengirim || formData.faskesPengirim.trim() === '') {
+        if (!formData.faskesPengirim || formData.faskesPengirim === '') {
           newErrors.faskesPengirim = 'Faskes pengirim harus dipilih';
         }
         
         // Check if faskes penerima is selected (not empty string)
-        if (!formData.faskesPenerima || formData.faskesPenerima.trim() === '') {
+        if (!formData.faskesPenerima || formData.faskesPenerima === '') {
           newErrors.faskesPenerima = 'Faskes penerima harus dipilih';
         }
         
-        // Validate faskes pengirim and penerima are different (only for non-demo values)
+        // Validate faskes pengirim and penerima are different
         if (formData.faskesPengirim && formData.faskesPenerima && 
-            formData.faskesPengirim.trim() !== '' && formData.faskesPenerima.trim() !== '' &&
-            formData.faskesPengirim === formData.faskesPenerima &&
-            !formData.faskesPengirim.includes('demo-') && !formData.faskesPenerima.includes('demo-')) {
+            formData.faskesPengirim !== '' && formData.faskesPenerima !== '' &&
+            formData.faskesPengirim === formData.faskesPenerima) {
           newErrors.faskesPenerima = 'Faskes penerima harus berbeda dengan faskes pengirim';
         }
         
@@ -928,6 +898,16 @@ const MultiStepReferralForm = ({
     return icons[step] || '';
   };
 
+  // Helper function to get faskes name from ID
+  const getFaskesName = (faskesId) => {
+    if (!faskesId) return 'Belum dipilih';
+    const faskesData = faskes.find(f => f.id === parseInt(faskesId));
+    if (faskesData) {
+      return `${faskesData.nama_faskes || faskesData.nama} (ID: ${faskesId})`;
+    }
+    return `ID: ${faskesId}`;
+  };
+
   const renderPreview = () => {
     return (
       <div className="form-step">
@@ -1022,7 +1002,7 @@ const MultiStepReferralForm = ({
             <div className="preview-grid">
               <div className="preview-item">
                 <label>Faskes Pengirim:</label>
-                <span>{formData.faskesPengirim}</span>
+                <span>{getFaskesName(formData.faskesPengirim)}</span>
               </div>
               <div className="preview-item">
                 <label>Dokter Pengirim:</label>
@@ -1030,7 +1010,7 @@ const MultiStepReferralForm = ({
               </div>
               <div className="preview-item">
                 <label>Faskes Penerima:</label>
-                <span>{formData.faskesPenerima}</span>
+                <span>{getFaskesName(formData.faskesPenerima)}</span>
               </div>
               <div className="preview-item">
                 <label>Dokter Penerima:</label>
@@ -1110,31 +1090,58 @@ const MultiStepReferralForm = ({
                 help="ID otomatis generated"
               />
               
-              <Input
-                label="Tanggal Rujukan"
-                type="date"
-                value={formData.tanggalRujukan}
-                onChange={(e) => handleInputChange('tanggalRujukan', e.target.value)}
-                error={errors.tanggalRujukan}
-                disabled={isReadOnly}
-                required
-              />
-              
-              <Input
-                label="Waktu Rujukan"
-                type="time"
-                value={formData.waktuRujukan}
-                onChange={(e) => handleInputChange('waktuRujukan', e.target.value)}
-                error={errors.waktuRujukan}
-                disabled={isReadOnly}
-                required
-              />
+              <div className="form-row">
+                <div className="form-col">
+                  <Input
+                    label="Tanggal Rujukan"
+                    type="date"
+                    value={formData.tanggalRujukan}
+                    onChange={(e) => handleInputChange('tanggalRujukan', e.target.value)}
+                    error={errors.tanggalRujukan}
+                    disabled={isReadOnly}
+                    required
+                  />
+                </div>
+                
+                <div className="form-col">
+                  <div className="time-input-group">
+                    <Input
+                      label="Waktu Rujukan"
+                      type="time"
+                      value={formData.waktuRujukan}
+                      onChange={(e) => handleInputChange('waktuRujukan', e.target.value)}
+                      error={errors.waktuRujukan}
+                      disabled={isReadOnly}
+                      required
+                    />
+                    {!isReadOnly && (
+                      <button
+                        type="button"
+                        className="time-update-btn"
+                        onClick={() => {
+                          const now = new Date();
+                          const currentTime = now.toTimeString().slice(0, 5);
+                          handleInputChange('waktuRujukan', currentTime);
+                        }}
+                        title="Set ke waktu sekarang"
+                      >
+                        <span className="time-icon">🕐</span>
+                        <span className="time-text">Sekarang</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             
              <div className="form-tips">
                <div className="tip-icon">💡</div>
                <div className="tip-content">
-                 <strong>Tips:</strong> Pastikan tanggal dan waktu rujukan sudah benar untuk memudahkan tracking
+                 <strong>Tips:</strong> Tanggal dan waktu rujukan tersusun rapi dalam dua kolom
+                 <br />
+                 <strong>Waktu Otomatis:</strong> Waktu rujukan otomatis di-set ke waktu sekarang
+                 <br />
+                 <strong>Tombol "Sekarang":</strong> Klik untuk mengupdate waktu ke waktu terbaru
                  <br />
                  <strong>Keyboard Shortcuts:</strong> Ctrl+← (Sebelumnya), Ctrl+→ (Selanjutnya), Ctrl+Enter (Submit), Esc (Cancel)
                </div>
@@ -1185,7 +1192,7 @@ const MultiStepReferralForm = ({
                    <div className="patient-found">
                      <div className="found-icon">✅</div>
                      <div className="found-content">
-                       <strong>Pasien ditemukan:</strong> {foundPasien.nama_lengkap} 
+                       <strong>Pasien ditemukan:</strong> {foundPasien.nama_pasien} 
                        ({foundPasien.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}, {calculateAge(foundPasien.tanggal_lahir)} tahun)
                      </div>
                    </div>
@@ -1353,10 +1360,9 @@ const MultiStepReferralForm = ({
                    <option value="">Pilih faskes pengirim...</option>
                    {faskes.map(faskesData => (
                      <option key={faskesData.id} value={faskesData.id}>
-                       {faskesData.nama} - {faskesData.tipe}
+                       {faskesData.nama_faskes || faskesData.nama} - {faskesData.tipe}
                      </option>
                    ))}
-                   <option value="demo-faskes-pengirim">Demo Puskesmas - Puskesmas Jakarta</option>
                  </select>
                  {errors.faskesPengirim && (
                    <div className="form-error">{errors.faskesPengirim}</div>
@@ -1392,10 +1398,9 @@ const MultiStepReferralForm = ({
                    <option value="">Pilih faskes penerima...</option>
                    {faskes.map(faskesData => (
                      <option key={faskesData.id} value={faskesData.id}>
-                       {faskesData.nama} - {faskesData.tipe}
+                       {faskesData.nama_faskes || faskesData.nama} - {faskesData.tipe}
                      </option>
                    ))}
-                   <option value="demo-faskes-penerima">Demo RS - RS Jantung Harapan</option>
                  </select>
                  {errors.faskesPenerima && (
                    <div className="form-error">{errors.faskesPenerima}</div>

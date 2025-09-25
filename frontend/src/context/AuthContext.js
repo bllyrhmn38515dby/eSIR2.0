@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('🔄 Attempting to refresh token...');
-      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/refresh`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.1.7:3001/api'}/auth/refresh`, {
         token: currentToken
       });
 
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }) => {
     if (currentToken) {
       try {
         console.log('🔍 Checking authentication with token...');
-        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/profile`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://192.168.1.7:3001/api'}/auth/profile`, {
           headers: { Authorization: `Bearer ${currentToken}` },
           timeout: 3000 // 3 detik timeout untuk request
         });
@@ -190,7 +190,7 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       
-      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/login`, {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.1.7:3001/api'}/auth/login`, {
         emailOrUsername,
         password
       });
@@ -248,7 +248,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/register`, userData);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.1.7:3001/api'}/auth/register`, userData);
       return { success: true, data: response.data.data };
     } catch (error) {
       return {
@@ -262,7 +262,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const currentToken = localStorage.getItem('token');
       if (currentToken) {
-        await axios.post(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/auth/force-logout`, {}, {
+        await axios.post(`${process.env.REACT_APP_API_URL || 'http://192.168.1.7:3001/api'}/auth/force-logout`, {}, {
           headers: { Authorization: `Bearer ${currentToken}` }
         });
         console.log('🔄 Force logout successful');

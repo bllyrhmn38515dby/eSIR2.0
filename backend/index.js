@@ -23,13 +23,16 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: ['http://localhost:3000', 'http://192.168.1.7:3000', 'http://192.168.1.2:3000'],
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://192.168.1.7:3000', 'http://192.168.1.2:3000'],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -1,0 +1,13 @@
+# Konfigurasi untuk Akses Jaringan Lokal
+# Copy file ini menjadi .env di folder frontend
+
+# Google Maps API Key untuk Real-Time Route Tracking
+# Dapatkan API key dari: https://console.cloud.google.com/
+# Aktifkan Maps JavaScript API dan Directions API
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# Backend API URL (sesuaikan dengan IP server Anda)
+REACT_APP_API_URL=http://192.168.1.7:3001/api
+
+# Socket.IO URL (sesuaikan dengan IP server Anda)
+REACT_APP_SOCKET_URL=http://192.168.1.7:3001
