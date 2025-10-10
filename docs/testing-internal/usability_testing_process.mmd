@@ -1,0 +1,20 @@
+%% Proses Pengujian Usability Testing Aplikasi Sistem Rujukan Online RS
+%% Export: usability_testing_process.png
+flowchart LR
+  classDef step fill:#1E88E5,stroke:#0D47A1,color:#fff
+  classDef action fill:#43A047,stroke:#1B5E20,color:#fff
+  classDef assess fill:#FB8C00,stroke:#E65100,color:#fff
+  classDef doc fill:#546E7A,stroke:#263238,color:#fff
+
+  A[Perencanaan Uji<br/>Tujuan, Metode, Skenario Tugas]:::step --> B[Rekrut Partisipan<br/>Tenaga Medis & Admin RS]:::step
+  B --> C[Briefing & Persetujuan Etik<br/>Informed Consent]:::step
+  C --> D[Pemberian Tugas Penggunaan<br/>Login, Buat Rujukan, Tracking, Laporan]:::action
+  D --> E[Pelaksanaan Uji<br/>Think Aloud + Observasi]:::action
+  E --> F[Pencatatan Metrik Kuantitatif<br/>Waktu tugas, error, bantuan]:::doc
+  E --> G[Pengisian Kuesioner (SUS/CSAT/UEQ)<br/>Kepuasan & Persepsi]:::assess
+  F --> H[Wawancara Singkat (Debrief)<br/>Insight & Rekomendasi]:::assess
+  G --> H
+  H --> I[Analisis Hasil<br/>Ease of Use, Efficiency, Satisfaction]:::doc
+  I --> J[Rekomendasi Perbaikan UI/UX<br/>Prioritas & Rencana Iterasi]:::step
+
+

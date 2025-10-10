@@ -314,7 +314,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   border-left: 3px solid transparent;
-  color: #1E293B;
+  color: #baccea;
   font-weight: 500;
 }
 

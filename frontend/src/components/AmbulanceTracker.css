@@ -1,18 +1,37 @@
 .ambulance-tracker {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 24px;
+  max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 80px);
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .tracker-header {
-  margin-bottom: 30px;
-  padding: 20px;
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  margin-bottom: 32px;
+  padding: 32px;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 50%, #b21f2d 100%);
   color: white;
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(220, 53, 69, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(220, 53, 69, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.tracker-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  50% { transform: translate(-50%, -50%) rotate(180deg); }
 }
 
 .header-content {
@@ -91,34 +110,59 @@
 
 .tracker-container {
   display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 20px;
-  height: calc(100vh - 200px);
+  grid-template-columns: 420px 1fr;
+  gap: 24px;
+  height: calc(100vh - 220px);
 }
 
 /* Sidebar Styles */
 .tracker-sidebar {
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .session-controls, .status-controls {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e9ecef;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(0, 123, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.session-controls::before, .status-controls::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #dc3545 0%, #28a745 50%, #007bff 100%);
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .session-controls h3, .status-controls h3 {
-  margin: 0 0 15px 0;
-  color: #495057;
-  font-size: 1.2rem;
-  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .rujukan-select {
@@ -304,28 +348,48 @@
 
 /* Main Content Styles */
 .tracker-main {
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  padding: 20px;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
   overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .position-display, .tracking-info, .tracking-status {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #e9ecef;
+  background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(0, 123, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.position-display::before, .tracking-info::before, .tracking-status::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff 0%, #28a745 50%, #dc3545 100%);
+  background-size: 200% 100%;
+  animation: gradientShift 4s ease-in-out infinite;
 }
 
 .position-display h3, .tracking-info h3, .tracking-status h3 {
-  margin: 0 0 15px 0;
-  color: #495057;
-  font-size: 1.2rem;
-  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .position-info, .info-content {

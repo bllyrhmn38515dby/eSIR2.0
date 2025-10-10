@@ -21,7 +21,11 @@ const DriverLayout = ({ children }) => {
         <div className="header-content">
           <div className="header-left">
             <Link to="/driver" className="logo">
-              <span className="logo-icon">🚑</span>
+              <img 
+                src="/esir20vlogo.png" 
+                alt="eSIR 2.0 Logo" 
+                className="logo-icon-img"
+              />
               <span className="logo-text">eSIR Driver</span>
             </Link>
           </div>

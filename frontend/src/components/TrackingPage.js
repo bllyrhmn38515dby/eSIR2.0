@@ -3,7 +3,10 @@ import { useSocket } from '../context/SocketContext';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-routing-machine';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import Layout from './Layout';
+import Chat from './Chat';
 import './TrackingPage.css';
 
 // Fix Leaflet default marker icons
@@ -18,11 +21,11 @@ L.Icon.Default.mergeOptions({
 const ambulanceIcon = L.divIcon({
   html: `
     <div style="
-      width: 40px; 
-      height: 40px; 
-      background: #E66666; 
-      border: 3px solid white; 
-      border-radius: 50%; 
+      width: 40px;
+      height: 40px;
+      background: #E66666;
+      border: 3px solid white;
+      border-radius: 50%;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
@@ -44,11 +47,11 @@ const ambulanceIcon = L.divIcon({
 const originIcon = L.divIcon({
   html: `
     <div style="
-      width: 32px; 
-      height: 32px; 
-      background: #34A853; 
-      border: 3px solid white; 
-      border-radius: 50%; 
+      width: 32px;
+      height: 32px;
+      background: #34A853;
+      border: 3px solid white;
+      border-radius: 50%;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
@@ -70,11 +73,11 @@ const originIcon = L.divIcon({
 const destinationIcon = L.divIcon({
   html: `
     <div style="
-      width: 32px; 
-      height: 32px; 
-      background: #FF3434; 
-      border: 3px solid white; 
-      border-radius: 50%; 
+      width: 32px;
+      height: 32px;
+      background: #FF3434;
+      border: 3px solid white;
+      border-radius: 50%;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
       display: flex;
       align-items: center;
@@ -95,13 +98,13 @@ const destinationIcon = L.divIcon({
 // Component untuk update map center
 const MapUpdater = ({ center }) => {
   const map = useMap();
-  
+
   useEffect(() => {
     if (center) {
       map.setView(center, map.getZoom());
     }
   }, [center, map]);
-  
+
   return null;
 };
 
@@ -115,6 +118,9 @@ const TrackingPage = () => {
   const [routePolyline, setRoutePolyline] = useState([]);
   const [currentPhase, setCurrentPhase] = useState('unknown'); // 'going_to_pickup', 'transporting_patient', 'unknown'
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [trafficInfo] = useState(null);
+  const [isRealTime] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const mapRef = useRef(null);
 
   // Fungsi untuk menghitung jarak antara dua koordinat (dalam meter)
@@ -137,7 +143,7 @@ const TrackingPage = () => {
 
     const ambulancePos = [parseFloat(tracking.latitude), parseFloat(tracking.longitude)];
     const originPos = [parseFloat(route.origin.lat), parseFloat(route.origin.lng)];
-    
+
     // Hitung jarak ke RS perujuk (dalam meter)
     const distanceToOrigin = calculateDistance(
       ambulancePos[0], ambulancePos[1],
@@ -152,38 +158,29 @@ const TrackingPage = () => {
     }
   };
 
-  // Fungsi untuk mendapatkan routing presisi melalui backend API
+  // Fungsi untuk mendapatkan routing presisi menggunakan OSRM (Open Source Routing Machine)
   const getPreciseRoute = async (startLat, startLng, endLat, endLng) => {
     try {
-      const response = await fetch('http://localhost:3001/api/routing/precise-route', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          startLat: parseFloat(startLat),
-          startLng: parseFloat(startLng),
-          endLat: parseFloat(endLat),
-          endLng: parseFloat(endLng)
-        })
-      });
+      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`);
 
       if (!response.ok) {
-        throw new Error(`Backend routing API error! status: ${response.status}`);
+        throw new Error(`OSRM API error! status: ${response.status}`);
       }
 
       const result = await response.json();
-      
-      if (result.success && result.data.coordinates) {
-        console.log('✅ Precise route received from backend:', result.data.pointCount, 'points');
-        return result.data.coordinates;
+
+      if (result.routes && result.routes.length > 0) {
+        const route = result.routes[0];
+        // OSRM returns coordinates as [lng, lat], convert to [lat, lng] for Leaflet
+        const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+        console.log('✅ Precise route received from OSRM:', coordinates.length, 'points');
+        return coordinates;
       } else {
-        console.log('⚠️ Backend returned fallback route');
-        return result.data.coordinates || [[startLat, startLng], [endLat, endLng]];
+        console.log('⚠️ No routes found from OSRM');
+        return [[startLat, startLng], [endLat, endLng]];
       }
     } catch (error) {
-      console.error('Error getting precise route from backend:', error);
+      console.error('Error getting precise route from OSRM:', error);
       // Final fallback ke garis lurus
       return [[startLat, startLng], [endLat, endLng]];
     }
@@ -196,7 +193,7 @@ const TrackingPage = () => {
     }
 
     const ambulancePos = [parseFloat(tracking.latitude), parseFloat(tracking.longitude)];
-    
+
     if (phase === 'going_to_pickup') {
       // Rute presisi dari posisi ambulans ke RS perujuk
       if (route.origin.lat && route.origin.lng) {
@@ -204,7 +201,7 @@ const TrackingPage = () => {
           ambulancePos[0], ambulancePos[1],
           parseFloat(route.origin.lat), parseFloat(route.origin.lng)
         );
-        return preciseRoute || [ambulancePos, [parseFloat(route.origin.lat), parseFloat(route.origin.lng)]];
+        return preciseRoute.length > 0 ? preciseRoute : [ambulancePos, [parseFloat(route.origin.lat), parseFloat(route.origin.lng)]];
       }
     } else if (phase === 'transporting_patient') {
       // Rute presisi dari RS perujuk ke RS tujuan
@@ -213,13 +210,13 @@ const TrackingPage = () => {
           parseFloat(route.origin.lat), parseFloat(route.origin.lng),
           parseFloat(route.destination.lat), parseFloat(route.destination.lng)
         );
-        return preciseRoute || [
+        return preciseRoute.length > 0 ? preciseRoute : [
           [parseFloat(route.origin.lat), parseFloat(route.origin.lng)],
           [parseFloat(route.destination.lat), parseFloat(route.destination.lng)]
         ];
       }
     }
-    
+
     return [];
   };
 
@@ -261,7 +258,7 @@ const TrackingPage = () => {
     const setupSocketListeners = () => {
       if (socket && socket.on && socket.connected) {
         console.log('🔌 Setting up socket listeners for tracking updates');
-        
+
         const handleTrackingUpdate = (data) => {
           console.log('📡 Tracking update received:', data);
           if (selectedSession && data.rujukan_id === selectedSession.rujukan_id) {
@@ -350,13 +347,13 @@ const TrackingPage = () => {
     console.log('🗺️ Rendering map with data:', { tracking, route });
 
     // Set map center to current position or destination
-    if (tracking.latitude && tracking.longitude && 
-        !isNaN(parseFloat(tracking.latitude)) && 
+    if (tracking.latitude && tracking.longitude &&
+        !isNaN(parseFloat(tracking.latitude)) &&
         !isNaN(parseFloat(tracking.longitude))) {
       setMapCenter([parseFloat(tracking.latitude), parseFloat(tracking.longitude)]);
       console.log('📍 Map center set to current position:', [tracking.latitude, tracking.longitude]);
-    } else if (route.destination.lat && route.destination.lng && 
-               !isNaN(parseFloat(route.destination.lat)) && 
+    } else if (route.destination.lat && route.destination.lng &&
+               !isNaN(parseFloat(route.destination.lat)) &&
                !isNaN(parseFloat(route.destination.lng))) {
       setMapCenter([parseFloat(route.destination.lat), parseFloat(route.destination.lng)]);
       console.log('📍 Map center set to destination:', [route.destination.lat, route.destination.lng]);
@@ -372,7 +369,7 @@ const TrackingPage = () => {
     try {
       const smartPolyline = await createSmartPolyline(tracking, route, journeyPhase);
       setRoutePolyline(smartPolyline);
-      
+
       if (smartPolyline.length > 0) {
         console.log('🛣️ Precise route polyline created for phase:', journeyPhase, smartPolyline.length, 'points');
       } else {
@@ -397,7 +394,7 @@ const TrackingPage = () => {
     }
 
     const ambulancePos = [parseFloat(tracking.latitude), parseFloat(tracking.longitude)];
-    
+
     if (phase === 'going_to_pickup') {
       if (route.origin.lat && route.origin.lng) {
         return [ambulancePos, [parseFloat(route.origin.lat), parseFloat(route.origin.lng)]];
@@ -410,7 +407,7 @@ const TrackingPage = () => {
         ];
       }
     }
-    
+
     return [];
   };
 
@@ -472,7 +469,7 @@ const TrackingPage = () => {
           <div className="tracking-sidebar">
             <div className="sidebar-header">
               <h3>📋 Sesi Tracking Aktif</h3>
-              <button 
+              <button
                 className="refresh-btn"
                 onClick={loadActiveSessions}
                 disabled={loading}
@@ -490,21 +487,21 @@ const TrackingPage = () => {
             ) : (
               <div className="sessions-list">
                 {activeSessions.map((session) => (
-                  <div 
+                  <div
                     key={session.id}
                     className={`session-card ${selectedSession?.id === session.id ? 'active' : ''}`}
                     onClick={() => selectSession(session)}
                   >
                     <div className="session-header">
                       <h4>{session.nomor_rujukan}</h4>
-                      <span 
+                      <span
                         className="status-badge"
                         style={{ backgroundColor: getStatusColor(session.status) }}
                       >
                         {getStatusText(session.status)}
                       </span>
                     </div>
-                    
+
                     <div className="session-details">
                       <p><strong>Pasien:</strong> {session.nama_pasien}</p>
                       <p><strong>Dari:</strong> {session.faskes_asal_nama}</p>
@@ -535,8 +532,8 @@ const TrackingPage = () => {
                 <p>Memuat data tracking...</p>
               </div>
             )}
-            
-            <MapContainer 
+
+            <MapContainer
               ref={mapRef}
               center={mapCenter}
               zoom={12}
@@ -546,7 +543,7 @@ const TrackingPage = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
-              
+
               <MapUpdater center={mapCenter} />
 
               {/* Smart Route Polyline */}
@@ -558,7 +555,7 @@ const TrackingPage = () => {
                   opacity={0.8}
                 />
               )}
-              
+
               {/* Route Info Overlay */}
               {routePolyline.length > 2 && (
                 <div className="route-info-overlay">
@@ -572,9 +569,9 @@ const TrackingPage = () => {
               )}
 
               {/* Origin Marker */}
-              {trackingData?.route?.origin?.lat && 
-               trackingData?.route?.origin?.lng && 
-               !isNaN(parseFloat(trackingData.route.origin.lat)) && 
+              {trackingData?.route?.origin?.lat &&
+               trackingData?.route?.origin?.lng &&
+               !isNaN(parseFloat(trackingData.route.origin.lat)) &&
                !isNaN(parseFloat(trackingData.route.origin.lng)) && (
                 <Marker
                   position={[parseFloat(trackingData.route.origin.lat), parseFloat(trackingData.route.origin.lng)]}
@@ -589,9 +586,9 @@ const TrackingPage = () => {
               )}
 
               {/* Destination Marker */}
-              {trackingData?.route?.destination?.lat && 
-               trackingData?.route?.destination?.lng && 
-               !isNaN(parseFloat(trackingData.route.destination.lat)) && 
+              {trackingData?.route?.destination?.lat &&
+               trackingData?.route?.destination?.lng &&
+               !isNaN(parseFloat(trackingData.route.destination.lat)) &&
                !isNaN(parseFloat(trackingData.route.destination.lng)) && (
                 <Marker
                   position={[parseFloat(trackingData.route.destination.lat), parseFloat(trackingData.route.destination.lng)]}
@@ -606,9 +603,9 @@ const TrackingPage = () => {
               )}
 
               {/* Current Position Marker */}
-              {trackingData?.tracking?.latitude && 
-               trackingData?.tracking?.longitude && 
-               !isNaN(parseFloat(trackingData.tracking.latitude)) && 
+              {trackingData?.tracking?.latitude &&
+               trackingData?.tracking?.longitude &&
+               !isNaN(parseFloat(trackingData.tracking.latitude)) &&
                !isNaN(parseFloat(trackingData.tracking.longitude)) && (
                 <Marker
                   position={[parseFloat(trackingData.tracking.latitude), parseFloat(trackingData.tracking.longitude)]}
@@ -623,27 +620,34 @@ const TrackingPage = () => {
                 </Marker>
               )}
             </MapContainer>
-            
+
             {selectedSession && trackingData && (
               <div className="tracking-info-panel">
                 <div className="info-header">
                   <h3>📍 Info Tracking</h3>
                   <div className="status-badges">
-                    <span 
+                    <span
                       className="status-badge"
                       style={{ backgroundColor: getStatusColor(trackingData.tracking.status) }}
                     >
                       {getStatusText(trackingData.tracking.status)}
                     </span>
-                    <span 
+                    <span
                       className="phase-badge"
                       style={{ backgroundColor: getPhaseColor(currentPhase) }}
                     >
                       {isLoadingRoute ? '🔄 Memproses Rute...' : getPhaseText(currentPhase)}
                     </span>
+                    <button
+                      className="chat-btn"
+                      onClick={() => setIsChatOpen(true)}
+                      title="Buka Chat"
+                    >
+                      💬 Chat
+                    </button>
                   </div>
                 </div>
-                
+
                 <div className="info-content">
                   <div className="info-row">
                     <span>Nomor Rujukan:</span>
@@ -668,7 +672,7 @@ const TrackingPage = () => {
                   <div className="info-row">
                     <span>Jarak Tersisa:</span>
                     <span>
-                      {trackingData.tracking.estimated_distance && typeof trackingData.tracking.estimated_distance === 'number' 
+                      {trackingData.tracking.estimated_distance && typeof trackingData.tracking.estimated_distance === 'number'
                         ? `${trackingData.tracking.estimated_distance.toFixed(1)} km`
                         : '-'
                       }
@@ -709,12 +713,42 @@ const TrackingPage = () => {
                       <span>🛣️ Mengikuti jalan yang sebenarnya</span>
                     </div>
                   )}
+                  {isRealTime && trafficInfo && (
+                    <div className="info-row">
+                      <span>Status Traffic:</span>
+                      <span className={`traffic-status ${trafficInfo.trafficLevel}`}>
+                        {trafficInfo.trafficLevel === 'heavy' ? '🔴 Macet' :
+                         trafficInfo.trafficLevel === 'moderate' ? '🟡 Sedang' : '🟢 Lancar'}
+                      </span>
+                    </div>
+                  )}
+                  {isRealTime && trafficInfo && trafficInfo.delayMinutes > 0 && (
+                    <div className="info-row">
+                      <span>Delay:</span>
+                      <span>+{trafficInfo.delayMinutes} menit ({trafficInfo.delayPercentage}%)</span>
+                    </div>
+                  )}
+                  {isRealTime && trafficInfo && (
+                    <div className="info-row">
+                      <span>Estimasi Real-time:</span>
+                      <span>{trafficInfo.durationInTraffic}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Chat Modal */}
+      {selectedSession && (
+        <Chat
+          rujukanId={selectedSession.rujukan_id}
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+        />
+      )}
     </Layout>
   );
 };

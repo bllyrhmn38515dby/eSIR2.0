@@ -34,6 +34,7 @@ import NotFoundPage from './components/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/ToastContainer';
 import DesignSystemDemo from './components/examples/DesignSystemDemo';
+import 'leaflet/dist/leaflet.css';
 // import PWAInstall from './components/PWAInstall'; // DISABLED
 import './App.css';
 import './styles/design-system.css';

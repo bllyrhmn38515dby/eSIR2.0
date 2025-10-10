@@ -30,8 +30,16 @@ const NotificationBell = () => {
   };
 
   const formatTime = (timestamp) => {
+    if (!timestamp) return 'Waktu tidak tersedia';
+    
     const now = new Date();
     const notificationTime = new Date(timestamp);
+    
+    // Check if timestamp is valid
+    if (isNaN(notificationTime.getTime())) {
+      return 'Waktu tidak tersedia';
+    }
+    
     const diffInMinutes = Math.floor((now - notificationTime) / (1000 * 60));
 
     if (diffInMinutes < 1) return 'Baru saja';
@@ -43,9 +51,10 @@ const NotificationBell = () => {
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'rujukan-baru':
-        return '📋';
+        return '📢';
       case 'status-update':
-        return '🔄';
+      case 'tracking-update':
+        return '🔔';
       default:
         return '🔔';
     }

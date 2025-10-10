@@ -1,0 +1,174 @@
+# VISUALISASI USER PERSONA - SISTEM RUJUKAN ONLINE eSIR 2.0
+
+## Gambar 4.X: Visualisasi User Persona
+
+### 1. Diagram Karakteristik Visual Persona
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    USER PERSONA OVERVIEW                       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        PERSONA 1: SPGDT         │    │        PERSONA 2: TIM PSC       │
+│                                 │    │                                 │
+│  👩‍⚕️ Sarah - Koordinator Rujukan  │    │  👨‍⚕️ Budi - Input Data Pasien   │
+│                                 │    │                                 │
+│  📊 Demografi:                  │    │  📊 Demografi:                  │
+│  • Usia: 28-35 tahun            │    │  • Usia: 25-40 tahun            │
+│  • Pengalaman: 3-5 tahun        │    │  • Pengalaman: 2-4 tahun        │
+│  • Posisi: SPGDT                │    │  • Posisi: Tim PSC             │
+│                                 │    │                                 │
+│  🎯 Fokus Utama:                │    │  🎯 Fokus Utama:                │
+│  Koordinasi & Komunikasi        │    │  Input Data & Navigasi          │
+│                                 │    │                                 │
+│  📱 Platform: Desktop + Mobile  │    │  📱 Platform: Desktop + Tablet  │
+│  ⏰ Frekuensi: 15-20x/hari      │    │  ⏰ Frekuensi: 10-15x/hari      │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+```
+
+### 2. Diagram Kebutuhan dan Pain Points
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    NEEDS & PAIN POINTS ANALYSIS                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        PERSONA 1: SPGDT         │    │        PERSONA 2: TIM PSC       │
+│                                 │    │                                 │
+│  ✅ KEBUTUHAN UTAMA:            │    │  ✅ KEBUTUHAN UTAMA:            │
+│                                 │    │                                 │
+│  🔄 Sistem tracking real-time  │    │  📝 Form input user-friendly    │
+│  🔔 Notifikasi otomatis         │    │  🧭 Navigasi intuitif          │
+│  📊 Dashboard koordinasi        │    │  ✅ Validasi data otomatis      │
+│  💬 Komunikasi efisien          │    │  📈 Dashboard informatif        │
+│                                 │    │                                 │
+│  ❌ PAIN POINTS:                │    │  ❌ PAIN POINTS:                │
+│                                 │    │                                 │
+│  🔍 Sulit melacak status        │    │  📄 Form terlalu panjang        │
+│  📞 Komunikasi tidak real-time  │    │  🌀 Navigasi membingungkan     │
+│  📊 Informasi tidak akurat      │    │  ❌ Sering terjadi kesalahan    │
+│  ⏰ Koordinasi tidak efisien    │    │  🖥️ Interface tidak intuitif    │
+│                                 │    │                                 │
+│  🎯 PRIORITAS:                  │    │  🎯 PRIORITAS:                  │
+│  Efisiensi koordinasi           │    │  Kemudahan input data           │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+```
+
+### 3. Diagram User Journey Mapping
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    USER JOURNEY OVERVIEW                       │
+└─────────────────────────────────────────────────────────────────┘
+
+SPGDT JOURNEY:                    TIM PSC JOURNEY:
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│ 1. 📞 Terima permintaan rujukan  │    │ 1. 📝 Buka sistem                │
+│ 2. 🔍 Cek ketersediaan faskes    │    │ 2. 📋 Isi form data pasien      │
+│ 3. 📤 Kirim rujukan             │    │ 3. ✅ Validasi data             │
+│ 4. 🔔 Tunggu konfirmasi          │    │ 4. 📤 Submit rujukan            │
+│ 5. 📊 Update status              │    │ 5. 📊 Monitor status            │
+│ 6. 🚑 Koordinasi ambulans       │    │ 6. 📝 Update informasi           │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+```
+
+### 4. Diagram Empati Mapping
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        EMPATHY MAPPING                         │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────┐    ┌─────────────────────────────────┐
+│        PERSONA 1: SPGDT         │    │        PERSONA 2: TIM PSC       │
+│                                 │    │                                 │
+│  💭 THINK & FEEL:               │    │  💭 THINK & FEEL:               │
+│  "Saya perlu sistem yang cepat" │    │  "Form ini terlalu rumit"       │
+│  "Koordinasi harus efisien"     │    │  "Saya sering salah input"      │
+│  "Informasi harus akurat"       │    │  "Navigasi membingungkan"       │
+│                                 │    │                                 │
+│  👀 SEE:                        │    │  👀 SEE:                        │
+│  • Dashboard yang kompleks      │    │  • Form yang panjang            │
+│  • Status yang tidak update     │    │  • Menu yang tidak jelas        │
+│  • Komunikasi yang lambat       │    │  • Error yang sering muncul     │
+│                                 │    │                                 │
+│  👂 HEAR:                       │    │  👂 HEAR:                       │
+│  "Kapan statusnya update?"      │    │  "Form ini susah diisi"        │
+│  "Ambulans sudah sampai?"       │    │  "Menu mana yang benar?"        │
+│  "Faskes tujuan siap?"          │    │  "Kenapa sering error?"         │
+│                                 │    │                                 │
+│  🗣️ SAY & DO:                   │    │  🗣️ SAY & DO:                   │
+│  "Cek status terus-menerus"     │    │  "Isi form dengan hati-hati"    │
+│  "Hubungi faskes manual"        │    │  "Klik menu berkali-kali"       │
+│  "Update status manual"         │    │  "Koreksi input berulang"       │
+│                                 │    │                                 │
+│  😰 PAIN:                       │    │  😰 PAIN:                       │
+│  • Sistem lambat                │    │  • Form rumit                   │
+│  • Informasi tidak real-time    │    │  • Navigasi membingungkan       │
+│  • Koordinasi tidak efisien     │    │  • Sering terjadi kesalahan     │
+│                                 │    │                                 │
+│  🎯 GAIN:                       │    │  🎯 GAIN:                       │
+│  • Koordinasi yang efisien      │    │  • Input data yang mudah        │
+│  • Informasi real-time          │    │  • Navigasi yang intuitif       │
+│  • Sistem yang responsif        │    │  • Sistem yang user-friendly   │
+└─────────────────────────────────┘    └─────────────────────────────────┘
+```
+
+### 5. Diagram Prioritas Fitur
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FEATURE PRIORITY MATRIX                     │
+└─────────────────────────────────────────────────────────────────┘
+
+HIGH PRIORITY (Must Have):
+┌─────────────────────────────────────────────────────────────────┐
+│ 🔄 Real-time tracking    📝 User-friendly forms                │
+│ 🔔 Auto notifications    🧭 Intuitive navigation              │
+│ 📊 Coordination dashboard ✅ Auto validation                  │
+└─────────────────────────────────────────────────────────────────┘
+
+MEDIUM PRIORITY (Should Have):
+┌─────────────────────────────────────────────────────────────────┐
+│ 📱 Mobile optimization   📈 Informative dashboard              │
+│ 🌙 Dark mode            🔍 Global search                       │
+│ 💾 Auto-save            📊 Analytics & reporting              │
+└─────────────────────────────────────────────────────────────────┘
+
+LOW PRIORITY (Nice to Have):
+┌─────────────────────────────────────────────────────────────────┐
+│ 🎨 Custom themes        🔗 System integration                  │
+│ 📚 Help documentation   🎯 Advanced analytics                  │
+│ 🔧 Customization tools  📱 Offline capability                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## PANDUAN UNTUK MEMBUAT DIAGRAM VISUAL:
+
+### 1. Tools yang Direkomendasikan:
+- **Figma** (Gratis, mudah digunakan)
+- **Draw.io** (Gratis, online)
+- **Lucidchart** (Berbayar, profesional)
+- **Canva** (Gratis, template siap pakai)
+
+### 2. Elemen Visual yang Perlu Ditambahkan:
+- **Foto/Ikon**: Representasi visual persona
+- **Warna**: Skema warna yang konsisten
+- **Typography**: Font yang mudah dibaca
+- **Layout**: Struktur yang jelas dan terorganisir
+
+### 3. Template yang Bisa Digunakan:
+- User Persona Template
+- Empathy Map Template
+- User Journey Map Template
+- Feature Priority Matrix Template
+
+### 4. Tips Desain:
+- Gunakan warna yang kontras untuk readability
+- Tambahkan ikon untuk setiap kategori
+- Buat layout yang simetris dan seimbang
+- Gunakan spacing yang konsisten
+
+Diagram ini akan menjadi **Gambar 4.X** dalam skripsi Anda dan akan mendukung pembahasan User Persona yang telah dibuat sebelumnya.

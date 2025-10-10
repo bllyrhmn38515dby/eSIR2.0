@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
-import DriverLayout from '../components/DriverLayout';
+import Layout from '../components/Layout';
+import Chat from '../components/Chat';
 import './DriverDashboard.css';
 
 const DriverDashboard = () => {
@@ -14,6 +15,7 @@ const DriverDashboard = () => {
   const [trackingStatus, setTrackingStatus] = useState('menunggu');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   const watchId = useRef(null);
   const intervalId = useRef(null);
@@ -248,19 +250,19 @@ const DriverDashboard = () => {
 
   if (error && !user) {
     return (
-      <DriverLayout>
+      <Layout>
         <div className="driver-dashboard">
           <div className="error-container">
             <h2>❌ Akses Ditolak</h2>
             <p>{error}</p>
           </div>
         </div>
-      </DriverLayout>
+      </Layout>
     );
   }
 
   return (
-    <DriverLayout>
+    <Layout>
       <div className="driver-dashboard">
         <div className="dashboard-header">
           <h1>🚑 Dashboard Sopir Ambulans</h1>
@@ -352,6 +354,13 @@ const DriverDashboard = () => {
               <div className="panel-header">
                 <h3>📍 Tracking Aktif</h3>
                 <span className="session-token">Token: {selectedSession.session_token}</span>
+                <button
+                  className="chat-btn"
+                  onClick={() => setIsChatOpen(true)}
+                  title="Buka Chat"
+                >
+                  💬 Chat
+                </button>
               </div>
               
               <div className="tracking-info">
@@ -420,9 +429,17 @@ const DriverDashboard = () => {
               </div>
             </div>
           )}
+
+          {isChatOpen && selectedSession && (
+            <Chat
+              rujukanId={selectedSession.rujukan_id}
+              isOpen={isChatOpen}
+              onClose={() => setIsChatOpen(false)}
+            />
+          )}
         </div>
       </div>
-    </DriverLayout>
+    </Layout>
   );
 };
 

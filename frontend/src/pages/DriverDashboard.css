@@ -1,66 +1,92 @@
-/* Driver Dashboard Styles */
-.driver-dashboard {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* === Base Styles === */
+:root {
+  --bg-light: #f3f4f6;
+  --bg-white: #ffffff;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #10b981;
+  --success-hover: #059669;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --border: #e5e7eb;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radius: 8px;
+  --font-main: 'Inter', sans-serif;
 }
 
+/* === Layout === */
+.driver-dashboard {
+  min-height: 100vh;
+  background: var(--bg-light);
+  padding: 20px;
+  font-family: var(--font-main);
+}
+
+/* === Header === */
 .dashboard-header {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
+  background: var(--bg-white);
+  border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  border: 1px solid var(--border);
 }
 
 .dashboard-header h1 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 2rem;
-  font-weight: 700;
+  color: var(--text-dark);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
+/* === User Info === */
 .user-info {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .user-info span {
-  background: #f8f9fa;
-  padding: 8px 15px;
-  border-radius: 20px;
+  background: #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-weight: 500;
-  color: #495057;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
+/* === Status Indicator === */
 .status-indicator {
   font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
 }
 
 .status-indicator.tracking {
-  background: #d4edda !important;
-  color: #155724 !important;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .status-indicator.idle {
-  background: #f8d7da !important;
-  color: #721c24 !important;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
+/* === Error Section === */
 .error-container {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 15px;
   padding: 40px;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
 }
 
@@ -90,6 +116,7 @@
   padding: 5px;
 }
 
+/* === Dashboard Content === */
 .dashboard-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -97,101 +124,75 @@
   height: calc(100vh - 200px);
 }
 
-@media (max-width: 1200px) {
-  .dashboard-content {
-    grid-template-columns: 1fr;
-    height: auto;
-  }
-}
-
 .sessions-panel,
 .tracking-panel {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
+  background: var(--bg-white);
+  border-radius: var(--radius);
   padding: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow);
   overflow-y: auto;
+  border: 1px solid var(--border);
 }
 
+/* === Panel Header === */
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #e9ecef;
+  border-bottom: 1px solid var(--border);
 }
 
 .panel-header h3 {
   margin: 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
+  color: var(--text-dark);
+  font-size: 1.3rem;
   font-weight: 600;
 }
 
 .panel-header button {
-  background: #007bff;
+  background: var(--primary);
   color: white;
   border: none;
-  padding: 8px 15px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
 }
 
 .panel-header button:hover:not(:disabled) {
-  background: #0056b3;
-  transform: translateY(-2px);
+  background: var(--primary-hover);
 }
 
 .panel-header button:disabled {
-  background: #6c757d;
+  background: #9ca3af;
   cursor: not-allowed;
 }
 
-.session-token {
-  background: #e9ecef;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 0.8rem;
-  color: #6c757d;
-  font-family: monospace;
-}
-
-.sessions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.no-sessions {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6c757d;
-  font-size: 1.1rem;
-}
-
+/* === Session Cards === */
 .session-card {
-  background: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: relative;
+  box-shadow: var(--shadow);
 }
 
 .session-card:hover {
-  border-color: #007bff;
+  border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
 }
 
 .session-card.selected {
-  border-color: #28a745;
-  background: #d4edda;
+  border-color: var(--success);
+  background: #f0fdf4;
 }
 
 .session-card.selected::before {
@@ -199,30 +200,35 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background: #28a745;
+  background: var(--success);
   color: white;
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  font-size: 0.8rem;
 }
 
+/* === Session Info === */
 .session-info h4 {
   margin: 0 0 10px 0;
-  color: #2c3e50;
-  font-size: 1.2rem;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
 .session-info p {
   margin: 5px 0;
-  color: #495057;
-  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
-.status-badge {
+/* === Badges === */
+.status-badge,
+.transport-badge {
   display: inline-block;
   padding: 4px 8px;
   border-radius: 12px;
@@ -233,62 +239,52 @@
 }
 
 .transport-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-left: 8px;
   background: linear-gradient(135deg, #667eea, #764ba2);
 }
 
+/* === Session Actions === */
 .session-actions {
   margin-top: 15px;
   display: flex;
   gap: 10px;
 }
 
-.start-btn {
-  background: #28a745;
-  color: white;
+.start-btn,
+.stop-btn {
   border: none;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  font-weight: 500;
   flex: 1;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.start-btn {
+  background: var(--success);
+  color: white;
 }
 
 .start-btn:hover {
-  background: #218838;
-  transform: translateY(-2px);
+  background: var(--success-hover);
 }
 
 .stop-btn {
-  background: #dc3545;
+  background: var(--danger);
   color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  flex: 1;
 }
 
 .stop-btn:hover {
-  background: #c82333;
-  transform: translateY(-2px);
+  background: var(--danger-hover);
 }
 
 .session-actions button:disabled {
-  background: #6c757d;
+  background: #9ca3af;
   cursor: not-allowed;
-  transform: none;
 }
 
+/* === Tracking Info === */
 .tracking-info {
   display: flex;
   flex-direction: column;
@@ -298,28 +294,33 @@
 .location-info,
 .status-controls,
 .session-details {
-  background: #f8f9fa;
+  background: var(--bg-white);
   padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .location-info h4,
 .status-controls h4,
 .session-details h4 {
   margin: 0 0 15px 0;
-  color: #2c3e50;
-  font-size: 1.2rem;
+  color: var(--text-dark);
+  font-size: 1.1rem;
   font-weight: 600;
 }
 
 .location-data p {
   margin: 8px 0;
-  color: #495057;
+  color: var(--text-muted);
   font-family: monospace;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  background: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 4px;
 }
 
+/* === Status Buttons === */
 .status-buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -328,25 +329,367 @@
 
 .status-btn {
   border: none;
-  padding: 12px 15px;
-  border-radius: 8px;
+  padding: 10px 15px;
+  border-radius: 6px;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease;
+  font-size: 0.85rem;
+}
+
+/* === Base Styles === */
+:root {
+  --bg-light: #f3f4f6;
+  --bg-white: #ffffff;
+  --text-dark: #1f2937;
+  --text-muted: #6b7280;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --success: #10b981;
+  --success-hover: #059669;
+  --danger: #ef4444;
+  --danger-hover: #dc2626;
+  --border: #e5e7eb;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radius: 8px;
+  --font-main: 'Inter', sans-serif;
+}
+
+/* === Layout === */
+.driver-dashboard {
+  min-height: 100vh;
+  background: var(--bg-light);
+  padding: 20px;
+  font-family: var(--font-main);
+}
+
+/* === Header === */
+.dashboard-header {
+  background: var(--bg-white);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid var(--border);
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* === User Info === */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.user-info span {
+  background: #e5e7eb;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
-.status-btn:hover {
+/* === Status Indicator === */
+.status-indicator {
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.status-indicator.tracking {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-indicator.idle {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* === Error Section === */
+.error-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+
+.error-container h2 {
+  color: #e74c3c;
+  margin-bottom: 15px;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #f5c6cb;
+}
+
+.error-message button {
+  background: none;
+  border: none;
+  color: #721c24;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+}
+
+/* === Dashboard Content === */
+.dashboard-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  height: calc(100vh - 200px);
+}
+
+.sessions-panel,
+.tracking-panel {
+  background: var(--bg-white);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+}
+
+/* === Panel Header === */
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: var(--text-dark);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.panel-header button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.panel-header button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.panel-header button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* === Session Cards === */
+.session-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+
+.session-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.15);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.session-card.selected {
+  border-color: var(--success);
+  background: #f0fdf4;
+}
+
+.session-card.selected::before {
+  content: '✓';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--success);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+/* === Session Info === */
+.session-info h4 {
+  margin: 0 0 10px 0;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.session-info p {
+  margin: 5px 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* === Badges === */
+.status-badge,
+.transport-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.transport-badge {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+/* === Session Actions === */
+.session-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.start-btn,
+.stop-btn {
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  flex: 1;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.start-btn {
+  background: var(--success);
+  color: white;
+}
+
+.start-btn:hover {
+  background: var(--success-hover);
+}
+
+.stop-btn {
+  background: var(--danger);
+  color: white;
+}
+
+.stop-btn:hover {
+  background: var(--danger-hover);
+}
+
+.session-actions button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* === Tracking Info === */
+.tracking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.location-info,
+.status-controls,
+.session-details {
+  background: var(--bg-white);
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.location-info h4,
+.status-controls h4,
+.session-details h4 {
+  margin: 0 0 15px 0;
+  color: var(--text-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.location-data p {
+  margin: 8px 0;
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.85rem;
+  background: #e5e7eb;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+/* === Status Buttons === */
+.status-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.status-btn {
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.status-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
 }
 
 .status-btn.active {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
   transform: scale(1.05);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
+/* === Details Grid === */
 .details-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -355,8 +698,8 @@
 
 .details-grid div {
   padding: 8px 0;
-  border-bottom: 1px solid #e9ecef;
-  color: #495057;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
@@ -364,75 +707,83 @@
   border-bottom: none;
 }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .driver-dashboard {
-    padding: 10px;
-  }
-  
-  .dashboard-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-  
-  .dashboard-header h1 {
-    font-size: 1.5rem;
-  }
-  
-  .user-info {
-    justify-content: center;
-  }
-  
-  .dashboard-content {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .sessions-panel,
-  .tracking-panel {
-    padding: 15px;
-  }
-  
-  .status-buttons {
-    grid-template-columns: 1fr;
-  }
-  
-  .details-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Loading Animation */
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
+/* === Loading Animation === */
+@keyframes fadePulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
 .loading {
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: fadePulse 1.2s ease-in-out infinite;
 }
 
-/* Scrollbar Styling */
+/* === Scrollbar Styling === */
 .sessions-panel::-webkit-scrollbar,
 .tracking-panel::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .sessions-panel::-webkit-scrollbar-track,
 .tracking-panel::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 4px;
 }
 
 .sessions-panel::-webkit-scrollbar-thumb,
 .tracking-panel::-webkit-scrollbar-thumb {
   background: #c1c1c1;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .sessions-panel::-webkit-scrollbar-thumb:hover,
 .tracking-panel::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* === Mobile Responsive === */
+@media (max-width: 768px) {
+  .driver-dashboard {
+    padding: 10px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .user-info {
+    justify-content: center;
+  }
+
+  .dashboard-content {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    height: auto;
+  }
+
+  .sessions-panel,
+  .tracking-panel {
+    padding: 15px;
+  }
+
+  .status-buttons {
+    grid-template-columns: 1fr;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Large Screen Optimization === */
+@media (min-width: 1600px) {
+  .dashboard-content {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
 }

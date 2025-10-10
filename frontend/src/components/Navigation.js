@@ -43,7 +43,11 @@ const Navigation = () => {
   return (
     <nav className="navigation">
       <div className="nav-brand">
-        <h2>eSIR 2.0</h2>
+        <img 
+          src="/esir20vlogo.png" 
+          alt="eSIR 2.0 Logo" 
+          className="nav-logo"
+        />
       </div>
       
       <div className="nav-menu">

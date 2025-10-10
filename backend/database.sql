@@ -145,6 +145,18 @@ CREATE TABLE IF NOT EXISTS tracking_sessions (
     INDEX idx_active_sessions (is_active, rujukan_id)
 );
 
+-- Tabel chat_messages untuk sistem chat real-time
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    rujukan_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (rujukan_id) REFERENCES rujukan(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    INDEX idx_rujukan_created (rujukan_id, created_at)
+);
+
 -- Insert data awal untuk roles
 INSERT INTO roles (nama_role, deskripsi) VALUES
 ('admin_pusat', 'Administrator Pusat - Akses penuh ke semua fitur'),

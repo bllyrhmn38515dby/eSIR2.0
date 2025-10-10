@@ -1,0 +1,2 @@
+device_id,reference_device_id,pairs,error_mean_m,error_median_m,error_p95_m,time_offset_mean_s,time_offset_median_s,time_offset_p95_s
+MEDIC01,AMBULANCE01,71,7.049,7.091,14.376,0.0,0.0,0.0

@@ -9,6 +9,7 @@
   display: flex;
   flex: 1;
   position: relative;
+  margin-top: 70px; /* Account for fixed navbar height */
 }
 
 .main-content {
@@ -17,11 +18,11 @@
   max-width: 1200px;
   margin: 0 auto;
   transition: margin-left 0.3s ease;
-  min-height: calc(100vh - 70px); /* Adjust based on navigation height */
+  min-height: calc(100vh - 140px); /* Adjust for navbar (70px) + margin-top (70px) */
 }
 
 .main-content.sidebar-expanded {
-  margin-left: 280px;
+  margin-left: 240px;
 }
 
 .main-content.sidebar-collapsed {

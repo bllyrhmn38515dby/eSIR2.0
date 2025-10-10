@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
 const Sidebar = ({ collapsed = false, onToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
 
   const handleToggle = () => {
@@ -23,7 +25,7 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
     return location.pathname === path || location.pathname.startsWith(path);
   };
 
-  const menuItems = [
+  const fullMenuItems = [
     {
       section: 'Menu Utama',
       items: [
@@ -31,8 +33,9 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
         { path: '/pasien', icon: '👥', label: 'Pasien', key: 'pasien' },
         { path: '/faskes', icon: '🏥', label: 'Faskes', key: 'faskes' },
         { path: '/rujukan', icon: '📋', label: 'Rujukan', key: 'rujukan' },
-        { path: '/enhanced-rujukan', icon: '✨', label: 'Enhanced Rujukan', key: 'enhanced-rujukan' },
+        { path: '/rujukan-enhanced', icon: '✨', label: 'Enhanced Rujukan', key: 'rujukan-enhanced' },
         { path: '/tracking', icon: '📍', label: 'Tracking', key: 'tracking' },
+        { path: '/ambulance-tracker', icon: '🚑', label: 'Ambulance Tracker', key: 'ambulance-tracker' },
         { path: '/tempat-tidur', icon: '🛏️', label: 'Tempat Tidur', key: 'tempat-tidur' },
         { path: '/laporan', icon: '📊', label: 'Laporan', key: 'laporan' }
       ]
@@ -46,13 +49,25 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
     }
   ];
 
+  const driverMenuItems = [
+    {
+      section: 'Menu Utama',
+      items: [
+        { path: '/dashboard', icon: '🏠', label: 'Dashboard', key: 'dashboard' },
+        { path: '/ambulance-tracker', icon: '🚑', label: 'Ambulance Tracker', key: 'ambulance-tracker' },
+        { path: '/rujukan-enhanced', icon: '✨', label: 'Enhanced Rujukan', key: 'rujukan-enhanced' }
+      ]
+    }
+  ];
+
+  const menuItems = user?.role === 'sopir_ambulans' ? driverMenuItems : fullMenuItems;
+
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <div className="sidebar-brand">
-          <div className="brand-icon">🚑</div>
-          {!isCollapsed && <span className="brand-text">eSIR 2.0</span>}
+          {!isCollapsed && <span className="brand-text">Menu</span>}
         </div>
         <button 
           className="sidebar-toggle"
@@ -97,7 +112,7 @@ const Sidebar = ({ collapsed = false, onToggle }) => {
               <span className="version-text">v2.0.0</span>
             </div>
             <div className="copyright-info">
-              <span className="copyright-text">© 2024 eSIR</span>
+              <span className="copyright-text">© 2025 eSIR2.0</span>
             </div>
           </div>
         )}

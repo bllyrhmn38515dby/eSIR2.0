@@ -75,6 +75,8 @@ app.use('/api/search', searchRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/dokumen', dokumenRoutes);
 app.use('/api/routing', routingRoutes);
+const chatRoutes = require('./routes/chat');
+app.use('/api/chat', chatRoutes);
 
 // Socket.IO middleware for authentication
 io.use(async (socket, next) => {
@@ -133,6 +135,12 @@ io.on('connection', (socket) => {
 
   socket.on('join-tracking', (rujukanId) => {
     socket.join(`tracking-${rujukanId}`);
+  });
+
+  // New chat room join event
+  socket.on('join-chat', (rujukanId) => {
+    socket.join(`chat-${rujukanId}`);
+    console.log(`User ${socket.user?.nama_lengkap} joined chat room for rujukan ${rujukanId}`);
   });
 
   socket.on('disconnect', (reason) => {

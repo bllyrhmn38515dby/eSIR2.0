@@ -23,14 +23,26 @@ const server = http.createServer(app);
 // Socket.IO setup
 const io = socketIo(server, {
   cors: {
-    origin: ['http://localhost:3000', 'http://192.168.1.7:3000', 'http://192.168.1.2:3000'],
+    origin: [
+      'http://localhost:3000', 
+      'http://192.168.1.7:3000', 
+      'http://192.168.1.2:3000',
+      'https://esirv02.my.id',
+      'https://www.esirv02.my.id'
+    ],
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://192.168.1.7:3000', 'http://192.168.1.2:3000'],
+  origin: [
+    'http://localhost:3000', 
+    'http://192.168.1.7:3000', 
+    'http://192.168.1.2:3000',
+    'https://esirv02.my.id',
+    'https://www.esirv02.my.id'
+  ],
   credentials: true
 }));
 app.use(express.json());

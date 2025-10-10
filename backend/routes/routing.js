@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
+// Import konfigurasi routing permanen
+const ROUTING_CONFIG = require('../config/routing-config');
+
 // Konfigurasi API Keys (simpan di environment variables untuk production)
 const API_KEYS = {
   openRouteService: process.env.OPENROUTE_API_KEY || '5b3ce3597851110001cf6248c8b8b8b8',
@@ -14,13 +17,13 @@ const API_KEYS = {
 const getPreciseRoute = async (startLat, startLng, endLat, endLng) => {
   console.log('🗺️ Getting precise route from:', [startLat, startLng], 'to:', [endLat, endLng]);
   
-  // Try Google Directions API first (most accurate for real roads)
+  // Try Google Directions API first (most accurate for real roads with real-time traffic)
   if (API_KEYS.googleMaps) {
     try {
-      const route = await getGoogleDirectionsRoute(startLat, startLng, endLat, endLng);
-      if (route && route.length > 2) {
-        console.log('✅ Got route from Google Directions:', route.length, 'points');
-        return route;
+      const routeResult = await getGoogleDirectionsRoute(startLat, startLng, endLat, endLng);
+      if (routeResult && routeResult.coordinates && routeResult.coordinates.length > 2) {
+        console.log('✅ Got real-time route from Google Directions:', routeResult.coordinates.length, 'points');
+        return routeResult;
       }
     } catch (error) {
       console.error('❌ Google Directions failed:', error.message);
@@ -92,11 +95,13 @@ const getOpenRouteServiceRoute = async (startLat, startLng, endLat, endLng) => {
   return null;
 };
 
-// Google Directions API implementation
+// Google Directions API implementation dengan traffic real-time (PERMANENT CONFIG)
 const getGoogleDirectionsRoute = async (startLat, startLng, endLat, endLng) => {
-  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&key=${API_KEYS.googleMaps}`;
+  // Gunakan konfigurasi permanen untuk parameter Google Directions
+  const config = ROUTING_CONFIG.googleMaps.parameters;
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${startLat},${startLng}&destination=${endLat},${endLng}&key=${API_KEYS.googleMaps}&departure_time=${config.departure_time}&traffic_model=${config.traffic_model}&avoid=${config.avoid}&mode=${config.mode}`;
   
-  console.log('🌐 Calling Google Directions API:', url);
+  console.log('🌐 Calling Google Directions API with PERMANENT real-time traffic config');
   
   const response = await fetch(url);
   if (!response.ok) {
@@ -104,16 +109,57 @@ const getGoogleDirectionsRoute = async (startLat, startLng, endLat, endLng) => {
   }
   
   const data = await response.json();
-  console.log('📊 Google Directions response:', JSON.stringify(data, null, 2));
+  console.log('📊 Google Directions response with traffic data received');
   
   if (data.routes && data.routes[0] && data.routes[0].overview_polyline) {
     const polyline = data.routes[0].overview_polyline.points;
     const coordinates = decodePolyline(polyline);
-    console.log('✅ Got coordinates from Google Directions:', coordinates.length, 'points');
-    return coordinates;
+    
+    // Extract traffic information menggunakan konfigurasi permanen
+    const trafficInfo = extractTrafficInfo(data.routes[0]);
+    
+    console.log('✅ Got real-time route from Google Directions:', coordinates.length, 'points');
+    console.log('🚦 Traffic info:', trafficInfo);
+    
+    return {
+      coordinates,
+      trafficInfo,
+      isRealTime: ROUTING_CONFIG.googleMaps.features.realTimeTraffic
+    };
   }
   
   return null;
+};
+
+// Fungsi untuk mengekstrak informasi traffic
+const extractTrafficInfo = (route) => {
+  const trafficInfo = {
+    duration: route.legs[0].duration?.text || 'Unknown',
+    durationInTraffic: route.legs[0].duration_in_traffic?.text || 'Unknown',
+    distance: route.legs[0].distance?.text || 'Unknown',
+    trafficLevel: 'normal'
+  };
+  
+  // Hitung traffic level berdasarkan perbedaan duration
+  if (route.legs[0].duration && route.legs[0].duration_in_traffic) {
+    const normalDuration = route.legs[0].duration.value; // dalam detik
+    const trafficDuration = route.legs[0].duration_in_traffic.value; // dalam detik
+    const delay = trafficDuration - normalDuration;
+    const delayPercentage = (delay / normalDuration) * 100;
+    
+    if (delayPercentage > 50) {
+      trafficInfo.trafficLevel = 'heavy';
+    } else if (delayPercentage > 20) {
+      trafficInfo.trafficLevel = 'moderate';
+    } else {
+      trafficInfo.trafficLevel = 'light';
+    }
+    
+    trafficInfo.delayMinutes = Math.round(delay / 60);
+    trafficInfo.delayPercentage = Math.round(delayPercentage);
+  }
+  
+  return trafficInfo;
 };
 
 // Mapbox implementation
@@ -438,14 +484,31 @@ router.post('/precise-route', async (req, res) => {
       parseFloat(endLng)
     );
     
-    if (route && route.length > 0) {
+    if (route && route.coordinates && route.coordinates.length > 0) {
+      console.log('✅ Precise route generated with', route.coordinates.length, 'points');
+      res.json({
+        success: true,
+        data: {
+          coordinates: route.coordinates,
+          pointCount: route.coordinates.length,
+          distance: calculateRouteDistance(route.coordinates),
+          trafficInfo: route.trafficInfo || null,
+          isRealTime: route.isRealTime || false,
+          apiProvider: route.trafficInfo ? 'Google Directions API (Real-time)' : 'OpenRouteService'
+        }
+      });
+    } else if (route && Array.isArray(route) && route.length > 0) {
+      // Fallback untuk format lama
       console.log('✅ Precise route generated with', route.length, 'points');
       res.json({
         success: true,
         data: {
           coordinates: route,
           pointCount: route.length,
-          distance: calculateRouteDistance(route)
+          distance: calculateRouteDistance(route),
+          trafficInfo: null,
+          isRealTime: false,
+          apiProvider: 'OpenRouteService'
         }
       });
     } else {
@@ -455,7 +518,10 @@ router.post('/precise-route', async (req, res) => {
         data: {
           coordinates: [[startLat, startLng], [endLat, endLng]],
           pointCount: 2,
-          distance: calculateDistance(startLat, startLng, endLat, endLng)
+          distance: calculateDistance(startLat, startLng, endLat, endLng),
+          trafficInfo: null,
+          isRealTime: false,
+          apiProvider: 'Fallback'
         }
       });
     }
