@@ -75,20 +75,27 @@ router.get('/global', verifyToken, async (req, res) => {
     // Search healthcare facilities
     if (!type || type === 'faskes') {
       const [facilities] = await db.execute(`
-        SELECT 
+        SELECT DISTINCT
           f.id,
           f.nama_faskes,
           f.tipe as tipe_faskes,
           f.alamat,
           f.telepon,
+          f.latitude,
+          f.longitude,
+          GROUP_CONCAT(s.nama_spesialisasi SEPARATOR ', ') as spesialisasi,
           'faskes' as entity_type
         FROM faskes f
+        LEFT JOIN faskes_spesialisasi fs ON f.id = fs.faskes_id
+        LEFT JOIN spesialisasi s ON fs.spesialisasi_id = s.id
         WHERE f.nama_faskes LIKE ? 
            OR f.alamat LIKE ? 
            OR f.telepon LIKE ?
+           OR s.nama_spesialisasi LIKE ?
+        GROUP BY f.id, f.nama_faskes, f.tipe, f.alamat, f.telepon, f.latitude, f.longitude
         ORDER BY f.nama_faskes
         LIMIT ?
-      `, [searchQuery, searchQuery, searchQuery, parseInt(limit)]);
+      `, [searchQuery, searchQuery, searchQuery, searchQuery, parseInt(limit)]);
       
       results.faskes = facilities;
     }
@@ -354,6 +361,111 @@ router.get('/rujukan', verifyToken, async (req, res) => {
   }
 });
 
+// Advanced faskes search with multiple filters
+router.get('/faskes', verifyToken, async (req, res) => {
+  try {
+    const {
+      query = '',
+      tipe = '',
+      spesialisasi = '',
+      alamat = '',
+      sort_by = 'nama_faskes',
+      sort_order = 'ASC',
+      page = 1,
+      limit = 20
+    } = req.query;
+
+    let whereConditions = [];
+    let queryParams = [];
+
+    // Query text search
+    if (query) {
+      whereConditions.push(`(
+        f.nama_faskes LIKE ? 
+        OR f.alamat LIKE ? 
+        OR f.telepon LIKE ?
+        OR s.nama_spesialisasi LIKE ?
+      )`);
+      const searchQuery = `%${query}%`;
+      queryParams.push(searchQuery, searchQuery, searchQuery, searchQuery);
+    }
+
+    // Filter by tipe
+    if (tipe) {
+      whereConditions.push('f.tipe = ?');
+      queryParams.push(tipe);
+    }
+
+    // Filter by spesialisasi
+    if (spesialisasi) {
+      whereConditions.push('s.nama_spesialisasi LIKE ?');
+      queryParams.push(`%${spesialisasi}%`);
+    }
+
+    // Filter by alamat
+    if (alamat) {
+      whereConditions.push('f.alamat LIKE ?');
+      queryParams.push(`%${alamat}%`);
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    // Count total results
+    const [countResult] = await db.execute(`
+      SELECT COUNT(DISTINCT f.id) as total
+      FROM faskes f
+      LEFT JOIN faskes_spesialisasi fs ON f.id = fs.faskes_id
+      LEFT JOIN spesialisasi s ON fs.spesialisasi_id = s.id
+      ${whereClause}
+    `, queryParams);
+
+    const total = countResult[0].total;
+
+    // Get paginated results
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    queryParams.push(parseInt(limit), offset);
+
+    const [facilities] = await db.execute(`
+      SELECT DISTINCT
+        f.id,
+        f.nama_faskes,
+        f.tipe as tipe_faskes,
+        f.alamat,
+        f.telepon,
+        f.latitude,
+        f.longitude,
+        GROUP_CONCAT(DISTINCT s.nama_spesialisasi ORDER BY s.nama_spesialisasi SEPARATOR ', ') as spesialisasi,
+        COUNT(DISTINCT s.id) as jumlah_spesialisasi
+      FROM faskes f
+      LEFT JOIN faskes_spesialisasi fs ON f.id = fs.faskes_id
+      LEFT JOIN spesialisasi s ON fs.spesialisasi_id = s.id
+      ${whereClause}
+      GROUP BY f.id, f.nama_faskes, f.tipe, f.alamat, f.telepon, f.latitude, f.longitude
+      ORDER BY ${sort_by} ${sort_order}
+      LIMIT ? OFFSET ?
+    `, queryParams);
+
+    res.json({
+      success: true,
+      data: {
+        facilities,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          total_pages: Math.ceil(total / parseInt(limit))
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error advanced faskes search:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal melakukan pencarian faskes'
+    });
+  }
+});
+
 // Advanced bed search with multiple filters
 router.get('/tempat-tidur', verifyToken, async (req, res) => {
   try {
@@ -538,6 +650,28 @@ router.get('/autocomplete/:type', verifyToken, async (req, res) => {
           LIMIT ?
         `, [searchQuery, searchQuery, parseInt(limit)]);
         suggestions = referrals;
+        break;
+
+      case 'spesialisasi':
+        const [specializations] = await db.execute(`
+          SELECT 
+            s.id,
+            s.nama_spesialisasi as label,
+            s.deskripsi as subtitle,
+            s.nama_spesialisasi as display_text,
+            COUNT(fs.faskes_id) as jumlah_faskes
+          FROM spesialisasi s
+          LEFT JOIN faskes_spesialisasi fs ON s.id = fs.spesialisasi_id
+          WHERE s.nama_spesialisasi LIKE ?
+          GROUP BY s.id, s.nama_spesialisasi, s.deskripsi
+          ORDER BY jumlah_faskes DESC, s.nama_spesialisasi
+          LIMIT ?
+        `, [searchQuery, parseInt(limit)]);
+        suggestions = specializations.map(s => ({
+          ...s,
+          subtitle: s.jumlah_faskes > 0 ? `${s.jumlah_faskes} faskes tersedia` : 'Belum ada faskes',
+          display_text: s.label
+        }));
         break;
 
       default:

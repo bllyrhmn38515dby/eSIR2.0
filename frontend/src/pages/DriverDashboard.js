@@ -378,6 +378,17 @@ const DriverDashboard = () => {
                   )}
                 </div>
 
+                {/* Tombol aksi cepat saat tiba di lokasi pasien */}
+                <div className="arrived-actions">
+                  <button
+                    className="status-btn arrived"
+                    onClick={() => updateStatus('dijemput')}
+                    style={{ backgroundColor: getStatusColor('dijemput') }}
+                  >
+                    ✅ Sudah sampai lokasi pasien
+                  </button>
+                </div>
+
                 <div className="status-controls">
                   <h4>🎛️ Kontrol Status</h4>
                   <div className="status-buttons">

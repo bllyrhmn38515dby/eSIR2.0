@@ -525,6 +525,14 @@ const AmbulanceTracker = () => {
             {isTracking && (
               <div className="status-controls">
                 <h3>📊 Status Kontrol</h3>
+                <div className="arrived-actions" style={{ marginBottom: '10px' }}>
+                  <button 
+                    onClick={() => updateStatus('dijemput')}
+                    className="status-btn dijemput"
+                  >
+                    ✅ Sudah sampai lokasi pasien
+                  </button>
+                </div>
                 <div className="status-buttons">
                   <button 
                     onClick={() => updateStatus('menunggu')}

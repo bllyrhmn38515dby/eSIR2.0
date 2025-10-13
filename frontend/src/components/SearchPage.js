@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Layout from './Layout';
 import './SearchPage.css';
 
 const SearchPage = () => {
@@ -20,7 +21,9 @@ const SearchPage = () => {
     tanggal_akhir: '',
     diagnosa: '',
     tipe_kamar: '',
-    tersedia: ''
+    tersedia: '',
+    tipe: '',
+    spesialisasi: ''
   });
 
   // Advanced search filters
@@ -30,6 +33,10 @@ const SearchPage = () => {
     page: 1,
     limit: 20
   });
+
+  // Autocomplete states
+  const [spesialisasiSuggestions, setSpesialisasiSuggestions] = useState([]);
+  const [showSpesialisasiSuggestions, setShowSpesialisasiSuggestions] = useState(false);
 
   const handleGlobalSearch = async () => {
     if (!searchQuery.trim() || searchQuery.length < 2) {
@@ -125,7 +132,9 @@ const SearchPage = () => {
       tanggal_akhir: '',
       diagnosa: '',
       tipe_kamar: '',
-      tersedia: ''
+      tersedia: '',
+      tipe: '',
+      spesialisasi: ''
     });
     setAdvancedFilters({
       sort_by: 'nama_pasien',
@@ -133,6 +142,42 @@ const SearchPage = () => {
       page: 1,
       limit: 20
     });
+  };
+
+  // Autocomplete functions
+  const fetchSpesialisasiSuggestions = async (query) => {
+    if (query.length < 2) {
+      setSpesialisasiSuggestions([]);
+      setShowSpesialisasiSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/search/autocomplete/spesialisasi?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        setSpesialisasiSuggestions(data.data);
+        setShowSpesialisasiSuggestions(true);
+      }
+    } catch (error) {
+      console.error('Error fetching spesialisasi suggestions:', error);
+    }
+  };
+
+  const handleSpesialisasiInputChange = (e) => {
+    const value = e.target.value;
+    setFilters(prev => ({ ...prev, spesialisasi: value }));
+    fetchSpesialisasiSuggestions(value);
+  };
+
+  const selectSpesialisasi = (spesialisasi) => {
+    setFilters(prev => ({ ...prev, spesialisasi: spesialisasi.nama_spesialisasi }));
+    setShowSpesialisasiSuggestions(false);
   };
 
   const renderGlobalSearchResults = () => {
@@ -203,7 +248,7 @@ const SearchPage = () => {
   };
 
   const renderAdvancedSearchResults = () => {
-    const data = searchResults.patients || searchResults.referrals || searchResults.beds;
+    const data = searchResults.patients || searchResults.referrals || searchResults.beds || searchResults.facilities;
     const pagination = searchResults.pagination;
 
     if (!data) return null;
@@ -255,6 +300,16 @@ const SearchPage = () => {
                     <th>Pasien</th>
                   </>
                 )}
+                {activeTab === 'faskes' && (
+                  <>
+                    <th>Nama Faskes</th>
+                    <th>Tipe</th>
+                    <th>Alamat</th>
+                    <th>Telepon</th>
+                    <th>Spesialisasi</th>
+                    <th>Jumlah Spesialisasi</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -290,6 +345,33 @@ const SearchPage = () => {
                       <td>{item.tipe_kamar}</td>
                       <td><span className={`status-${item.status}`}>{item.status}</span></td>
                       <td>{item.nama_pasien || '-'}</td>
+                    </>
+                  )}
+                  {activeTab === 'faskes' && (
+                    <>
+                      <td>{item.nama_faskes}</td>
+                      <td>{item.tipe_faskes}</td>
+                      <td>{item.alamat}</td>
+                      <td>{item.telepon}</td>
+                      <td>
+                        <div className="spesialisasi-list">
+                          {item.spesialisasi ? (
+                            item.spesialisasi.split(', ').slice(0, 3).map((spec, idx) => (
+                              <span key={idx} className="spesialisasi-tag">
+                                {spec}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="no-spec">Tidak ada data</span>
+                          )}
+                          {item.spesialisasi && item.spesialisasi.split(', ').length > 3 && (
+                            <span className="more-spec">
+                              +{item.spesialisasi.split(', ').length - 3} lainnya
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td>{item.jumlah_spesialisasi || 0}</td>
                     </>
                   )}
                 </tr>
@@ -487,6 +569,69 @@ const SearchPage = () => {
           </div>
         )}
 
+        {activeTab === 'faskes' && (
+          <div className="filter-group">
+            <div className="filter-row">
+              <div className="filter-item">
+                <label>Tipe Faskes:</label>
+                <select 
+                  value={filters.tipe} 
+                  onChange={(e) => setFilters(prev => ({ ...prev, tipe: e.target.value }))}
+                >
+                  <option value="">Semua</option>
+                  <option value="RSUD">RSUD</option>
+                  <option value="RS Swasta">RS Swasta</option>
+                  <option value="Puskesmas">Puskesmas</option>
+                  <option value="Klinik">Klinik</option>
+                </select>
+              </div>
+              <div className="filter-item">
+                <label>Alamat:</label>
+                <input 
+                  type="text" 
+                  value={filters.alamat}
+                  onChange={(e) => setFilters(prev => ({ ...prev, alamat: e.target.value }))}
+                  placeholder="Masukkan alamat"
+                />
+              </div>
+            </div>
+            <div className="filter-item">
+              <label>Spesialisasi:</label>
+              <div className="autocomplete-container">
+                <input 
+                  type="text" 
+                  value={filters.spesialisasi}
+                  onChange={handleSpesialisasiInputChange}
+                  onFocus={() => {
+                    if (filters.spesialisasi.length >= 2) {
+                      setShowSpesialisasiSuggestions(true);
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay hiding to allow click on suggestion
+                    setTimeout(() => setShowSpesialisasiSuggestions(false), 200);
+                  }}
+                  placeholder="Cari spesialisasi (contoh: Bedah, Jantung, Paru)"
+                />
+                {showSpesialisasiSuggestions && spesialisasiSuggestions.length > 0 && (
+                  <div className="autocomplete-suggestions">
+                    {spesialisasiSuggestions.map((spesialisasi, index) => (
+                      <div 
+                        key={index}
+                        className="suggestion-item"
+                        onClick={() => selectSpesialisasi(spesialisasi)}
+                      >
+                        <div className="suggestion-label">{spesialisasi.label}</div>
+                        <div className="suggestion-subtitle">{spesialisasi.subtitle}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="filter-actions">
           <button onClick={clearFilters} className="clear-filters-btn">
             Bersihkan Filter
@@ -497,11 +642,12 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="search-page">
-      <div className="search-header">
-        <h1>🔍 Pencarian</h1>
-        <p>Cari data pasien, rujukan, faskes, dan tempat tidur dengan mudah</p>
-      </div>
+    <Layout>
+      <div className="search-page">
+        <div className="search-header">
+          <h1>🔍 Pencarian</h1>
+          <p>Cari data pasien, rujukan, faskes, dan tempat tidur dengan mudah</p>
+        </div>
 
       <div className="search-container">
         <div className="search-tabs">
@@ -582,7 +728,8 @@ const SearchPage = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

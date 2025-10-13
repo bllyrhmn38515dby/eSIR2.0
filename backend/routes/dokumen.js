@@ -145,7 +145,7 @@ router.post('/upload', verifyToken, uploadSingle, async (req, res) => {
       fileInfo.path,
       deskripsi || null,
       kategori || 'lainnya',
-      req.user.userId
+      req.user.id
     ]);
 
     // Log upload activity
@@ -154,7 +154,7 @@ router.post('/upload', verifyToken, uploadSingle, async (req, res) => {
       VALUES (?, ?, ?, ?, ?)
     `, [
       result.insertId,
-      req.user.userId,
+      req.user.id,
       'upload',
       req.ip,
       req.get('User-Agent')
@@ -193,6 +193,9 @@ router.post('/upload', verifyToken, uploadSingle, async (req, res) => {
 
   } catch (error) {
     console.error('Error uploading dokumen:', error);
+    if (error && error.code) console.error('DB Error code:', error.code);
+    if (error && error.sqlMessage) console.error('DB SQL message:', error.sqlMessage);
+    if (error && error.stack) console.error(error.stack);
     
     // Delete uploaded file if exists
     if (req.file && fs.existsSync(req.file.path)) {
@@ -201,7 +204,12 @@ router.post('/upload', verifyToken, uploadSingle, async (req, res) => {
     
     res.status(500).json({
       success: false,
-      message: 'Gagal mengupload dokumen'
+      message: 'Gagal mengupload dokumen',
+      ...(process.env.NODE_ENV !== 'production' ? {
+        error: error?.message,
+        sqlMessage: error?.sqlMessage,
+        code: error?.code
+      } : {})
     });
   }
 });
@@ -389,7 +397,7 @@ router.get('/:id/download', verifyToken, async (req, res) => {
       VALUES (?, ?, ?, ?, ?)
     `, [
       id,
-      req.user.userId,
+      req.user.id,
       'download',
       req.ip,
       req.get('User-Agent')
@@ -414,10 +422,9 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
     // Get dokumen data
     const [dokumenRows] = await db.execute(`
-      SELECT d.*, r.faskes_asal_id, r.faskes_tujuan_id, u.role as user_role
+      SELECT d.*, r.faskes_asal_id, r.faskes_tujuan_id
       FROM dokumen d
       LEFT JOIN rujukan r ON d.rujukan_id = r.id
-      LEFT JOIN users u ON d.uploaded_by = u.id
       WHERE d.id = ?
     `, [id]);
 
@@ -431,7 +438,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
     const dokumen = dokumenRows[0];
 
     // Check permission - only uploader or admin can delete
-    if (dokumen.uploaded_by != req.user.userId && req.user.role !== 'admin_pusat') {
+    if (dokumen.uploaded_by != req.user.id && req.user.role !== 'admin_pusat') {
       return res.status(403).json({
         success: false,
         message: 'Tidak memiliki izin untuk menghapus dokumen ini'

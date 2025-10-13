@@ -135,8 +135,19 @@ const TrackingPage = () => {
     return R * c; // Jarak dalam meter
   };
 
-  // Fungsi untuk menentukan fase perjalanan berdasarkan posisi ambulans
+  // Fungsi untuk menentukan fase perjalanan berbasis status tracking lalu fallback jarak
   const determineJourneyPhase = (tracking, route) => {
+    // Utamakan status yang dikirim oleh sopir melalui update-position
+    if (tracking && tracking.status) {
+      if (tracking.status === 'dijemput' || tracking.status === 'dalam_perjalanan') {
+        return 'transporting_patient';
+      }
+      if (tracking.status === 'menunggu') {
+        return 'going_to_pickup';
+      }
+    }
+
+    // Fallback ke perhitungan jarak jika status tidak ada/unknown
     if (!tracking.latitude || !tracking.longitude || !route.origin.lat || !route.origin.lng) {
       return 'unknown';
     }

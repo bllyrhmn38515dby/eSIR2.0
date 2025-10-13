@@ -1,0 +1,627 @@
+# LAMPIRAN D: CSS STYLING IMPLEMENTATION
+
+## D.1 Main Search Page Styling
+
+```css
+/* File: frontend/src/components/SearchPage.css */
+
+/* === SEARCH PAGE STYLING (Enhanced Version) === */
+.search-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: calc(100vh - 120px);
+  background: #f5f7fb;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #333;
+}
+
+/* HEADER */
+.search-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #6a80f5 0%, #8b5cf6 100%);
+  color: #fff;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.25);
+  transition: transform 0.3s ease;
+}
+
+.search-header:hover {
+  transform: translateY(-2px);
+}
+
+.search-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.search-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+```
+
+## D.2 Container dan Tab Styling
+
+```css
+/* CONTAINER */
+.search-container {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.search-container:hover {
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* TABS */
+.search-tabs {
+  display: flex;
+  background: #f9fafc;
+  border-bottom: 1px solid #e5e8ec;
+}
+
+.tab {
+  flex: 1;
+  padding: 15px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.3s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.tab:hover {
+  background: #eef1f8;
+  color: #4b5563;
+}
+
+.tab.active {
+  background: #fff;
+  color: #6a80f5;
+  border-bottom-color: #6a80f5;
+}
+```
+
+## D.3 Input Section Styling
+
+```css
+/* INPUT SECTION */
+.search-input-section {
+  padding: 32px 30px;
+  background: white;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 14px 20px;
+  border: 2px solid #e5e8ec;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f9fafc;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #6a80f5;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(106, 128, 245, 0.15);
+}
+
+.search-type-select {
+  padding: 14px 18px;
+  border: 2px solid #e5e8ec;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: #fff;
+  cursor: pointer;
+  min-width: 150px;
+  transition: border-color 0.3s ease;
+}
+
+.search-type-select:focus {
+  border-color: #6a80f5;
+}
+
+.search-btn {
+  padding: 15px 32px;
+  background: linear-gradient(135deg, #6a80f5 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(106, 128, 245, 0.35);
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+```
+
+## D.4 Filter Section Styling
+
+```css
+/* FILTERS */
+.search-filters {
+  padding: 24px 30px;
+  background: #f9fafc;
+  border-top: 1px solid #e5e8ec;
+}
+
+.search-filters h4 {
+  margin: 0 0 20px 0;
+  color: #374151;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.filter-group {
+  margin-bottom: 20px;
+}
+
+.filter-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-item label {
+  font-weight: 500;
+  color: #4b5563;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.filter-item input,
+.filter-item select {
+  padding: 10px 15px;
+  border: 1px solid #e5e8ec;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+  outline: none;
+  border-color: #6a80f5;
+  box-shadow: 0 0 0 3px rgba(106, 128, 245, 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.clear-filters-btn {
+  padding: 10px 20px;
+  background: #9ca3af;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.clear-filters-btn:hover {
+  background: #868d96;
+}
+```
+
+## D.5 Autocomplete Styling
+
+```css
+/* Autocomplete Styles */
+.autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.suggestion-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.suggestion-item:hover {
+  background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-label {
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.suggestion-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* Highlight matching text */
+.suggestion-item.highlighted {
+  background-color: #e3f2fd;
+}
+```
+
+## D.6 Spesialisasi Tags Styling
+
+```css
+/* Spesialisasi Tags */
+.spesialisasi-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 200px;
+}
+
+.spesialisasi-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.no-spec {
+  color: #999;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.more-spec {
+  background: #f5f5f5;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+```
+
+## D.7 Results Table Styling
+
+```css
+/* RESULTS */
+.search-results {
+  padding: 30px;
+  background: white;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e5e8ec;
+}
+
+.results-header h3 {
+  margin: 0;
+  color: #374151;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.results-count {
+  color: #6b7280;
+  font-size: 0.9rem;
+  background: #eef1f8;
+  padding: 5px 12px;
+  border-radius: 20px;
+}
+
+/* TABLE */
+.results-table {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e5e8ec;
+}
+
+.results-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.results-table th {
+  background: #f9fafc;
+  padding: 14px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e8ec;
+  font-size: 0.9rem;
+}
+
+.results-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e8ec;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.results-table tr:hover {
+  background: #f3f4f6;
+}
+```
+
+## D.8 Status Colors dan Loading
+
+```css
+/* Status Colors */
+.status-pending {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+.status-diterima {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.status-ditolak {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.status-selesai {
+  color: #17a2b8;
+  font-weight: 600;
+}
+
+.status-tersedia {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.status-terisi {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.status-maintenance {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+.status-reserved {
+  color: #17a2b8;
+  font-weight: 600;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+  color: #6c757d;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e9ecef;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+```
+
+## D.9 Pagination Styling
+
+```css
+/* PAGINATION */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  margin-top: 30px;
+  padding: 20px;
+  background: #f9fafc;
+  border-radius: 10px;
+}
+
+.pagination button {
+  padding: 10px 20px;
+  background: #6a80f5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #5b6fd6;
+  transform: translateY(-1px);
+}
+
+.pagination button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+```
+
+## D.10 Responsive Design
+
+```css
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .search-page {
+    padding: 12px;
+  }
+
+  .search-header h1 {
+    font-size: 2rem;
+  }
+
+  .search-input-group {
+    flex-direction: column;
+  }
+
+  .results-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .results-table th,
+  .results-table td {
+    padding: 8px 6px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Mobile responsive for autocomplete */
+  .autocomplete-suggestions {
+    max-height: 150px;
+  }
+  
+  .suggestion-item {
+    padding: 10px 12px;
+  }
+  
+  .suggestion-label {
+    font-size: 0.9rem;
+  }
+  
+  .suggestion-subtitle {
+    font-size: 0.8rem;
+  }
+
+  /* Mobile responsive for spesialisasi */
+  .spesialisasi-list {
+    max-width: 150px;
+  }
+  
+  .spesialisasi-tag {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+  
+  .more-spec {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-tabs {
+    flex-direction: column;
+  }
+  
+  .tab {
+    text-align: center;
+  }
+  
+  .results-header {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+```
+
+## D.11 CSS Variables (Optional Enhancement)
+
+```css
+/* CSS Variables untuk konsistensi warna */
+:root {
+  --primary-color: #6a80f5;
+  --primary-hover: #5b6fd6;
+  --secondary-color: #8b5cf6;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #17a2b8;
+  --light-bg: #f9fafc;
+  --border-color: #e5e8ec;
+  --text-primary: #374151;
+  --text-secondary: #6b7280;
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.08);
+  --border-radius: 12px;
+  --transition: all 0.3s ease;
+}
+```
+
+**Fitur CSS:**
+- Modern gradient design
+- Smooth transitions dan hover effects
+- Responsive design untuk semua device
+- Autocomplete styling dengan z-index
+- Spesialisasi tags dengan flexbox
+- Status colors yang konsisten
+- Loading spinner animation
+- Box shadows untuk depth
+- Mobile-first approach

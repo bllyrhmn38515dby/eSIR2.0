@@ -93,8 +93,7 @@ const DokumenManager = ({ rujukanId, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       const headers = { 
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+        Authorization: `Bearer ${token}`
       };
       
       const formData = new FormData();
