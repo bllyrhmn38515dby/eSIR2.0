@@ -23,7 +23,7 @@ const FaskesPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get('http://localhost:3001/api/faskes', { headers });
+      const response = await axios.get('/api/faskes', { headers });
       setFaskes(response.data.data);
     } catch (error) {
       setError('Gagal memuat data faskes');
@@ -53,9 +53,9 @@ const FaskesPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       if (editingFaskes) {
-        await axios.put(`http://localhost:3001/api/faskes/${editingFaskes.id}`, formData, { headers });
+        await axios.put(`/api/faskes/${editingFaskes.id}`, formData, { headers });
       } else {
-        await axios.post('http://localhost:3001/api/faskes', formData, { headers });
+        await axios.post('/api/faskes', formData, { headers });
       }
       
       fetchFaskes();
@@ -85,7 +85,7 @@ const FaskesPage = () => {
         const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      await axios.delete(`http://localhost:3001/api/faskes/${id}`, { headers });
+      await axios.delete(`/api/faskes/${id}`, { headers });
         fetchFaskes();
       } catch (error) {
         setError(error.response?.data?.message || 'Gagal menghapus faskes');

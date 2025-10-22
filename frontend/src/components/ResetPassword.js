@@ -21,7 +21,7 @@ const ResetPassword = () => {
 
   const verifyToken = useCallback(async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/auth/verify-reset-token/${token}`);
+      const response = await axios.get(`/api/auth/verify-reset-token/${token}`);
       
       if (response.data.success) {
         setTokenValid(true);
@@ -74,7 +74,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/reset-password', {
+      const response = await axios.post('/api/auth/reset-password', {
         token,
         newPassword: formData.newPassword
       });

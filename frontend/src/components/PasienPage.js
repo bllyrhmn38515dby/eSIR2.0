@@ -26,7 +26,7 @@ const PasienPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get('http://localhost:3001/api/pasien', { headers });
+      const response = await axios.get('/api/pasien', { headers });
       setPasien(response.data.data);
     } catch (error) {
       setError('Gagal memuat data pasien');
@@ -56,9 +56,9 @@ const PasienPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       if (editingPasien) {
-        await axios.put(`http://localhost:3001/api/pasien/${editingPasien.id}`, formData, { headers });
+        await axios.put(`/api/pasien/${editingPasien.id}`, formData, { headers });
       } else {
-        await axios.post('http://localhost:3001/api/pasien', formData, { headers });
+        await axios.post('/api/pasien', formData, { headers });
       }
       
       fetchPasien();
@@ -91,7 +91,7 @@ const PasienPage = () => {
         const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      await axios.delete(`http://localhost:3001/api/pasien/${id}`, { headers });
+      await axios.delete(`/api/pasien/${id}`, { headers });
         fetchPasien();
       } catch (error) {
         setError(error.response?.data?.message || 'Gagal menghapus pasien');

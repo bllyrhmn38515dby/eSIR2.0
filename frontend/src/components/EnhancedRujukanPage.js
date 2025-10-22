@@ -30,7 +30,7 @@ const EnhancedRujukanPage = () => {
 
       // Fetch rujukan data
       try {
-        const rujukanResponse = await axios.get('http://localhost:3001/api/rujukan', { headers });
+        const rujukanResponse = await axios.get('/api/rujukan', { headers });
         if (rujukanResponse.data.success) {
           setRujukan(rujukanResponse.data.data);
         }
@@ -41,7 +41,7 @@ const EnhancedRujukanPage = () => {
 
       // Fetch pasien data
       try {
-        const pasienResponse = await axios.get('http://localhost:3001/api/pasien', { headers });
+        const pasienResponse = await axios.get('/api/pasien', { headers });
         if (pasienResponse.data.success) {
           setPasien(pasienResponse.data.data);
         }
@@ -52,7 +52,7 @@ const EnhancedRujukanPage = () => {
 
       // Fetch faskes data
       try {
-        const faskesResponse = await axios.get('http://localhost:3001/api/faskes', { headers });
+        const faskesResponse = await axios.get('/api/faskes', { headers });
         if (faskesResponse.data.success) {
           setFaskes(faskesResponse.data.data);
         }
@@ -119,7 +119,7 @@ const EnhancedRujukanPage = () => {
       }
 
       console.log('Sending API data:', apiData);
-      console.log('API URL:', 'http://localhost:3001/api/rujukan/with-pasien');
+      console.log('API URL:', '/api/rujukan/with-pasien');
       console.log('Headers:', headers);
       console.log('Form data received:', formData);
       console.log('Selected patient:', formData.selectedPatient);
@@ -127,7 +127,7 @@ const EnhancedRujukanPage = () => {
       console.log('Faskes Pengirim:', formData.faskesPengirim, 'Type:', typeof formData.faskesPengirim);
       console.log('Faskes Penerima:', formData.faskesPenerima, 'Type:', typeof formData.faskesPenerima);
 
-      const response = await axios.post('http://localhost:3001/api/rujukan/with-pasien', apiData, { headers });
+      const response = await axios.post('/api/rujukan/with-pasien', apiData, { headers });
       
       console.log('API Response:', response.data);
       
@@ -183,7 +183,7 @@ const EnhancedRujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.put(`http://localhost:3001/api/rujukan/${rujukanId}/status`, statusData, { headers });
+      const response = await axios.put(`/api/rujukan/${rujukanId}/status`, statusData, { headers });
       
       if (response.data.success) {
         setShowStatusModal(false);
@@ -204,7 +204,7 @@ const EnhancedRujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.put(`http://localhost:3001/api/rujukan/${rujukanId}/cancel`, cancelData, { headers });
+      const response = await axios.put(`/api/rujukan/${rujukanId}/cancel`, cancelData, { headers });
       
       if (response.data.success) {
         setShowCancelModal(false);

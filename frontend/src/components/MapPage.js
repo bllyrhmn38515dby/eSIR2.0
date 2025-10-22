@@ -83,7 +83,7 @@ const MapPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get('http://localhost:3001/api/rujukan', { headers });
+      const response = await axios.get('/api/rujukan', { headers });
       setRujukan(response.data.data);
     } catch (error) {
       console.error('Error fetching rujukan:', error);
@@ -130,8 +130,8 @@ const MapPage = () => {
       console.log('Mengambil data faskes dan rujukan...');
       
       const [faskesRes, rujukanRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/faskes', { headers }),
-        axios.get('http://localhost:3001/api/rujukan', { headers })
+        axios.get('/api/faskes', { headers }),
+        axios.get('/api/rujukan', { headers })
       ]);
 
       console.log(`Berhasil mengambil ${faskesRes.data.data.length} faskes`);
@@ -154,7 +154,7 @@ const MapPage = () => {
         }
       } else if (error.request) {
         // Network error
-        setError('Tidak dapat terhubung ke server. Pastikan backend berjalan di port 3001.');
+        setError('Tidak dapat terhubung ke server. Pastikan backend berjalan.');
       } else {
         // Other error
         setError(`Gagal memuat data peta: ${error.message}`);

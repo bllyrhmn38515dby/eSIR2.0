@@ -21,7 +21,7 @@ const LaporanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get('http://localhost:3001/api/faskes', { headers });
+      const response = await axios.get('/api/faskes', { headers });
       setFaskes(response.data.data);
     } catch (error) {
       console.error('Error fetching faskes:', error);
@@ -77,7 +77,7 @@ const LaporanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get(`http://localhost:3001/api/laporan/export/${type}`, {
+      const response = await axios.get(`/api/laporan/export/${type}`, {
         params: filters,
         headers
       });

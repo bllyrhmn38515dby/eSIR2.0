@@ -199,7 +199,7 @@ const MultiStepReferralForm = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get(`http://localhost:3001/api/pasien/search?nik=${searchNik}`, { headers });
+      const response = await axios.get(`/api/pasien/search?nik=${searchNik}`, { headers });
       
       if (response.data.success && response.data.data) {
         const pasien = response.data.data;

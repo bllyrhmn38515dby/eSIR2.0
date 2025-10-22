@@ -55,7 +55,7 @@ const RujukanPage = () => {
       
       // Fetch faskes terpisah untuk debugging
       try {
-        const faskesRes = await axios.get('http://localhost:3001/api/faskes', { headers });
+        const faskesRes = await axios.get('/api/faskes', { headers });
         console.log('Faskes response:', faskesRes.data);
         if (faskesRes.data.success) {
           setFaskes(faskesRes.data.data);
@@ -70,7 +70,7 @@ const RujukanPage = () => {
       // Fetch rujukan terpisah untuk debugging
       try {
         console.log('🔍 Fetching rujukan data...');
-        const rujukanRes = await axios.get('http://localhost:3001/api/rujukan', { headers });
+        const rujukanRes = await axios.get('/api/rujukan', { headers });
         console.log('📡 Rujukan response status:', rujukanRes.status);
         console.log('📡 Rujukan response data:', rujukanRes.data);
         
@@ -94,7 +94,7 @@ const RujukanPage = () => {
       
       // Fetch pasien
       try {
-        const pasienRes = await axios.get('http://localhost:3001/api/pasien', { headers });
+        const pasienRes = await axios.get('/api/pasien', { headers });
         console.log('Pasien response:', pasienRes.data);
         if (pasienRes.data.success) {
           setPasien(pasienRes.data.data);
@@ -137,7 +137,7 @@ const RujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.get(`http://localhost:3001/api/pasien/search?nik=${searchNik}`, { headers });
+      const response = await axios.get(`/api/pasien/search?nik=${searchNik}`, { headers });
       
       if (response.data.success && response.data.data) {
         const pasien = response.data.data;
@@ -222,7 +222,7 @@ const RujukanPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      const response = await axios.post('http://localhost:3001/api/rujukan/with-pasien', formData, { headers });
+      const response = await axios.post('/api/rujukan/with-pasien', formData, { headers });
       
       if (response.data.success) {
         setShowForm(false);
@@ -248,7 +248,7 @@ const RujukanPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const response = await axios.put(
-        `http://localhost:3001/api/rujukan/${selectedRujukan.id}/status`,
+        `/api/rujukan/${selectedRujukan.id}/status`,
         statusData,
         { headers }
       );
@@ -276,7 +276,7 @@ const RujukanPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const response = await axios.put(
-        `http://localhost:3001/api/rujukan/${selectedRujukan.id}/cancel`,
+        `/api/rujukan/${selectedRujukan.id}/cancel`,
         cancelData,
         { headers }
       );

@@ -56,7 +56,7 @@ RewriteRule . /index.html [L]
 
 # API routes (proxy to Node.js backend)
 RewriteCond %{REQUEST_URI} ^/api/(.*)$
-RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
+RewriteRule ^api/(.*)$ http://esirv02.my.id/api/$1 [P,L]
 
 # Block access to sensitive files
 <FilesMatch "\.(env|log|sql|md)$">

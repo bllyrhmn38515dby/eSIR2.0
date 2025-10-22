@@ -22,7 +22,7 @@ const DokumenManager = ({ rujukanId, onClose }) => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const response = await axios.get(
-        `http://localhost:3001/api/dokumen/rujukan/${rujukanId}`,
+        `/api/dokumen/rujukan/${rujukanId}`,
         { headers }
       );
       
@@ -103,7 +103,7 @@ const DokumenManager = ({ rujukanId, onClose }) => {
       formData.append('kategori', uploadData.kategori);
       
       const response = await axios.post(
-        'http://localhost:3001/api/dokumen/upload',
+        '/api/dokumen/upload',
         formData,
         { headers }
       );
@@ -131,7 +131,7 @@ const DokumenManager = ({ rujukanId, onClose }) => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const response = await axios.get(
-        `http://localhost:3001/api/dokumen/${dokumenId}/download`,
+        `/api/dokumen/${dokumenId}/download`,
         { 
           headers,
           responseType: 'blob'
@@ -164,7 +164,7 @@ const DokumenManager = ({ rujukanId, onClose }) => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const response = await axios.delete(
-        `http://localhost:3001/api/dokumen/${dokumenId}`,
+        `/api/dokumen/${dokumenId}`,
         { headers }
       );
       

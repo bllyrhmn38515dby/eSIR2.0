@@ -1,5 +1,5 @@
 // eSIR 2.0 Service Worker
-const CACHE_NAME = 'esir-cache-v1.0.0';
+const CACHE_NAME = 'esir-cache-v1.0.1';
 
 // Install event
 // eslint-disable-next-line no-restricted-globals

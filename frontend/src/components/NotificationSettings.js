@@ -32,7 +32,7 @@ const NotificationSettings = ({ onClose }) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3001/api/notifications/settings', {
+      const response = await axios.get('/api/notifications/settings', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -58,7 +58,7 @@ const NotificationSettings = ({ onClose }) => {
       setSuccess('');
       
       const token = localStorage.getItem('token');
-      const response = await axios.put('http://localhost:3001/api/notifications/settings', settings, {
+      const response = await axios.put('/api/notifications/settings', settings, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

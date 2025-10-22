@@ -134,7 +134,7 @@ export const SocketProvider = ({ children }) => {
     }
 
     // Create socket connection with better error handling
-    const newSocket = io(process.env.REACT_APP_SOCKET_URL || 'http://192.168.1.7:3001', {
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL || 'https://esirv02.my.id', {
       auth: {
         token: localStorage.getItem('token')
       },

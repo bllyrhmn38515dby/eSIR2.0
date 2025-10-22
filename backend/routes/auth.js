@@ -866,15 +866,31 @@ router.post('/refresh', async (req, res) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded.userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token tidak valid'
+      });
+    }
     
     // Cek apakah user masih ada
-    const [users] = await pool.execute(
-      `SELECT u.id, u.nama_lengkap, u.email, u.username, r.nama_role as role
-       FROM users u 
-       LEFT JOIN roles r ON u.role_id = r.id 
-       WHERE u.id = ?`,
-      [decoded.userId]
-    );
+    let users;
+    try {
+      const result = await pool.execute(
+        `SELECT u.id, u.nama_lengkap, u.email, u.username, r.nama_role as role
+         FROM users u 
+         LEFT JOIN roles r ON u.role_id = r.id 
+         WHERE u.id = ?`,
+        [decoded.userId]
+      );
+      users = result[0];
+    } catch (dbError) {
+      console.error('Error refresh token - DB:', dbError.code || dbError.message);
+      return res.status(503).json({
+        success: false,
+        message: 'Layanan database tidak tersedia, coba lagi nanti'
+      });
+    }
 
     if (users.length === 0) {
       return res.status(401).json({

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 import './Chat.css';
@@ -17,6 +17,26 @@ const Chat = ({ rujukanId, isOpen, onClose }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const fetchMessages = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/chat/${rujukanId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setMessages(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [rujukanId]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -26,7 +46,7 @@ const Chat = ({ rujukanId, isOpen, onClose }) => {
     if (rujukanId && isOpen) {
       fetchMessages();
     }
-  }, [rujukanId, isOpen]);
+  }, [rujukanId, isOpen, fetchMessages]);
 
   // Join chat room when socket is connected and rujukanId is available
   useEffect(() => {
@@ -50,32 +70,12 @@ const Chat = ({ rujukanId, isOpen, onClose }) => {
     }
   }, [socket, isConnected]);
 
-  const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/${rujukanId}/messages`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setMessages(data.data);
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() || !socket || !isConnected) return;
 
     try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat/${rujukanId}/messages`, {
+        const response = await fetch(`/api/chat/${rujukanId}/messages`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -27,7 +27,7 @@ const Dashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       console.log('📊 Fetching dashboard stats...');
-      const response = await axios.get('http://localhost:3001/api/rujukan/stats/overview', { headers });
+      const response = await axios.get('/api/rujukan/stats/overview', { headers });
       
       if (response.data.success) {
         setStats(response.data.data);
@@ -40,7 +40,7 @@ const Dashboard = () => {
       
       // Handle different types of errors
       if (error.code === 'ECONNREFUSED' || error.message.includes('Network Error')) {
-        setError('Server tidak tersedia. Pastikan backend berjalan di port 3001.');
+        setError('Server tidak tersedia. Pastikan backend berjalan.');
       } else if (error.response?.status === 401 && retryAttempt < 2) {
         console.log(`🔄 Retrying stats fetch (attempt ${retryAttempt + 1})...`);
         setTimeout(() => {

@@ -234,7 +234,7 @@ const TrackingPage = () => {
   const loadActiveSessions = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/tracking/sessions/active', {
+      const response = await fetch('/api/tracking/sessions/active', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -329,7 +329,7 @@ const TrackingPage = () => {
       }
 
       // Load tracking data
-      const response = await fetch(`http://localhost:3001/api/tracking/${session.rujukan_id}`, {
+      const response = await fetch(`/api/tracking/${session.rujukan_id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

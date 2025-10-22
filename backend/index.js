@@ -24,31 +24,52 @@ const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
     origin: [
-      'http://localhost:3000', 
-      'http://192.168.1.7:3000', 
-      'http://192.168.1.2:3000',
+      'http://localhost:3000',
       'https://esirv02.my.id',
-      'https://www.esirv02.my.id'
+      'https://www.esirv02.my.id',
+      'https://unawkwardly-unadvancing-edison.ngrok-free.dev',
+      /^http:\/\/192\.168\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
+      /^http:\/\/10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
+      /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/
     ],
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 // Middleware
-app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://192.168.1.7:3000', 
-    'http://192.168.1.2:3000',
-    'https://esirv02.my.id',
-    'https://www.esirv02.my.id'
-  ],
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser or same-origin
+
+    const explicitOrigins = new Set([
+      'http://localhost:3000',
+      'https://esirv02.my.id',
+      'https://www.esirv02.my.id',
+      'https://unawkwardly-unadvancing-edison.ngrok-free.dev'
+    ]);
+
+    const privateLanPatterns = [
+      /^http:\/\/192\.168\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
+      /^http:\/\/10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
+      /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/
+    ];
+
+    if (explicitOrigins.has(origin) || privateLanPatterns.some((re) => re.test(origin))) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Test database connection
+// Test database connection with detailed logging
 async function testDatabaseConnection() {
   try {
     const connection = await pool.getConnection();
@@ -57,8 +78,11 @@ async function testDatabaseConnection() {
     console.log('✅ Database connection successful');
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    console.log('⚠️  Using mock data mode');
+    const code = error && error.code ? error.code : 'UNKNOWN';
+    console.error('❌ Database connection failed:', code, '-', error.message);
+    if (code === 'ECONNREFUSED') {
+      console.error('🔎 Pastikan DB_HOST/DB_PORT benar, MySQL berjalan, dan firewall mengizinkan koneksi.');
+    }
     return false;
   }
 }
@@ -184,6 +208,28 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Add health check endpoint (moved before 404 handler)
+app.get('/api/health', async (req, res) => {
+  try {
+    const databaseMonitor = require('./utils/databaseMonitor');
+    const dbStatus = databaseMonitor.getConnectionStatus();
+    const isHealthy = dbStatus.isConnected;
+    res.json({
+      success: true,
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      timestamp: new Date().toISOString(),
+      database: dbStatus,
+      uptime: process.uptime()
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      status: 'error',
+      message: error.message
+    });
+  }
+});
+
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({
@@ -203,7 +249,8 @@ async function startServer() {
     console.log(`✅ Test endpoint: http://localhost:${PORT}/test`);
     console.log(`✅ Login endpoint: http://localhost:${PORT}/api/auth/login`);
     console.log(`✅ Stats endpoint: http://localhost:${PORT}/api/rujukan/stats/overview`);
-    console.log(`✅ Network access: http://192.168.18.6:${PORT}`);
+    console.log(`✅ Network access: http://192.168.1.11:${PORT}`);
+    console.log(`✅ Network access: http://192.168.137.1:${PORT}`);
     
     if (dbConnected) {
       console.log(`✅ Database terhubung: ${process.env.DB_DATABASE || 'prodsysesirv02'}`);
@@ -230,25 +277,3 @@ const databaseMonitor = require('./utils/databaseMonitor');
 
 // Start database monitoring
 databaseMonitor.startMonitoring();
-
-// Add health check endpoint
-app.get('/api/health', async (req, res) => {
-  try {
-    const dbStatus = databaseMonitor.getConnectionStatus();
-    const isHealthy = dbStatus.isConnected;
-    
-    res.json({
-      success: true,
-      status: isHealthy ? 'healthy' : 'unhealthy',
-      timestamp: new Date().toISOString(),
-      database: dbStatus,
-      uptime: process.uptime()
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      status: 'error',
-      message: error.message
-    });
-  }
-});

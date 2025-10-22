@@ -33,7 +33,7 @@ const AmbulanceTracker = () => {
     if (!sessionToken) return;
 
     try {
-      const response = await fetch('http://localhost:3001/api/tracking/update-position', {
+      const response = await fetch('/api/tracking/update-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -150,7 +150,7 @@ const AmbulanceTracker = () => {
       const token = localStorage.getItem('token');
       
       if (rujukanId) {
-        const response = await fetch(`http://localhost:3001/api/tracking/session/${rujukanId}`, {
+        const response = await fetch(`/api/tracking/session/${rujukanId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -196,7 +196,7 @@ const AmbulanceTracker = () => {
   const loadActiveSessions = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/tracking/sessions/active', {
+      const response = await fetch('/api/tracking/sessions/active', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -219,7 +219,7 @@ const AmbulanceTracker = () => {
       const token = localStorage.getItem('token');
       console.log('Token exists:', !!token);
       
-      const response = await fetch('http://localhost:3001/api/rujukan', {
+      const response = await fetch('/api/rujukan', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -267,7 +267,7 @@ const AmbulanceTracker = () => {
       setLoading(true);
       setError('');
 
-      const response = await fetch('http://localhost:3001/api/tracking/start-session', {
+      const response = await fetch('/api/tracking/start-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -346,7 +346,7 @@ const AmbulanceTracker = () => {
       console.log('🔄 Updating status:', status);
       console.log('📡 Request body:', requestBody);
 
-      const response = await fetch('http://localhost:3001/api/tracking/update-position', {
+      const response = await fetch('/api/tracking/update-position', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

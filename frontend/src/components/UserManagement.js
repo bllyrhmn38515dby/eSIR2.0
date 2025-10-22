@@ -31,7 +31,7 @@ const UserManagement = () => {
       setError('');
       console.log('🔍 Fetching users...');
       
-      const response = await axios.get('http://localhost:3001/api/auth/users', {
+      const response = await axios.get('/api/auth/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -60,7 +60,7 @@ const UserManagement = () => {
     try {
       console.log('🔍 Fetching faskes...');
       
-      const response = await axios.get('http://localhost:3001/api/faskes', {
+      const response = await axios.get('/api/faskes', {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -124,12 +124,12 @@ const UserManagement = () => {
         }
         
         console.log('Updating user with data:', submitData);
-        await axios.put(`http://localhost:3001/api/auth/users/${editingUser.id}`, submitData, { headers });
+        await axios.put(`/api/auth/users/${editingUser.id}`, submitData, { headers });
         setSuccess('User berhasil diperbarui!');
       } else {
         // Create new user
         console.log('Creating user with data:', submitData);
-        await axios.post('http://localhost:3001/api/auth/users', submitData, { headers });
+        await axios.post('/api/auth/users', submitData, { headers });
         setSuccess('User berhasil ditambahkan!');
       }
       
@@ -160,7 +160,7 @@ const UserManagement = () => {
     }
 
     try {
-      await axios.delete(`http://localhost:3001/api/auth/users/${userId}`, {
+      await axios.delete(`/api/auth/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSuccess('User berhasil dihapus!');

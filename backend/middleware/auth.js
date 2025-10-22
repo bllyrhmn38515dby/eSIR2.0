@@ -24,16 +24,33 @@ const verifyToken = async (req, res, next) => {
   try {
     if (shouldLog) console.log('🔍 Middleware - Verifying token...');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded.userId) {
+      if (shouldLog) console.log('❌ Middleware - Decoded token tidak memiliki userId');
+      return res.status(401).json({
+        success: false,
+        message: 'Token tidak valid'
+      });
+    }
     if (shouldLog) console.log('✅ Middleware - Token verified, userId:', decoded.userId);
     
     // Ambil data user dari database dengan role
-    const [users] = await pool.execute(
+    let users;
+    try {
+      const result = await pool.execute(
       `SELECT u.*, r.nama_role as role 
        FROM users u 
        LEFT JOIN roles r ON u.role_id = r.id 
        WHERE u.id = ?`,
       [decoded.userId]
-    );
+      );
+      users = result[0];
+    } catch (dbError) {
+      console.error('❌ Middleware - Database query failed:', dbError.code || dbError.message);
+      return res.status(503).json({
+        success: false,
+        message: 'Layanan database tidak tersedia, coba lagi nanti'
+      });
+    }
 
     if (users.length === 0) {
       if (shouldLog) console.log('❌ Middleware - User not found in database');

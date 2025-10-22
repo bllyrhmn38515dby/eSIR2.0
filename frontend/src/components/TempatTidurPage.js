@@ -24,10 +24,10 @@ const TempatTidurPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       
       const [tempatTidurRes, statistikRes, faskesRes, pasienRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/tempat-tidur', { headers }),
-        axios.get('http://localhost:3001/api/tempat-tidur/statistik', { headers }),
-        axios.get('http://localhost:3001/api/faskes', { headers }),
-        axios.get('http://localhost:3001/api/pasien', { headers })
+        axios.get('/api/tempat-tidur', { headers }),
+        axios.get('/api/tempat-tidur/statistik', { headers }),
+        axios.get('/api/faskes', { headers }),
+        axios.get('/api/pasien', { headers })
       ]);
 
       setTempatTidur(tempatTidurRes.data.data);
@@ -88,10 +88,10 @@ const TempatTidurPage = () => {
       
       if (editingBed.id) {
         // Update
-        await axios.put(`http://localhost:3001/api/tempat-tidur/${editingBed.id}`, editingBed, { headers });
+        await axios.put(`/api/tempat-tidur/${editingBed.id}`, editingBed, { headers });
       } else {
         // Create
-        await axios.post('http://localhost:3001/api/tempat-tidur', editingBed, { headers });
+        await axios.post('/api/tempat-tidur', editingBed, { headers });
       }
       
       setShowModal(false);
@@ -108,7 +108,7 @@ const TempatTidurPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       
-      await axios.put(`http://localhost:3001/api/tempat-tidur/${statusBed.id}/status`, statusBed, { headers });
+      await axios.put(`/api/tempat-tidur/${statusBed.id}/status`, statusBed, { headers });
       
       setShowStatusModal(false);
       setStatusBed(null);
@@ -124,7 +124,7 @@ const TempatTidurPage = () => {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
         
-        await axios.delete(`http://localhost:3001/api/tempat-tidur/${id}`, { headers });
+        await axios.delete(`/api/tempat-tidur/${id}`, { headers });
         fetchData();
       } catch (error) {
         setError(error.response?.data?.message || 'Gagal menghapus data');

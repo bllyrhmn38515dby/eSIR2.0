@@ -56,7 +56,7 @@ const DriverDashboard = () => {
   const fetchActiveSessions = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/tracking/sessions/active`, {
+      const response = await fetch(`/api/tracking/sessions/active`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -161,7 +161,7 @@ const DriverDashboard = () => {
     try {
       console.log('🔄 Updating position:', { session_token: session.session_token, latitude, longitude });
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001/api'}/tracking/update-position`, {
+      const response = await fetch(`/api/tracking/update-position`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
