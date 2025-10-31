@@ -9,6 +9,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [faskes, setFaskes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -21,6 +22,12 @@ const UserManagement = () => {
     faskes_id: '',
     telepon: ''
   });
+
+  // Filter dan Pagination State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Check if user has admin access
   const hasAdminAccess = user?.role === 'admin_pusat' || user?.role === 'admin_faskes';
@@ -97,6 +104,56 @@ const UserManagement = () => {
     });
     setEditingUser(null);
     setShowForm(false);
+  };
+
+  // Filter dan Pagination Functions
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = searchTerm === '' || 
+      user.nama_lengkap?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === '' || user.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset ke halaman pertama saat search
+  };
+
+  const handleRoleFilterChange = (e) => {
+    setRoleFilter(e.target.value);
+    setCurrentPage(1); // Reset ke halaman pertama saat filter role
+  };
+
+  const handleItemsPerPageChange = (e) => {
+    setItemsPerPage(parseInt(e.target.value));
+    setCurrentPage(1); // Reset ke halaman pertama saat ubah items per page
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToLastPage = () => setCurrentPage(totalPages);
+  const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchUsers();
+      await fetchFaskes();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -395,9 +452,71 @@ const UserManagement = () => {
                         ➕ Tambah User
                       </button>
                     )}
-                    <button className="refresh-btn" onClick={fetchUsers}>
-                      🔄 Refresh
+                    <button 
+                      className="refresh-btn" 
+                      onClick={handleRefresh}
+                      disabled={refreshing}
+                    >
+                      {refreshing ? (
+                        <>
+                          <span className="refresh-spinner">⟳</span>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          🔄
+                        </>
+                      )}
                     </button>
+                  </div>
+                </div>
+
+                {/* Filter Controls */}
+                <div className="filter-controls">
+                  <div className="filter-row">
+                    <div className="search-box">
+                      <input
+                        type="text"
+                        placeholder="🔍 Cari berdasarkan nama atau email..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        className="search-input"
+                      />
+                    </div>
+                    <div className="filter-dropdown">
+                      <select
+                        value={roleFilter}
+                        onChange={handleRoleFilterChange}
+                        className="role-select"
+                      >
+                        <option value="">Semua Role</option>
+                        <option value="admin_pusat">Admin Pusat</option>
+                        <option value="admin_faskes">Admin Faskes</option>
+                        <option value="operator">Operator</option>
+                        <option value="sopir_ambulans">Sopir Ambulans</option>
+                      </select>
+                    </div>
+                    <div className="items-per-page">
+                      <label htmlFor="itemsPerPage">Tampilkan:</label>
+                      <select
+                        id="itemsPerPage"
+                        value={itemsPerPage}
+                        onChange={handleItemsPerPageChange}
+                        className="items-select"
+                      >
+                        <option value={5}>5 data</option>
+                        <option value={10}>10 data</option>
+                        <option value={15}>15 data</option>
+                        <option value={20}>20 data</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="filter-info">
+                    <span className="filter-results">
+                      Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredUsers.length)} dari {filteredUsers.length} user
+                      {searchTerm && ` (hasil pencarian: "${searchTerm}")`}
+                      {roleFilter && ` (role: ${roleFilter})`}
+                    </span>
                   </div>
                 </div>
                 
@@ -416,17 +535,22 @@ const UserManagement = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {users.length === 0 ? (
+                      {paginatedUsers.length === 0 ? (
                         <tr>
                           <td colSpan="8" className="no-data">
                             <div className="no-data-content">
                               <span className="no-data-icon">📭</span>
-                              <p>Tidak ada data user</p>
+                              <p>
+                                {filteredUsers.length === 0 
+                                  ? (searchTerm || roleFilter ? 'Tidak ada data yang sesuai dengan filter' : 'Tidak ada data user')
+                                  : 'Tidak ada data pada halaman ini'
+                                }
+                              </p>
                             </div>
                           </td>
                         </tr>
                       ) : (
-                        users.map(user => (
+                        paginatedUsers.map(user => (
                           <tr key={user.id}>
                             <td>
                               <div className="user-info">
@@ -481,6 +605,76 @@ const UserManagement = () => {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="pagination-controls">
+                    <div className="pagination-info">
+                      <span>
+                        Halaman {currentPage} dari {totalPages}
+                      </span>
+                    </div>
+                    <div className="pagination-buttons">
+                      <button 
+                        className="pagination-btn"
+                        onClick={goToFirstPage}
+                        disabled={currentPage === 1}
+                        title="Halaman Pertama"
+                      >
+                        ⏮️
+                      </button>
+                      <button 
+                        className="pagination-btn"
+                        onClick={goToPrevPage}
+                        disabled={currentPage === 1}
+                        title="Halaman Sebelumnya"
+                      >
+                        ⬅️
+                      </button>
+                      
+                      {/* Page Numbers */}
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <button
+                            key={pageNum}
+                            className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                            onClick={() => handlePageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                      
+                      <button 
+                        className="pagination-btn"
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        title="Halaman Selanjutnya"
+                      >
+                        ➡️
+                      </button>
+                      <button 
+                        className="pagination-btn"
+                        onClick={goToLastPage}
+                        disabled={currentPage === totalPages}
+                        title="Halaman Terakhir"
+                      >
+                        ⏭️
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>

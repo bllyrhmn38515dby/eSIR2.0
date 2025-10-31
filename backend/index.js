@@ -25,29 +25,61 @@ const io = socketIo(server, {
   cors: {
     origin: [
       'http://localhost:3000',
+      'http://127.0.0.1:3000',
       'https://esirv02.my.id',
       'https://www.esirv02.my.id',
       'https://unawkwardly-unadvancing-edison.ngrok-free.dev',
+      // Dev/local patterns
+      /^http:\/\/localhost(:[0-9]{1,5})?$/,
+      /^http:\/\/127\.0\.0\.1(:[0-9]{1,5})?$/,
+      // NGROK domain patterns
+      /^https:\/\/.*\.ngrok\.io$/,
+      /^https:\/\/.*\.ngrok-free\.dev$/,
+      // Private LAN ranges
       /^http:\/\/192\.168\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
       /^http:\/\/10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
       /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/
     ],
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000
 });
 
 // Middleware
+const allowAllCors = (process.env.NODE_ENV !== 'production') || (process.env.CORS_ALLOW_ALL === 'true');
+
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // allow non-browser or same-origin
+    // Allow non-browser/same-origin requests
+    if (!origin) return callback(null, true);
+
+    // Allow all in development or when explicitly enabled
+    if (allowAllCors) {
+      return callback(null, true);
+    }
 
     const explicitOrigins = new Set([
       'http://localhost:3000',
+      'http://127.0.0.1:3000',
       'https://esirv02.my.id',
       'https://www.esirv02.my.id',
       'https://unawkwardly-unadvancing-edison.ngrok-free.dev'
     ]);
+
+    // NGROK domain patterns
+    const ngrokPatterns = [
+      /^https:\/\/.*\.ngrok\.io$/,
+      /^https:\/\/.*\.ngrok-free\.dev$/
+    ];
+
+    // Localhost patterns (any port)
+    const localhostPatterns = [
+      /^http:\/\/localhost(:[0-9]{1,5})?$/,
+      /^http:\/\/127\.0\.0\.1(:[0-9]{1,5})?$/
+    ];
 
     const privateLanPatterns = [
       /^http:\/\/192\.168\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/,
@@ -55,13 +87,19 @@ const corsOptions = {
       /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.[0-9]{1,3}\.[0-9]{1,3}(:[0-9]{1,5})?$/
     ];
 
-    if (explicitOrigins.has(origin) || privateLanPatterns.some((re) => re.test(origin))) {
+    if (explicitOrigins.has(origin) || 
+        localhostPatterns.some((re) => re.test(origin)) ||
+        privateLanPatterns.some((re) => re.test(origin)) ||
+        ngrokPatterns.some((re) => re.test(origin))) {
       return callback(null, true);
     }
 
+    // Do not throw to avoid 500; indicate disallowed origin
     return callback(new Error('Not allowed by CORS'));
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
@@ -145,6 +183,8 @@ io.use(async (socket, next) => {
 // Socket.IO connection handling
 io.on('connection', (socket) => {
   console.log(`✅ User connected: ${socket.id} - ${socket.user?.nama_lengkap} (${socket.user?.role})`);
+  console.log(`🔗 Socket transport: ${socket.conn.transport.name}`);
+  console.log(`🌐 Socket handshake origin: ${socket.handshake.headers.origin}`);
   
   // Auto-join rooms based on user role
   if (socket.user) {
@@ -194,6 +234,14 @@ global.io = io;
 app.use((err, req, res, next) => {
   console.error('Error:', err.message);
   
+  // Handle CORS rejections explicitly with 403 instead of 500
+  if (err && err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      success: false,
+      message: 'Not allowed by CORS'
+    });
+  }
+
   // Handle database connection errors
   if (err.code === 'ECONNREFUSED') {
     return res.status(503).json({

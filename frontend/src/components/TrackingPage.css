@@ -3,18 +3,18 @@
   max-width: 1400px;
   margin: 0 auto;
   min-height: calc(100vh - 80px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--surface-light);
+  font-family: var(--font-family-primary);
 }
 
 .tracking-header {
   text-align: center;
   margin-bottom: 30px;
   padding: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  color: #ffffff;
   border-radius: 20px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
 }
@@ -57,28 +57,28 @@
   display: grid;
   grid-template-columns: 350px 1fr;
   gap: 20px;
-  height: calc(100vh - 200px);
+  min-height: calc(100vh - 200px);
 }
 
 /* Sidebar Styles */
 .tracking-sidebar {
-  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  background: linear-gradient(145deg, var(--surface-white) 0%, var(--surface-gray) 100%);
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--neutral-200);
   backdrop-filter: blur(10px);
 }
 
 .sidebar-header {
   padding: 25px;
-  border-bottom: 2px solid rgba(0, 123, 255, 0.1);
+  border-bottom: 2px solid rgba(30, 64, 175, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, rgba(0, 123, 255, 0.05) 0%, rgba(0, 123, 255, 0.02) 100%);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(30, 64, 175, 0.02) 100%);
   position: relative;
 }
 
@@ -110,16 +110,16 @@
 }
 
 .refresh-btn {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+  color: #ffffff;
   border: none;
   padding: 10px 18px;
   border-radius: 12px;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
 }
@@ -140,13 +140,13 @@
 }
 
 .refresh-btn:hover {
-  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+  box-shadow: var(--shadow-lg);
 }
 
 .refresh-btn:disabled {
-  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  background: linear-gradient(135deg, var(--neutral-500) 0%, var(--neutral-700) 100%);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -159,14 +159,14 @@
 }
 
 .session-card {
-  background: linear-gradient(145deg, #ffffff 0%, #fafbfc 100%);
-  border: 2px solid rgba(0, 123, 255, 0.1);
+  background: linear-gradient(145deg, var(--surface-white) 0%, var(--surface-gray) 100%);
+  border: 2px solid rgba(30, 64, 175, 0.1);
   border-radius: 16px;
   padding: 18px;
   margin-bottom: 16px;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
 }
@@ -273,13 +273,14 @@
 /* Map Container Styles */
 .tracking-map-container {
   position: relative;
-  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+  background: linear-gradient(145deg, var(--surface-white) 0%, var(--surface-gray) 100%);
   border-radius: 20px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   z-index: 1;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--neutral-200);
   backdrop-filter: blur(10px);
+  align-self: start; /* prevent stretching to sidebar height */
 }
 
 .map-loading {
@@ -333,12 +334,12 @@
   right: 20px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 249, 250, 0.95) 100%);
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
   padding: 16px;
   min-width: 260px;
   max-width: 300px;
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--neutral-200);
   z-index: 1000;
   pointer-events: auto;
   user-select: none;
@@ -431,6 +432,11 @@
   }
   
   .tracking-sidebar {
+    max-height: none;
+  }
+
+  /* Pada mobile, batasi tinggi list agar tetap nyaman */
+  .sessions-list {
     max-height: 300px;
   }
   
@@ -583,8 +589,8 @@
   transition: all 0.3s ease;
 }
 
-/* Loading animation for phase badge */
-.phase-badge:contains("🔄") {
+/* Loading animation for phase badge (gunakan class .loading bila tersedia) */
+.phase-badge.loading {
   animation: pulse 1.5s infinite;
 }
 
@@ -614,15 +620,15 @@
   border: 2px solid transparent;
   border-radius: 16px;
   padding: 12px 16px;
-  box-shadow: 0 8px 24px rgba(66, 133, 244, 0.25);
+  box-shadow: var(--shadow-md);
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: var(--neutral-800);
   backdrop-filter: blur(15px);
-  border-image: linear-gradient(135deg, #4285F4, #34A853) 1;
+  border-image: linear-gradient(135deg, var(--primary-500), var(--secondary-500)) 1;
   position: relative;
   overflow: hidden;
 }
@@ -650,7 +656,7 @@
 
 .route-text {
   white-space: nowrap;
-  background: linear-gradient(135deg, #4285F4 0%, #34A853 100%);
+  background: linear-gradient(135deg, var(--primary-500) 0%, var(--secondary-500) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -682,23 +688,23 @@
 }
 
 .traffic-status.heavy {
-  background-color: #ff4444;
-  color: white;
+  background-color: var(--danger-600);
+  color: #ffffff;
 }
 
 .traffic-status.moderate {
-  background-color: #ffaa00;
-  color: white;
+  background-color: var(--warning-600);
+  color: #ffffff;
 }
 
 .traffic-status.light {
-  background-color: #44aa44;
-  color: white;
+  background-color: var(--success-600);
+  color: #ffffff;
 }
 
 .traffic-status.normal {
-  background-color: #666666;
-  color: white;
+  background-color: var(--neutral-600);
+  color: #ffffff;
 }
 
 /* Leaflet Marker Icon Fixes */
@@ -752,4 +758,19 @@
 .custom-destination-icon .leaflet-div-icon {
   background: none !important;
   border: none !important;
+}
+
+.sessions-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 8px;
+  border-top: 1px solid var(--neutral-200);
+  margin-top: 8px;
+}
+
+.sessions-pagination .page-info {
+  font-size: 0.85rem;
+  color: var(--neutral-600);
 }

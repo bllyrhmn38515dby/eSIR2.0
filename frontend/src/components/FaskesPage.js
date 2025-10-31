@@ -17,6 +17,14 @@ const FaskesPage = () => {
     longitude: ''
   });
   const [error, setError] = useState('');
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTipe, setFilterTipe] = useState('all');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const fetchFaskes = useCallback(async () => {
     try {
@@ -105,6 +113,28 @@ const FaskesPage = () => {
     setEditingFaskes(null);
   };
 
+  // Filter logic
+  const filteredFaskes = faskes.filter(faskes => {
+    const matchesSearch = faskes.nama_faskes.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         faskes.alamat.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (faskes.telepon && faskes.telepon.includes(searchTerm));
+    
+    const matchesTipe = filterTipe === 'all' || faskes.tipe === filterTipe;
+    
+    return matchesSearch && matchesTipe;
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredFaskes.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedFaskes = filteredFaskes.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterTipe, itemsPerPage]);
+
   const getTipeBadge = (tipe) => {
     const tipeConfig = {
       'RSUD': { text: 'RSUD', class: 'tipe-rsud' },
@@ -146,6 +176,57 @@ const FaskesPage = () => {
             {error}
           </div>
         )}
+
+        {/* Filter Section */}
+        <div className="filter-section">
+          <div className="filter-controls">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Cari berdasarkan nama, alamat, atau telepon..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            
+            <div className="filter-dropdown">
+              <select
+                value={filterTipe}
+                onChange={(e) => setFilterTipe(e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">Semua Tipe</option>
+                <option value="RSUD">RSUD</option>
+                <option value="Puskesmas">Puskesmas</option>
+                <option value="Klinik">Klinik</option>
+                <option value="RS Swasta">RS Swasta</option>
+              </select>
+            </div>
+            
+            <div className="items-per-page">
+              <label htmlFor="itemsPerPage">Tampilkan:</label>
+              <select
+                id="itemsPerPage"
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="items-select"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+            
+            <div className="filter-info">
+              <span className="result-count">
+                Menampilkan {startIndex + 1}-{Math.min(endIndex, filteredFaskes.length)} dari {filteredFaskes.length} faskes
+              </span>
+            </div>
+          </div>
+        </div>
 
         {showForm && (
           <div className="form-modal">
@@ -269,7 +350,7 @@ const FaskesPage = () => {
               </tr>
             </thead>
             <tbody>
-              {faskes.map((f) => (
+              {paginatedFaskes.map((f) => (
                 <tr key={f.id}>
                   <td>{f.nama_faskes}</td>
                   <td>{getTipeBadge(f.tipe)}</td>
@@ -305,12 +386,87 @@ const FaskesPage = () => {
             </tbody>
           </table>
           
+          {filteredFaskes.length === 0 && faskes.length > 0 && (
+            <div className="empty-state">
+              <p>Tidak ada faskes yang sesuai dengan filter</p>
+            </div>
+          )}
+          
           {faskes.length === 0 && (
             <div className="empty-state">
               <p>Belum ada data faskes</p>
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {filteredFaskes.length > 0 && totalPages > 1 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              <span>
+                Halaman {currentPage} dari {totalPages}
+              </span>
+            </div>
+            
+            <div className="pagination-controls">
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                ««
+              </button>
+              
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                «
+              </button>
+              
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                
+                return (
+                  <button
+                    key={pageNum}
+                    className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                    onClick={() => setCurrentPage(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+              
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                »
+              </button>
+              
+              <button
+                className="pagination-btn"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                »»
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

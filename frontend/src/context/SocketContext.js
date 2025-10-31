@@ -16,8 +16,16 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState(() => {
+    // Try to restore connection status from localStorage
+    const savedStatus = localStorage.getItem('socketConnectionStatus');
+    return savedStatus || 'disconnected';
+  });
+  const [retryCount, setRetryCount] = useState(0);
   const { user } = useAuth();
   const socketRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const healthCheckIntervalRef = useRef(null);
 
   const addNotification = useCallback((notification) => {
     setNotifications(prev => {
@@ -121,36 +129,40 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    if (!user) {
-      // Disconnect socket if user is not logged in
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        setSocket(null);
-        setIsConnected(false);
-        socketRef.current = null;
-      }
-      return;
+  // Create socket connection with enhanced error handling
+  const createSocketConnection = useCallback(() => {
+    if (!user) return;
+
+    // Clean up existing connection
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
     }
 
-    // Create socket connection with better error handling
-    const newSocket = io(process.env.REACT_APP_SOCKET_URL || 'https://esirv02.my.id', {
+    console.log('🔌 Creating new socket connection...');
+    setConnectionStatus('connecting');
+
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001', {
       auth: {
         token: localStorage.getItem('token')
       },
       transports: ['websocket', 'polling'],
       timeout: 10000,
-      reconnection: true, // Enable auto-reconnection
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
+      reconnection: false, // We handle reconnection manually
       forceNew: true
     });
 
     // Connection events
     newSocket.on('connect', () => {
       console.log('✅ Socket connected:', newSocket.id);
+      console.log('🔗 Socket transport:', newSocket.io.engine.transport.name);
+      console.log('🌐 Socket URL:', newSocket.io.uri);
       setIsConnected(true);
+      setConnectionStatus('connected');
+      setRetryCount(0); // Reset retry count on successful connection
+      
+      // Save connection status to localStorage
+      localStorage.setItem('socketConnectionStatus', 'connected');
 
       // Join appropriate rooms based on user role
       if (user.role === 'admin') {
@@ -160,32 +172,38 @@ export const SocketProvider = ({ children }) => {
         newSocket.emit('join-faskes', user.faskes_id);
         console.log('🏥 Joined faskes room:', user.faskes_id);
       }
+
+      // Start health check
+      setTimeout(() => startHealthCheck(), 0);
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log('❌ Socket disconnected:', reason);
       setIsConnected(false);
+      setConnectionStatus('disconnected');
+      
+      // Save connection status to localStorage
+      localStorage.setItem('socketConnectionStatus', 'disconnected');
+      
+      // Clear health check
+      if (healthCheckIntervalRef.current) {
+        clearInterval(healthCheckIntervalRef.current);
+        healthCheckIntervalRef.current = null;
+      }
+
+      // Schedule reconnection unless it's a manual disconnect
+      if (reason !== 'io client disconnect') {
+        // Use setTimeout to avoid calling scheduleReconnect before it's defined
+        setTimeout(() => scheduleReconnect(), 0);
+      }
     });
 
     newSocket.on('connect_error', (error) => {
-      console.warn('⚠️ Socket connection error (backend may not be running):', error.message);
+      console.warn('⚠️ Socket connection error:', error.message);
       setIsConnected(false);
-      // Don't show error to user, just log it
-    });
-
-    newSocket.on('reconnect', (attemptNumber) => {
-      console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
-      setIsConnected(true);
-    });
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('❌ Socket reconnection error:', error);
-      setIsConnected(false);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('❌ Socket reconnection failed');
-      setIsConnected(false);
+      setConnectionStatus('error');
+      // Use setTimeout to avoid calling scheduleReconnect before it's defined
+      setTimeout(() => scheduleReconnect(), 0);
     });
 
     // Listen for realtime notifications
@@ -230,13 +248,115 @@ export const SocketProvider = ({ children }) => {
 
     setSocket(newSocket);
     socketRef.current = newSocket;
+  }, [user, addNotification]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-reconnection with exponential backoff
+  const scheduleReconnect = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+    }
+
+    const maxRetries = 10;
+    const baseDelay = 1000; // 1 second
+    const maxDelay = 30000; // 30 seconds
+    const delay = Math.min(baseDelay * Math.pow(2, retryCount), maxDelay);
+
+    if (retryCount < maxRetries) {
+      console.log(`🔄 Scheduling reconnection attempt ${retryCount + 1}/${maxRetries} in ${delay}ms`);
+      setConnectionStatus('reconnecting');
+      
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (user && !isConnected) {
+          console.log(`🔄 Attempting reconnection ${retryCount + 1}/${maxRetries}`);
+          setRetryCount(prev => prev + 1);
+          createSocketConnection();
+        }
+      }, delay);
+    } else {
+      console.error('❌ Max reconnection attempts reached. Auto-refreshing page...');
+      setConnectionStatus('failed');
+      
+      // Auto-refresh page after 5 seconds if max retries reached
+      setTimeout(() => {
+        console.log('🔄 Auto-refreshing page due to connection failure');
+        window.location.reload();
+      }, 5000);
+    }
+  }, [retryCount, user, isConnected, createSocketConnection]);
+
+  // Health check function
+  const startHealthCheck = useCallback(() => {
+    if (healthCheckIntervalRef.current) {
+      clearInterval(healthCheckIntervalRef.current);
+    }
+
+    healthCheckIntervalRef.current = setInterval(async () => {
+      if (socketRef.current && isConnected) {
+        try {
+          // Ping the backend health endpoint
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/health`);
+          if (!response.ok) {
+            throw new Error('Health check failed');
+          }
+          console.log('💚 Health check passed');
+        } catch (error) {
+          console.warn('⚠️ Health check failed, attempting reconnection');
+          if (socketRef.current) {
+            socketRef.current.disconnect();
+          }
+          scheduleReconnect();
+        }
+      }
+    }, 30000); // Check every 30 seconds
+  }, [isConnected, scheduleReconnect]);
+
+  useEffect(() => {
+    if (!user) {
+      // Disconnect socket if user is not logged in
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        setSocket(null);
+        setIsConnected(false);
+        setConnectionStatus('disconnected');
+        socketRef.current = null;
+      }
+      
+      // Clear any pending reconnection
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      // Clear health check
+      if (healthCheckIntervalRef.current) {
+        clearInterval(healthCheckIntervalRef.current);
+        healthCheckIntervalRef.current = null;
+      }
+      
+      return;
+    }
+
+    // Create initial connection
+    createSocketConnection();
 
     // Cleanup on unmount
     return () => {
-      newSocket.disconnect();
-      socketRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      if (healthCheckIntervalRef.current) {
+        clearInterval(healthCheckIntervalRef.current);
+        healthCheckIntervalRef.current = null;
+      }
     };
-  }, [user, addNotification]); // Remove socket from dependencies to prevent infinite loop
+  }, [user, createSocketConnection]);
 
   const markNotificationAsRead = (notificationId) => {
     setNotifications(prev =>
@@ -263,13 +383,16 @@ export const SocketProvider = ({ children }) => {
   const reconnectSocket = useCallback(() => {
     if (socketRef.current && !isConnected) {
       console.log('🔄 Attempting manual socket reconnection...');
-      socketRef.current.connect();
+      setRetryCount(0); // Reset retry count for manual reconnection
+      createSocketConnection();
     }
-  }, [isConnected]);
+  }, [isConnected, createSocketConnection]);
 
   const value = {
     socket,
     isConnected,
+    connectionStatus,
+    retryCount,
     notifications,
     addNotification,
     markNotificationAsRead,

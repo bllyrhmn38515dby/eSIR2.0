@@ -24,14 +24,21 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // Start tracking session
 router.post('/start-session', verifyToken, async (req, res) => {
   try {
+    console.log('🚀 Starting tracking session...');
+    console.log('📋 Request body:', req.body);
+    console.log('👤 User:', req.user.nama_lengkap, `(${req.user.role})`);
+    
     const { rujukan_id, device_id } = req.body;
 
     if (!rujukan_id) {
+      console.log('❌ Missing rujukan_id');
       return res.status(400).json({
         success: false,
         message: 'rujukan_id wajib diisi'
       });
     }
+
+    console.log(`🔍 Checking rujukan with ID: ${rujukan_id}`);
 
     // Cek apakah rujukan exists dan user punya akses
     const [rujukanRows] = await db.execute(`
@@ -44,7 +51,10 @@ router.post('/start-session', verifyToken, async (req, res) => {
       WHERE r.id = ?
     `, [rujukan_id]);
 
+    console.log(`📊 Found ${rujukanRows.length} rujukan records`);
+
     if (rujukanRows.length === 0) {
+      console.log('❌ Rujukan tidak ditemukan');
       return res.status(404).json({
         success: false,
         message: 'Rujukan tidak ditemukan'
@@ -52,16 +62,21 @@ router.post('/start-session', verifyToken, async (req, res) => {
     }
 
     const rujukan = rujukanRows[0];
+    console.log('✅ Rujukan found:', rujukan.nomor_rujukan);
 
     // Cek apakah sudah ada session aktif untuk rujukan ini
+    console.log('🔍 Checking for existing active sessions...');
     const [existingSession] = await db.execute(`
       SELECT * FROM tracking_sessions 
       WHERE rujukan_id = ? AND is_active = TRUE
     `, [rujukan_id]);
 
+    console.log(`📊 Found ${existingSession.length} existing active sessions`);
+
     if (existingSession.length > 0) {
       // Jika sudah ada session aktif, return session yang sudah ada
       const existingSessionData = existingSession[0];
+      console.log('✅ Returning existing session:', existingSessionData.session_token);
       return res.status(200).json({
         success: true,
         message: 'Session tracking sudah aktif',
@@ -76,18 +91,25 @@ router.post('/start-session', verifyToken, async (req, res) => {
 
     // Generate session token
     const sessionToken = generateSessionToken();
+    console.log('🔑 Generated session token:', sessionToken);
 
     // Create tracking session
+    console.log('💾 Creating new tracking session...');
     const [result] = await db.execute(`
       INSERT INTO tracking_sessions (rujukan_id, user_id, device_id, session_token, is_active)
       VALUES (?, ?, ?, ?, TRUE)
     `, [rujukan_id, req.user.id, device_id || null, sessionToken]);
 
+    console.log('✅ Tracking session created with ID:', result.insertId);
+
     // Create initial tracking data
+    console.log('💾 Creating initial tracking data...');
     await db.execute(`
       INSERT INTO tracking_data (rujukan_id, latitude, longitude, status, estimated_time, estimated_distance)
       VALUES (?, ?, ?, 'menunggu', NULL, NULL)
     `, [rujukan_id, 0, 0]);
+
+    console.log('✅ Initial tracking data created');
 
     res.status(201).json({
       success: true,
@@ -100,10 +122,17 @@ router.post('/start-session', verifyToken, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error starting tracking session:', error);
+    console.error('❌ Error starting tracking session:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage,
+      stack: error.stack
+    });
     res.status(500).json({
       success: false,
-      message: 'Gagal memulai session tracking'
+      message: 'Gagal memulai session tracking',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -111,7 +140,9 @@ router.post('/start-session', verifyToken, async (req, res) => {
 // Update position (untuk petugas ambulans)
 router.post('/update-position', async (req, res) => {
   try {
-    console.log('🔄 Update position request:', req.body);
+    console.log('🔄 Update position request received at:', new Date().toISOString());
+    console.log('🔄 Request headers:', req.headers);
+    console.log('🔄 Request body:', req.body);
     
     const { 
       session_token, 
@@ -144,6 +175,7 @@ router.post('/update-position', async (req, res) => {
     console.log('✅ Coordinates valid');
 
     // Cek session token
+    console.log('🔍 Checking session token:', session_token.substring(0, 20) + '...');
     const [sessionRows] = await db.execute(`
       SELECT ts.*, r.faskes_tujuan_id, ft.latitude as dest_lat, ft.longitude as dest_lng
       FROM tracking_sessions ts
@@ -151,11 +183,17 @@ router.post('/update-position', async (req, res) => {
       LEFT JOIN faskes ft ON r.faskes_tujuan_id = ft.id
       WHERE ts.session_token = ? AND ts.is_active = TRUE
     `, [session_token]);
+    console.log('📊 Session query result:', sessionRows.length, 'rows found');
 
     if (sessionRows.length === 0) {
+      console.log('❌ Invalid session token:', session_token.substring(0, 20) + '...');
       return res.status(401).json({
         success: false,
-        message: 'Session token tidak valid atau sudah tidak aktif'
+        message: 'Session token tidak valid atau sudah tidak aktif',
+        debug: process.env.NODE_ENV === 'development' ? {
+          session_token: session_token.substring(0, 20) + '...',
+          timestamp: new Date().toISOString()
+        } : undefined
       });
     }
 
@@ -182,16 +220,21 @@ router.post('/update-position', async (req, res) => {
     }
 
     // Update tracking data
-    await db.execute(`
+    console.log('💾 Updating tracking data for rujukan_id:', rujukan_id);
+    const updateData = [
+      latitude, longitude, status || 'dalam_perjalanan', estimated_time,
+      estimated_distance, speed || 0, heading || null, accuracy || 0, battery_level || null,
+      rujukan_id
+    ];
+    console.log('💾 Update data:', updateData);
+    
+    const updateResult = await db.execute(`
       UPDATE tracking_data 
       SET latitude = ?, longitude = ?, status = ?, estimated_time = ?, 
           estimated_distance = ?, speed = ?, heading = ?, accuracy = ?, battery_level = ?
       WHERE rujukan_id = ?
-    `, [
-      latitude, longitude, status || 'dalam_perjalanan', estimated_time,
-      estimated_distance, speed || 0, heading || null, accuracy || 0, battery_level || null,
-      rujukan_id
-    ]);
+    `, updateData);
+    console.log('✅ Tracking data updated successfully:', updateResult);
 
     // Log tracking update for debugging
     console.log(`📍 Tracking update for rujukan ${rujukan_id}:`, {
@@ -244,20 +287,39 @@ router.post('/update-position', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error updating position:', error);
+    console.error('❌ Error updating position:', error);
     
     // Log detailed error information
-    console.error('Error details:', {
+    console.error('❌ Error details:', {
       message: error.message,
       code: error.code,
       sqlMessage: error.sqlMessage,
+      sqlState: error.sqlState,
+      errno: error.errno,
       stack: error.stack
+    });
+    
+    // Log request data for debugging
+    console.error('❌ Request data:', {
+      session_token: session_token ? session_token.substring(0, 20) + '...' : 'null',
+      latitude,
+      longitude,
+      status,
+      speed,
+      heading,
+      accuracy,
+      battery_level
     });
     
     res.status(500).json({
       success: false,
       message: 'Gagal mengupdate posisi',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      debug: process.env.NODE_ENV === 'development' ? {
+        code: error.code,
+        sqlMessage: error.sqlMessage,
+        sqlState: error.sqlState
+      } : undefined
     });
   }
 });
@@ -346,6 +408,9 @@ router.get('/:rujukan_id', verifyToken, async (req, res) => {
 router.get('/session/:rujukan_id', verifyToken, async (req, res) => {
   try {
     const { rujukan_id } = req.params;
+    
+    console.log(`🔍 Getting active session for rujukan_id: ${rujukan_id}`);
+    console.log(`👤 User requesting: ${req.user.nama_lengkap} (${req.user.role})`);
 
     const [rows] = await db.execute(`
       SELECT ts.*, td.latitude, td.longitude, td.status as tracking_status, td.estimated_time, td.estimated_distance,
@@ -365,20 +430,29 @@ router.get('/session/:rujukan_id', verifyToken, async (req, res) => {
       LIMIT 1
     `, [rujukan_id]);
 
+    console.log(`📊 Found ${rows.length} active sessions for rujukan ${rujukan_id}`);
+
     if (rows.length === 0) {
+      console.log(`❌ No active session found for rujukan ${rujukan_id}`);
       return res.status(404).json({
         success: false,
         message: 'Tidak ada session aktif untuk rujukan ini'
       });
     }
 
+    console.log(`✅ Active session found:`, rows[0]);
     res.json({
       success: true,
       data: rows[0]
     });
 
   } catch (error) {
-    console.error('Error getting active session:', error);
+    console.error('❌ Error getting active session:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      code: error.code,
+      sqlMessage: error.sqlMessage
+    });
     res.status(500).json({
       success: false,
       message: 'Gagal mengambil data session aktif'

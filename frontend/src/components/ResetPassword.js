@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import './ResetPassword.css';
@@ -19,25 +19,25 @@ const ResetPassword = () => {
 
   const token = searchParams.get('token');
 
-  const verifyToken = useCallback(async () => {
-    try {
-      const response = await axios.get(`/api/auth/verify-reset-token/${token}`);
-      
-      if (response.data.success) {
-        setTokenValid(true);
-        setUserInfo(response.data.data);
-      } else {
-        setError('Token tidak valid atau sudah kadaluarsa');
-      }
-    } catch (error) {
-      console.error('Error verifying token:', error);
-      setError('Token tidak valid atau sudah kadaluarsa');
-    } finally {
-      setVerifying(false);
-    }
-  }, [token]);
-
   useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        const response = await axios.get(`/api/auth/verify-reset-token/${token}`);
+        
+        if (response.data.success) {
+          setTokenValid(true);
+          setUserInfo(response.data.data);
+        } else {
+          setError('Token tidak valid atau sudah kadaluarsa');
+        }
+      } catch (error) {
+        console.error('Error verifying token:', error);
+        setError('Token tidak valid atau sudah kadaluarsa');
+      } finally {
+        setVerifying(false);
+      }
+    };
+
     if (!token) {
       setError('Token reset password tidak ditemukan');
       setVerifying(false);
@@ -45,7 +45,7 @@ const ResetPassword = () => {
     }
 
     verifyToken();
-  }, [token, verifyToken]);
+  }, [token]);
 
   const handleInputChange = (e) => {
     setFormData({

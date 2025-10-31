@@ -6,6 +6,7 @@ import './AmbulanceTracker.css';
 const AmbulanceTracker = () => {
   const navigate = useNavigate();
   const [sessionToken, setSessionToken] = useState('');
+  const [sessionId, setSessionId] = useState(null);
   const [rujukanId, setRujukanId] = useState('');
   const [isTracking, setIsTracking] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(null);
@@ -15,16 +16,138 @@ const AmbulanceTracker = () => {
   const [loadingRujukan, setLoadingRujukan] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualPosition, setManualPosition] = useState({ latitude: '', longitude: '' });
+  const [gpsPermissionStatus, setGpsPermissionStatus] = useState('checking'); // checking, granted, denied, unavailable
+  const [gpsError, setGpsError] = useState('');
   const watchIdRef = useRef(null);
+  const gpsRequestTimeoutRef = useRef(null);
+  const lastGpsRequestRef = useRef(0);
+  const lastUpdatePositionRef = useRef(0);
+
+  // Auto-request GPS permission on component mount with rate limiting
+  const requestGPSPermission = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setGpsPermissionStatus('unavailable');
+      setGpsError('Geolocation tidak didukung di browser ini');
+      return;
+    }
+
+    // Rate limiting: prevent multiple requests within 5 seconds
+    const now = Date.now();
+    if (now - lastGpsRequestRef.current < 5000) {
+      console.log('⏰ GPS request rate limited, skipping...');
+      return;
+    }
+    lastGpsRequestRef.current = now;
+
+    // Clear any existing timeout
+    if (gpsRequestTimeoutRef.current) {
+      clearTimeout(gpsRequestTimeoutRef.current);
+    }
+
+    setGpsPermissionStatus('checking');
+    setGpsError('');
+
+    try {
+      console.log('🔄 Requesting GPS permission...');
+      
+      // Try with high accuracy first (shorter timeout)
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 8000, // Reduced timeout
+            maximumAge: 0
+          }
+        );
+      });
+
+      console.log('✅ GPS permission granted, position obtained:', position.coords);
+      setGpsPermissionStatus('granted');
+      setCurrentPosition({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        heading: position.coords.heading,
+        speed: position.coords.speed ? position.coords.speed * 3.6 : null
+      });
+      setGpsError('');
+    } catch (error) {
+      console.error('❌ GPS permission error:', error);
+      
+      let finalError = error;
+      
+      // If timeout, try with lower accuracy
+      if (error.code === error.TIMEOUT) {
+        console.log('⏰ High accuracy timeout, trying low accuracy...');
+        try {
+          const fallbackPosition = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              resolve,
+              reject,
+              {
+                enableHighAccuracy: false,
+                timeout: 15000, // Longer timeout for low accuracy
+                maximumAge: 60000 // Accept cached position up to 1 minute old
+              }
+            );
+          });
+
+          console.log('✅ GPS fallback successful:', fallbackPosition.coords);
+          setGpsPermissionStatus('granted');
+          setCurrentPosition({
+            latitude: fallbackPosition.coords.latitude,
+            longitude: fallbackPosition.coords.longitude,
+            accuracy: fallbackPosition.coords.accuracy,
+            heading: fallbackPosition.coords.heading,
+            speed: fallbackPosition.coords.speed ? fallbackPosition.coords.speed * 3.6 : null
+          });
+          setGpsError('');
+          return;
+        } catch (fallbackError) {
+          console.error('❌ GPS fallback also failed:', fallbackError);
+          // Use fallback error for final handling
+          finalError = fallbackError;
+        }
+      }
+      
+      let errorMessage = '';
+      let status = 'denied';
+      
+      switch (finalError.code) {
+        case finalError.PERMISSION_DENIED:
+          errorMessage = 'Izin lokasi ditolak. Silakan izinkan akses lokasi di browser untuk menggunakan GPS tracking.';
+          status = 'denied';
+          break;
+        case finalError.POSITION_UNAVAILABLE:
+          errorMessage = 'Informasi lokasi tidak tersedia. Pastikan GPS aktif dan coba lagi.';
+          status = 'unavailable';
+          break;
+        case finalError.TIMEOUT:
+          errorMessage = 'Timeout mendapatkan posisi GPS. Pastikan GPS aktif dan coba lagi.';
+          status = 'unavailable';
+          break;
+        default:
+          errorMessage = 'Gagal mendapatkan posisi GPS.';
+          status = 'unavailable';
+      }
+      
+      setGpsPermissionStatus(status);
+      setGpsError(errorMessage);
+    }
+  }, []);
 
   // Define all functions before they are used to avoid temporal dead zone
-  const getBatteryLevel = useCallback(() => {
+  const getBatteryLevel = useCallback(async () => {
     if ('getBattery' in navigator) {
-      navigator.getBattery().then(battery => {
+      try {
+        const battery = await navigator.getBattery();
         return Math.round(battery.level * 100);
-      });
+      } catch (error) {
+        console.warn('Failed to get battery level:', error);
+        return null;
+      }
     }
     return null;
   }, []);
@@ -32,30 +155,103 @@ const AmbulanceTracker = () => {
   const updatePosition = useCallback(async (coords) => {
     if (!sessionToken) return;
 
+    // Rate limiting: prevent multiple requests within 2 seconds
+    const now = Date.now();
+    if (now - lastUpdatePositionRef.current < 2000) {
+      console.log('⏰ Update position rate limited, skipping...');
+      return;
+    }
+    lastUpdatePositionRef.current = now;
+
     try {
-      const response = await fetch('/api/tracking/update-position', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          session_token: sessionToken,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          status: 'dalam_perjalanan',
-          speed: coords.speed,
-          heading: coords.heading,
-          accuracy: coords.accuracy,
-          battery_level: getBatteryLevel()
-        })
+      // Validasi koordinat sebelum mengirim
+      if (!coords.latitude || !coords.longitude) {
+        console.warn('⚠️ Invalid coordinates:', coords);
+        return;
+      }
+
+      // Validasi koordinat dalam area Jawa Barat
+      if (coords.latitude < -7.5 || coords.latitude > -5.5 || 
+          coords.longitude < 106.0 || coords.longitude > 108.5) {
+        console.warn('⚠️ Coordinates out of Jawa Barat area:', coords);
+        setError('Koordinat di luar area Jawa Barat');
+        return;
+      }
+
+      const batteryLevel = await getBatteryLevel();
+      
+      console.log('🔄 Updating position:', {
+        session_token: sessionToken.substring(0, 20) + '...',
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        battery_level: batteryLevel
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error updating position:', errorData);
+      // Retry mechanism for update position
+      let response;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      const attemptUpdate = async (currentRetryCount) => {
+        try {
+          response = await fetch('/api/tracking/update-position', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              session_token: sessionToken,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+              status: 'dalam_perjalanan',
+              speed: coords.speed,
+              heading: coords.heading,
+              accuracy: coords.accuracy,
+              battery_level: batteryLevel
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Position updated successfully:', result);
+            return true; // Success
+          } else {
+            const errorData = await response.json();
+            console.error(`❌ Error updating position (attempt ${currentRetryCount + 1}):`, errorData);
+            
+            if (currentRetryCount === maxRetries - 1) {
+              // Last attempt failed
+              setError(errorData.message || 'Gagal mengupdate posisi');
+            } else {
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, 1000 * (currentRetryCount + 1)));
+            }
+            return false;
+          }
+        } catch (error) {
+          console.error(`❌ Network error updating position (attempt ${currentRetryCount + 1}):`, error);
+          
+          if (currentRetryCount === maxRetries - 1) {
+            // Last attempt failed
+            setError('Gagal mengupdate posisi');
+          } else {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * (currentRetryCount + 1)));
+          }
+          return false;
+        }
+      };
+      
+      while (retryCount < maxRetries) {
+        const success = await attemptUpdate(retryCount);
+        if (success) {
+          break; // Success, exit retry loop
+        }
+        retryCount++;
       }
     } catch (error) {
-      console.error('Error updating position:', error);
+      console.error('❌ Error updating position:', error);
+      setError('Gagal mengupdate posisi');
     }
   }, [sessionToken, getBatteryLevel]);
 
@@ -91,14 +287,21 @@ const AmbulanceTracker = () => {
 
     setError('');
 
-    const tryGetPosition = (highAccuracy = true) => {
+    const tryGetPosition = (highAccuracy = true, attempt = 1) => {
+      // Rate limiting: prevent too many attempts
+      if (attempt > 3) {
+        console.log('❌ Max GPS attempts reached, giving up...');
+        setError('Gagal mendapatkan posisi GPS setelah beberapa percobaan. Silakan coba lagi nanti.');
+        return;
+      }
+
       const options = {
         enableHighAccuracy: highAccuracy,
-        timeout: highAccuracy ? 15000 : 30000,
-        maximumAge: highAccuracy ? 0 : 60000
+        timeout: highAccuracy ? 8000 : 15000, // Reduced timeouts
+        maximumAge: highAccuracy ? 0 : 30000 // Accept cached position for low accuracy
       };
 
-      console.log(`🔄 Mencoba mendapatkan posisi GPS (${highAccuracy ? 'high accuracy' : 'low accuracy'})...`);
+      console.log(`🔄 Mencoba mendapatkan posisi GPS (${highAccuracy ? 'high accuracy' : 'low accuracy'}) - attempt ${attempt}...`);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -106,7 +309,9 @@ const AmbulanceTracker = () => {
           setCurrentPosition({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy
+            accuracy: position.coords.accuracy,
+            heading: position.coords.heading,
+            speed: position.coords.speed ? position.coords.speed * 3.6 : null
           });
           updatePosition(position.coords);
           startWatchingPosition(options);
@@ -118,7 +323,8 @@ const AmbulanceTracker = () => {
           switch (error.code) {
             case error.PERMISSION_DENIED:
               errorMessage = 'Izin lokasi ditolak. Silakan izinkan akses lokasi di browser.';
-              break;
+              setError(errorMessage);
+              return;
             case error.POSITION_UNAVAILABLE:
               errorMessage = 'Informasi lokasi tidak tersedia.';
               break;
@@ -126,7 +332,7 @@ const AmbulanceTracker = () => {
               if (highAccuracy) {
                 console.log('⏰ Timeout dengan high accuracy, mencoba low accuracy...');
                 setError('Mencoba mendapatkan posisi dengan akurasi rendah...');
-                setTimeout(() => tryGetPosition(false), 1000);
+                setTimeout(() => tryGetPosition(false, attempt + 1), 2000); // Longer delay
                 return;
               } else {
                 errorMessage = 'Timeout mendapatkan posisi GPS. Pastikan GPS aktif dan coba lagi.';
@@ -142,7 +348,7 @@ const AmbulanceTracker = () => {
       );
     };
 
-    tryGetPosition(true);
+    tryGetPosition(true, 1);
   }, [updatePosition, startWatchingPosition]);
 
   const checkExistingSession = useCallback(async () => {
@@ -162,6 +368,7 @@ const AmbulanceTracker = () => {
           console.log('Found existing session:', result.data);
           
           setSessionToken(result.data.session_token);
+          setSessionId(result.data.id || null);
           setTrackingData({
             nomor_rujukan: result.data.nomor_rujukan,
             nama_pasien: result.data.nama_pasien,
@@ -184,13 +391,32 @@ const AmbulanceTracker = () => {
   useEffect(() => {
     loadRujukanList();
     loadActiveSessions();
-  }, []);
+    // Auto-request GPS permission when component mounts
+    requestGPSPermission();
+  }, [requestGPSPermission]);
 
   useEffect(() => {
     if (rujukanId) {
       checkExistingSession();
     }
   }, [rujukanId, checkExistingSession]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    const currentWatchId = watchIdRef.current;
+    const currentTimeout = gpsRequestTimeoutRef.current;
+    
+    return () => {
+      // Clear GPS watch
+      if (currentWatchId) {
+        navigator.geolocation.clearWatch(currentWatchId);
+      }
+      // Clear timeout
+      if (currentTimeout) {
+        clearTimeout(currentTimeout);
+      }
+    };
+  }, []);
 
   // Rest of the component functions
   const loadActiveSessions = async () => {
@@ -281,9 +507,20 @@ const AmbulanceTracker = () => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('✅ Session started successfully:', result);
+        
+        if (!result.data?.session_token) {
+          console.error('❌ No session token in response:', result);
+          setError('Session token tidak ditemukan dalam response');
+          return;
+        }
+        
         setSessionToken(result.data.session_token);
+        setSessionId(result.data.session_id);
         setTrackingData(result.data.rujukan);
         setIsTracking(true);
+        
+        console.log('🔑 Session token set:', result.data.session_token.substring(0, 20) + '...');
         
         if (result.data.is_existing) {
           setSuccess('Session tracking sudah aktif, melanjutkan tracking...');
@@ -294,6 +531,7 @@ const AmbulanceTracker = () => {
         startGPSTracking();
       } else {
         const errorData = await response.json();
+        console.error('❌ Failed to start session:', errorData);
         setError(errorData.message || 'Gagal memulai session tracking');
       }
     } catch (error) {
@@ -304,17 +542,38 @@ const AmbulanceTracker = () => {
     }
   };
 
-  const stopTracking = () => {
-    if (watchIdRef.current) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-    }
+  const stopTracking = async () => {
+    try {
+      if (watchIdRef.current) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
 
-    setIsTracking(false);
-    setSessionToken('');
-    setCurrentPosition(null);
-    setTrackingData(null);
-    setSuccess('Tracking berhasil dihentikan');
+      if (sessionId) {
+        const token = localStorage.getItem('token');
+        const resp = await fetch(`/api/tracking/end-session/${sessionId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          console.error('❌ end-session failed:', err);
+        }
+      }
+
+      setIsTracking(false);
+      setSessionToken('');
+      setSessionId(null);
+      setCurrentPosition(null);
+      setTrackingData(null);
+      setSuccess('Tracking berhasil dihentikan');
+    } catch (e) {
+      console.error('❌ Error stopping tracking:', e);
+      setError('Gagal menghentikan tracking');
+    }
   };
 
   const updateStatus = async (status) => {
@@ -323,15 +582,40 @@ const AmbulanceTracker = () => {
       return;
     }
 
-    try {
-      const position = currentPosition || {
-        latitude: -6.5971,
-        longitude: 106.8060,
-        accuracy: 1000,
-        speed: null,
-        heading: null
-      };
+    // Rate limiting: prevent multiple requests within 3 seconds
+    const now = Date.now();
+    if (now - lastUpdatePositionRef.current < 3000) {
+      console.log('⏰ Update status rate limited, please wait...');
+      setError('Tunggu sebentar sebelum mengupdate status lagi');
+      return;
+    }
+    lastUpdatePositionRef.current = now;
 
+    try {
+      if (!currentPosition) {
+        setError('Posisi GPS belum tersedia. Pastikan GPS aktif dan izin lokasi diberikan.');
+        return;
+      }
+
+      const position = currentPosition;
+
+      // Validasi koordinat sebelum mengirim
+      if (!position.latitude || !position.longitude) {
+        console.warn('⚠️ Invalid coordinates:', position);
+        setError('Koordinat GPS tidak valid');
+        return;
+      }
+
+      // Validasi koordinat dalam area Jawa Barat
+      if (position.latitude < -7.5 || position.latitude > -5.5 || 
+          position.longitude < 106.0 || position.longitude > 108.5) {
+        console.warn('⚠️ Coordinates out of Jawa Barat area:', position);
+        setError('Koordinat di luar area Jawa Barat');
+        return;
+      }
+
+      const batteryLevel = await getBatteryLevel();
+      
       const requestBody = {
         session_token: sessionToken,
         latitude: position.latitude,
@@ -340,34 +624,67 @@ const AmbulanceTracker = () => {
         speed: position.speed,
         heading: position.heading,
         accuracy: position.accuracy,
-        battery_level: getBatteryLevel()
+        battery_level: batteryLevel
       };
 
       console.log('🔄 Updating status:', status);
       console.log('📡 Request body:', requestBody);
 
-      const response = await fetch('/api/tracking/update-position', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
+      // Retry mechanism for update status
+      let response;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      const attemptStatusUpdate = async (currentRetryCount) => {
+        try {
+          response = await fetch('/api/tracking/update-position', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+          });
 
-      console.log('📡 Response status:', response.status);
+          console.log('📡 Response status:', response.status);
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Update successful:', result);
-        setSuccess(`Status berhasil diupdate ke: ${getStatusText(status)}`);
-        
-        if (!currentPosition) {
-          setCurrentPosition(position);
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Update successful:', result);
+            setSuccess(`Status berhasil diupdate ke: ${getStatusText(status)}`);
+            return true; // Success
+          } else {
+            const errorData = await response.json();
+            console.error(`❌ Error response (attempt ${currentRetryCount + 1}):`, errorData);
+            
+            if (currentRetryCount === maxRetries - 1) {
+              // Last attempt failed
+              setError(errorData.message || 'Gagal mengupdate status');
+            } else {
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, 1000 * (currentRetryCount + 1)));
+            }
+            return false;
+          }
+        } catch (error) {
+          console.error(`❌ Network error updating status (attempt ${currentRetryCount + 1}):`, error);
+          
+          if (currentRetryCount === maxRetries - 1) {
+            // Last attempt failed
+            setError('Gagal mengupdate status');
+          } else {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000 * (currentRetryCount + 1)));
+          }
+          return false;
         }
-      } else {
-        const errorData = await response.json();
-        console.error('❌ Error response:', errorData);
-        setError(errorData.message || 'Gagal mengupdate status');
+      };
+      
+      while (retryCount < maxRetries) {
+        const success = await attemptStatusUpdate(retryCount);
+        if (success) {
+          break; // Success, exit retry loop
+        }
+        retryCount++;
       }
     } catch (error) {
       console.error('❌ Error updating status:', error);
@@ -385,53 +702,17 @@ const AmbulanceTracker = () => {
     }
   };
 
-  const handleManualPositionSubmit = () => {
-    const lat = parseFloat(manualPosition.latitude);
-    const lng = parseFloat(manualPosition.longitude);
-    
-    if (isNaN(lat) || isNaN(lng)) {
-      setError('Latitude dan longitude harus berupa angka');
+
+  const retryGPSPermission = () => {
+    // Debounce retry requests
+    const now = Date.now();
+    if (now - lastGpsRequestRef.current < 3000) {
+      console.log('⏰ GPS retry rate limited, please wait...');
       return;
     }
     
-    if (lat < -90 || lat > 90) {
-      setError('Latitude harus antara -90 dan 90');
-      return;
-    }
-    
-    if (lng < -180 || lng > 180) {
-      setError('Longitude harus antara -180 dan 180');
-      return;
-    }
-
-    const position = {
-      latitude: lat,
-      longitude: lng,
-      accuracy: 100,
-      speed: null,
-      heading: null
-    };
-
-    setCurrentPosition(position);
-    updatePosition(position);
-    setShowManualInput(false);
-    setError('');
-    setSuccess('Posisi manual berhasil diupdate');
-  };
-
-  const useDefaultPosition = () => {
-    const defaultPosition = {
-      latitude: -6.5971,
-      longitude: 106.8060,
-      accuracy: 1000,
-      speed: null,
-      heading: null
-    };
-
-    setCurrentPosition(defaultPosition);
-    updatePosition(defaultPosition);
-    setError('');
-    setSuccess('Menggunakan posisi default Bogor');
+    setGpsError('');
+    requestGPSPermission();
   };
 
   return (
@@ -512,7 +793,8 @@ const AmbulanceTracker = () => {
                 </div>
               ) : (
                 <div className="stop-session">
-                  <button 
+                  <button
+                    type="button"
                     onClick={stopTracking}
                     className="stop-btn"
                   >
@@ -579,6 +861,55 @@ const AmbulanceTracker = () => {
             <div className="position-display">
               <h3>📍 Posisi GPS</h3>
               
+              {/* GPS Permission Status */}
+              <div className="gps-status">
+                {gpsPermissionStatus === 'checking' && (
+                  <div className="gps-status-checking">
+                    <div className="loading-spinner"></div>
+                    <span>🔄 Meminta izin GPS...</span>
+                    <p style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>
+                      Pastikan GPS aktif dan browser memiliki izin lokasi
+                    </p>
+                  </div>
+                )}
+                
+                {gpsPermissionStatus === 'granted' && currentPosition && (
+                  <div className="gps-status-granted">
+                    <span>✅ GPS Aktif</span>
+                  </div>
+                )}
+                
+                {gpsPermissionStatus === 'denied' && (
+                  <div className="gps-status-denied">
+                    <span>❌ Izin GPS Ditolak</span>
+                    <p style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>
+                      Klik ikon lokasi di address bar browser untuk mengizinkan akses lokasi
+                    </p>
+                    <button onClick={retryGPSPermission} className="retry-btn">
+                      🔄 Coba Lagi
+                    </button>
+                  </div>
+                )}
+                
+                {gpsPermissionStatus === 'unavailable' && (
+                  <div className="gps-status-unavailable">
+                    <span>⚠️ GPS Tidak Tersedia</span>
+                    <p style={{fontSize: '12px', color: '#666', marginTop: '5px'}}>
+                      Pastikan GPS aktif di perangkat dan coba lagi
+                    </p>
+                    <button onClick={retryGPSPermission} className="retry-btn">
+                      🔄 Coba Lagi
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {gpsError && (
+                <div className="gps-error">
+                  <p>❌ {gpsError}</p>
+                </div>
+              )}
+              
               {currentPosition ? (
                 <div className="position-info">
                   <div className="position-row">
@@ -605,14 +936,6 @@ const AmbulanceTracker = () => {
                       <span>{currentPosition.heading}°</span>
                     </div>
                   )}
-                  <div className="position-actions">
-                    <button 
-                      onClick={() => setShowManualInput(true)}
-                      className="manual-btn"
-                    >
-                      📝 Input Manual
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className="no-position">
@@ -620,60 +943,15 @@ const AmbulanceTracker = () => {
                   <p>Pastikan GPS aktif dan izin lokasi diberikan</p>
                   <div className="position-fallback">
                     <button 
-                      onClick={() => setShowManualInput(true)}
-                      className="manual-btn"
+                      onClick={retryGPSPermission}
+                      className="retry-gps-btn"
                     >
-                      📝 Input Posisi Manual
-                    </button>
-                    <button 
-                      onClick={useDefaultPosition}
-                      className="default-btn"
-                    >
-                      🏠 Gunakan Posisi Default
+                      🔄 Coba GPS Lagi
                     </button>
                   </div>
                 </div>
               )}
 
-              {showManualInput && (
-                <div className="manual-input">
-                  <h4>📝 Input Posisi Manual</h4>
-                  <div className="input-group">
-                    <label>Latitude:</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={manualPosition.latitude}
-                      onChange={(e) => setManualPosition(prev => ({ ...prev, latitude: e.target.value }))}
-                      placeholder="-6.5971"
-                    />
-                  </div>
-                  <div className="input-group">
-                    <label>Longitude:</label>
-                    <input
-                      type="number"
-                      step="any"
-                      value={manualPosition.longitude}
-                      onChange={(e) => setManualPosition(prev => ({ ...prev, longitude: e.target.value }))}
-                      placeholder="106.8060"
-                    />
-                  </div>
-                  <div className="manual-actions">
-                    <button 
-                      onClick={handleManualPositionSubmit}
-                      className="submit-btn"
-                    >
-                      ✅ Submit
-                    </button>
-                    <button 
-                      onClick={() => setShowManualInput(false)}
-                      className="cancel-btn"
-                    >
-                      ❌ Batal
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
             {trackingData && (
@@ -729,3 +1007,4 @@ const AmbulanceTracker = () => {
 };
 
 export default AmbulanceTracker;
+

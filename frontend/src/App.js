@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { LastPageProvider } from './context/LastPageContext';
@@ -33,152 +34,153 @@ import LiveMapPreview from './pages/LiveMapPreview';
 import NotFoundPage from './components/NotFoundPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastContainer from './components/ToastContainer';
+import ConnectionStatus from './components/ConnectionStatus';
 import DesignSystemDemo from './components/examples/DesignSystemDemo';
 import 'leaflet/dist/leaflet.css';
 // import PWAInstall from './components/PWAInstall'; // DISABLED
 import './App.css';
 import './styles/design-system.css';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const hideOnAuthPages = ['/login', '/forgot-password', '/reset-password'];
+  const showConnectionStatus = !hideOnAuthPages.includes(location.pathname);
+
   return (
-    <ErrorBoundary>
-      <AuthProvider>
-        <SocketProvider>
-          <Router>
-            <LastPageProvider>
-              <div className="App">
-                  <Routes>
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route
-                      path="/dashboard" 
-                      element={
-                        <ProtectedRoute>
-                          <Dashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route
-                      path="/user-management" 
-                      element={
-                        <ProtectedRoute>
-                          <UserManagement />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/pasien" 
-                      element={
-                        <ProtectedRoute>
-                          <PasienPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/rujukan" 
-                      element={
-                        <ProtectedRoute>
-                          <RujukanPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/rujukan-enhanced" 
-                      element={
-                        <ProtectedRoute>
-                          <EnhancedRujukanPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/faskes" 
-                      element={
-                        <ProtectedRoute>
-                          <FaskesPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/peta" 
-                      element={
-                        <ProtectedRoute>
-                          <MapPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/tempat-tidur" 
-                      element={
-                        <ProtectedRoute>
-                          <TempatTidurPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/laporan" 
-                      element={
-                        <ProtectedRoute>
-                          <LaporanPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/search" 
-                      element={
-                        <ProtectedRoute>
-                          <SearchPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/tracking" 
-                      element={
-                        <ProtectedRoute>
-                          <TrackingPage />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/tracking-dashboard" 
-                      element={
-                        <ProtectedRoute>
-                          <TrackingDashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/ambulance-tracker" 
-                      element={
-                        <ProtectedRoute>
-                          <AmbulanceTracker />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/driver" 
-                      element={
-                        <ProtectedRoute>
-                          <DriverDashboard />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/design-preview" 
-                      element={
-                        <ProtectedRoute>
-                          <DesignPreview />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/patient-preview" 
-                      element={
-                        <ProtectedRoute>
-                          <PatientPreview />
-                        </ProtectedRoute>
-                      } 
-                    />
+    <LastPageProvider>
+      <div className="App">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route
+              path="/user-management" 
+              element={
+                <ProtectedRoute>
+                  <UserManagement />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/pasien" 
+              element={
+                <ProtectedRoute>
+                  <PasienPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/rujukan" 
+              element={
+                <ProtectedRoute>
+                  <RujukanPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/rujukan-enhanced" 
+              element={
+                <ProtectedRoute>
+                  <EnhancedRujukanPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/faskes" 
+              element={
+                <ProtectedRoute>
+                  <FaskesPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/peta" 
+              element={
+                <ProtectedRoute>
+                  <MapPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tempat-tidur" 
+              element={
+                <ProtectedRoute>
+                  <TempatTidurPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/laporan" 
+              element={
+                <ProtectedRoute>
+                  <LaporanPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/search" 
+              element={
+                <ProtectedRoute>
+                  <SearchPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tracking" 
+              element={
+                <ProtectedRoute>
+                  <TrackingPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/tracking-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <TrackingDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/ambulance-tracker" 
+              element={
+                <ProtectedRoute>
+                  <AmbulanceTracker />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/driver" 
+              element={
+                <ProtectedRoute>
+                  <DriverDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/design-preview" 
+              element={
+                <ProtectedRoute>
+                  <DesignPreview />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/patient-preview" 
+              element={
+                <ProtectedRoute>
+                  <PatientPreview />
+                </ProtectedRoute>
+              } 
+            />
         <Route
           path="/referral-preview"
           element={
@@ -243,22 +245,35 @@ function App() {
             </ProtectedRoute>
           }
         />
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                  
-                  {/* Toast Container for notifications */}
-                  <ToastContainer position="top-right" maxToasts={5} />
-                  
-                  {/* PWA Install Component - DISABLED */}
-                  {/* <PWAInstall /> */}
-                </div>
-              </LastPageProvider>
-            </Router>
-          </SocketProvider>
-        </AuthProvider>
-      </ErrorBoundary>
-    );
-  }
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+          
+          {/* Toast Container for notifications */}
+          <ToastContainer position="top-right" maxToasts={5} />
+          
+          {/* Connection Status Indicator (hidden on auth pages) */}
+          {showConnectionStatus && <ConnectionStatus />}
+          
+          {/* PWA Install Component - DISABLED */}
+          {/* <PWAInstall /> */}
+        </div>
+      </LastPageProvider>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <SocketProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </SocketProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+}
 
 export default App;

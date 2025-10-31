@@ -123,6 +123,24 @@ const TrackingPage = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const mapRef = useRef(null);
 
+  // Pagination state untuk daftar sesi
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
+  const totalPages = Math.max(1, Math.ceil(activeSessions.length / pageSize));
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const sessionsToShow = activeSessions.slice(startIndex, endIndex);
+
+  // Jaga agar page tetap valid saat data berubah
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+    if (page < 1) {
+      setPage(1);
+    }
+  }, [page, totalPages]);
+
   // Fungsi untuk menghitung jarak antara dua koordinat (dalam meter)
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
     const R = 6371000; // Radius bumi dalam meter
@@ -497,7 +515,7 @@ const TrackingPage = () => {
               </div>
             ) : (
               <div className="sessions-list">
-                {activeSessions.map((session) => (
+                {sessionsToShow.map((session) => (
                   <div
                     key={session.id}
                     className={`session-card ${selectedSession?.id === session.id ? 'active' : ''}`}
@@ -532,6 +550,31 @@ const TrackingPage = () => {
                     )}
                   </div>
                 ))}
+
+                {/* Pagination Controls */}
+                {activeSessions.length > pageSize && (
+                  <div className="sessions-pagination">
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      ← Sebelumnya
+                    </button>
+                    <span className="page-info">
+                      Halaman {page} dari {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                    >
+                      Berikutnya →
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -549,6 +592,7 @@ const TrackingPage = () => {
               center={mapCenter}
               zoom={12}
               style={{ height: '600px', width: '100%' }}
+              className="tracking-map"
             >
               <TileLayer
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -567,17 +611,7 @@ const TrackingPage = () => {
                 />
               )}
 
-              {/* Route Info Overlay */}
-              {routePolyline.length > 2 && (
-                <div className="route-info-overlay">
-                  <div className="route-info-card">
-                    <span className="route-icon">🛣️</span>
-                    <span className="route-text">
-                      Rute Presisi ({routePolyline.length} titik)
-                    </span>
-                  </div>
-                </div>
-              )}
+              {/* Route Info Overlay dipindah ke luar MapContainer agar posisi relatif ke container */}
 
               {/* Origin Marker */}
               {trackingData?.route?.origin?.lat &&
@@ -632,6 +666,18 @@ const TrackingPage = () => {
               )}
             </MapContainer>
 
+            {/* Route Info Overlay */}
+            {routePolyline.length > 2 && (
+              <div className="route-info-overlay">
+                <div className="route-info-card">
+                  <span className="route-icon">🛣️</span>
+                  <span className="route-text">
+                    Rute Presisi ({routePolyline.length} titik)
+                  </span>
+                </div>
+              </div>
+            )}
+
             {selectedSession && trackingData && (
               <div className="tracking-info-panel">
                 <div className="info-header">
@@ -650,7 +696,7 @@ const TrackingPage = () => {
                       {isLoadingRoute ? '🔄 Memproses Rute...' : getPhaseText(currentPhase)}
                     </span>
                     <button
-                      className="chat-btn"
+                      className="refresh-btn"
                       onClick={() => setIsChatOpen(true)}
                       title="Buka Chat"
                     >

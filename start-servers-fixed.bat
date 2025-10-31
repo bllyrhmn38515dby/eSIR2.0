@@ -1,26 +1,31 @@
 @echo off
-echo Starting eSIR 2.0 Servers (Fixed Version)...
+echo Starting eSIR 2.0 Servers...
 
 echo.
 echo Starting Backend Server...
-cd backend
-start "Backend Server" cmd /k "node index.js"
+start "Backend Server" cmd /c "cd backend && node index.js"
 
 echo.
 echo Waiting 5 seconds...
-timeout /t 5 /nobreak > nul
+timeout /t 5 /nobreak >nul
+
+echo.
+echo Starting Ngrok Tunnel...
+start "Ngrok Tunnel" cmd /c "ngrok http 3000"
+
+echo.
+echo Waiting 5 seconds...
+timeout /t 5 /nobreak >nul
 
 echo.
 echo Starting Frontend Server...
-cd ..\frontend
-start "Frontend Server" cmd /k "set DANGEROUSLY_DISABLE_HOST_CHECK=true && set HOST=0.0.0.0 && set WDS_SOCKET_HOST=192.168.18.6 && set WDS_SOCKET_PORT=3000 && npm start"
+start "Frontend Server" cmd /c "cd frontend && set DANGEROUSLY_DISABLE_HOST_CHECK=true && set HOST=0.0.0.0 && npm start"
 
 echo.
-echo Servers are starting...
-echo Backend: http://192.168.18.6:3001
-echo Frontend: http://192.168.18.6:3000
+echo All servers started! Check the opened windows.
 echo.
-echo Access from mobile: http://192.168.18.6:3000
+echo Backend: http://localhost:3000
+echo Frontend: http://localhost:3001
+echo Ngrok Dashboard: http://localhost:4040
 echo.
-echo Press any key to exit...
-pause > nul
+pause

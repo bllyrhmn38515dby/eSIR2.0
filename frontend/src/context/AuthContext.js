@@ -12,7 +12,7 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const API_BASE = process.env.REACT_APP_API_URL || '/api';
+  const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:3001';
   // Set baseURL global agar semua request axios otomatis ke API_BASE (proxy CRA akan teruskan ke backend)
   axios.defaults.baseURL = API_BASE;
   const [user, setUser] = useState(null);
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       console.log('🔄 Attempting to refresh token...');
-      const response = await axios.post(`/auth/refresh`, {
+      const response = await axios.post(`/api/auth/refresh`, {
         token: currentToken
       });
 
@@ -82,7 +82,7 @@ export const AuthProvider = ({ children }) => {
     if (currentToken) {
       try {
         console.log('🔍 Checking authentication with token...');
-        const response = await axios.get(`/auth/profile`, {
+        const response = await axios.get(`/api/auth/profile`, {
           headers: { Authorization: `Bearer ${currentToken}` },
           timeout: 3000 // 3 detik timeout untuk request
         });
@@ -193,7 +193,7 @@ export const AuthProvider = ({ children }) => {
       setToken(null);
       setUser(null);
       
-      const response = await axios.post(`/auth/login`, {
+      const response = await axios.post(`/api/auth/login`, {
         emailOrUsername,
         password
       });
@@ -251,7 +251,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await axios.post(`/auth/register`, userData);
+      const response = await axios.post(`/api/auth/register`, userData);
       return { success: true, data: response.data.data };
     } catch (error) {
       return {
@@ -265,7 +265,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const currentToken = localStorage.getItem('token');
       if (currentToken) {
-        await axios.post(`/auth/force-logout`, {}, {
+        await axios.post(`/api/auth/force-logout`, {}, {
           headers: { Authorization: `Bearer ${currentToken}` }
         });
         console.log('🔄 Force logout successful');

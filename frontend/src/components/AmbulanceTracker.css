@@ -281,6 +281,8 @@
 .stop-btn {
   background: #dc3545;
   color: white;
+  position: relative;
+  z-index: 1; /* ensure clickable above decorative layers */
 }
 
 .stop-btn:hover {
@@ -617,22 +619,6 @@
   border-top: 1px solid #e9ecef;
 }
 
-.manual-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.manual-btn:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
-}
-
 .position-fallback {
   display: flex;
   flex-direction: column;
@@ -640,99 +626,103 @@
   margin-top: 15px;
 }
 
-.default-btn {
-  background: #6c757d;
+
+/* GPS Status Styles */
+.gps-status {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.gps-status-checking {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.gps-status-granted {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+.gps-status-denied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.gps-status-unavailable {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ffc107;
+  font-weight: 500;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e9ecef;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.retry-btn {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-btn:hover {
+  background: #0056b3;
+}
+
+.gps-error {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #f5c6cb;
+}
+
+.gps-error p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.retry-gps-btn {
+  background: #28a745;
   color: white;
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s;
+  margin-right: 8px;
 }
 
-.default-btn:hover {
-  background: #545b62;
-  transform: translateY(-1px);
-}
-
-.manual-input {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-top: 15px;
-  border: 2px solid #007bff;
-}
-
-.manual-input h4 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 1.1rem;
-}
-
-.input-group {
-  margin-bottom: 15px;
-}
-
-.input-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
-  color: #666;
-}
-
-.input-group input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-family: 'Courier New', monospace;
-}
-
-.input-group input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-.manual-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.submit-btn {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
-}
-
-.submit-btn:hover {
+.retry-gps-btn:hover {
   background: #218838;
-  transform: translateY(-1px);
-}
-
-.cancel-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
-}
-
-.cancel-btn:hover {
-  background: #c82333;
-  transform: translateY(-1px);
 }
